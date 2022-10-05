@@ -1,0 +1,17 @@
+[
+  {
+    "include": [
+      "http://sensitive.a.com/*"
+    ],
+    "exclude": [
+    ]
+  },
+  {
+    "include": [
+      "http://*.b.com/*"
+    ],
+    "exclude": [
+      "http://notsensitive.b.com/*"
+    ]
+  }
+]

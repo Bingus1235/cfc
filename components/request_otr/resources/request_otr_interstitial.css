@@ -1,0 +1,51 @@
+.requestotr a {
+  color: #6B7084;
+  text-decoration: none;
+}
+
+.requestotr #main-message {
+  font-weight: 400;
+}
+
+.requestotr #main-message > h1 {
+  font-weight: 500;
+}
+
+.requestotr #main-message > p {
+  display: block;
+}
+
+.requestotr #main-message > p#primary-paragraph {
+  font-weight: 500;
+}
+
+.requestotr .icon {
+  background-image: url(shield-star.svg);
+  height: 84px;
+}
+
+.requestotr #never-ask-again {
+  padding-top: 1em;
+}
+
+.requestotr #never-ask-again > p {
+  margin-top: 0;
+  padding-left: 1.8em;
+}
+
+.requestotr input#never-ask-again-checkbox {
+  opacity: 1;
+}
+
+.requestotr label {
+  font-size: 110%;
+}
+.requestotr button#primary-button {
+  background-color: #423EEE;
+  border-radius: 1000px;
+  color: white;
+}
+
+.requestotr button {
+    border-radius: 28px;
+}

@@ -32,6 +32,7 @@
 #include "brave/browser/profiles/brave_renderer_updater.h"
 #include "brave/browser/profiles/brave_renderer_updater_factory.h"
 #include "brave/browser/profiles/profile_util.h"
+#include "brave/browser/request_otr/request_otr_service_factory.h"
 #include "brave/browser/skus/skus_service_factory.h"
 #include "brave/components/brave_ads/common/features.h"
 #include "brave/components/brave_federated/features.h"
@@ -68,6 +69,7 @@
 #include "brave/components/ipfs/buildflags/buildflags.h"
 #include "brave/components/playlist/common/buildflags/buildflags.h"
 #include "brave/components/playlist/common/features.h"
+#include "brave/components/request_otr/browser/request_otr_navigation_throttle.h"
 #include "brave/components/skus/common/skus_sdk.mojom.h"
 #include "brave/components/speedreader/common/buildflags/buildflags.h"
 #include "brave/components/tor/buildflags/buildflags.h"
@@ -1014,6 +1016,18 @@ BraveContentBrowserClient::CreateThrottlesForNavigation(
               handle,
               debounce::DebounceServiceFactory::GetForBrowserContext(context)))
     throttles.push_back(std::move(debounce_throttle));
+
+  // Request Off-The-Record
+  if (auto request_otr_throttle =
+          request_otr::RequestOTRNavigationThrottle::MaybeCreateThrottleFor(
+              handle,
+              request_otr::RequestOTRServiceFactory::GetForBrowserContext(
+                  context),
+              EphemeralStorageServiceFactory::GetForContext(context),
+              user_prefs::UserPrefs::Get(context),
+              g_browser_process->GetApplicationLocale())) {
+    throttles.push_back(std::move(request_otr_throttle));
+  }
 
   return throttles;
 }

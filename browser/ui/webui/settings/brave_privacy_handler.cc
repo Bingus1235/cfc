@@ -11,6 +11,7 @@
 #include "brave/components/de_amp/common/features.h"
 #include "brave/components/debounce/common/features.h"
 #include "brave/components/google_sign_in_permission/google_sign_in_permission_util.h"
+#include "brave/components/request_otr/common/features.h"
 #include "chrome/browser/browser_process.h"
 #include "chrome/browser/profiles/profile.h"
 #include "components/gcm_driver/gcm_buildflags.h"
@@ -85,6 +86,9 @@ void BravePrivacyHandler::AddLoadTimeData(content::WebUIDataSource* data_source,
   data_source->AddBoolean(
       "isDebounceFeatureEnabled",
       base::FeatureList::IsEnabled(debounce::features::kBraveDebounce));
+  data_source->AddBoolean(
+      "isRequestOTRFeatureEnabled",
+      base::FeatureList::IsEnabled(request_otr::features::kBraveRequestOTR));
   data_source->AddBoolean(
       "isGoogleSignInFeatureEnabled",
       google_sign_in_permission::IsGoogleSignInFeatureEnabled());

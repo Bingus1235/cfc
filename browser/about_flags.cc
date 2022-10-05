@@ -26,6 +26,7 @@
 #include "brave/components/ipfs/buildflags/buildflags.h"
 #include "brave/components/ntp_background_images/browser/features.h"
 #include "brave/components/playlist/common/buildflags/buildflags.h"
+#include "brave/components/request_otr/common/features.h"
 #include "brave/components/skus/browser/skus_utils.h"
 #include "brave/components/skus/common/features.h"
 #include "brave/components/speedreader/common/buildflags/buildflags.h"
@@ -78,6 +79,7 @@ using brave_shields::features::kCosmeticFilteringSyncLoad;
 using de_amp::features::kBraveDeAMP;
 using debounce::features::kBraveDebounce;
 using google_sign_in_permission::features::kBraveGoogleSignInPermission;
+using request_otr::features::kBraveRequestOTR;
 
 using ntp_background_images::features::kBraveNTPBrandedWallpaperDemo;
 using ntp_background_images::features::kBraveNTPSuperReferralWallpaper;
@@ -168,6 +170,10 @@ constexpr char kBraveDomainBlock1PESDescription[] =
 constexpr char kBraveDebounceName[] = "Enable debouncing";
 constexpr char kBraveDebounceDescription[] =
     "Enable support for skipping top-level redirect tracking URLs";
+
+constexpr char kBraveRequestOTRName[] = "Enable Request-OTR";
+constexpr char kBraveRequestOTRDescription[] =
+    "Suggest to go off-the-record when visiting potentially sensitive URLs";
 
 constexpr char kBraveDeAMPName[] = "Enable De-AMP";
 constexpr char kBraveDeAMPDescription[] = "Enable De-AMPing feature";
@@ -746,6 +752,10 @@ constexpr char kRestrictEventSourcePoolDescription[] =
         flag_descriptions::kBraveDebounceName,                              \
         flag_descriptions::kBraveDebounceDescription, kOsAll,               \
         FEATURE_VALUE_TYPE(kBraveDebounce)},                                \
+    {"brave-request-otr",                                                   \
+            flag_descriptions::kBraveRequestOTRName,                        \
+            flag_descriptions::kBraveRequestOTRDescription, kOsAll,         \
+            FEATURE_VALUE_TYPE(kBraveRequestOTR)},                          \
     {"brave-de-amp",                                                        \
         flag_descriptions::kBraveDeAMPName,                                 \
         flag_descriptions::kBraveDeAMPDescription, kOsAll,                  \

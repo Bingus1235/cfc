@@ -68,6 +68,7 @@ const char16_t kDeAmpLearnMoreUrl[] =
     u"https://support.brave.com/hc/en-us/articles/8611298579981";
 const char16_t kDebounceLearnMoreUrl[] =
     u"https://brave.com/privacy-updates/11-debouncing/";
+const char16_t kRequestOTRLearnMoreUrl[] = u"https://brave.com/#TODO";
 
 void BraveAddCommonStrings(content::WebUIDataSource* html_source,
                            Profile* profile) {
@@ -236,6 +237,13 @@ void BraveAddCommonStrings(content::WebUIDataSource* html_source,
      IDS_SETTINGS_WEBRTC_POLICY_DEFAULT_PUBLIC_INTERFACE_ONLY},
     {"disableNonProxiedUdp",
      IDS_SETTINGS_WEBRTC_POLICY_DISABLE_NON_PROXIED_UDP},
+
+    {"requestOTRLabel", IDS_SETTINGS_REQUEST_OTR_LABEL},
+    {"requestOTRSubLabel", IDS_SETTINGS_REQUEST_OTR_SUB_LABEL},
+    {"requestOTRDefault", IDS_SETTINGS_REQUEST_OTR_DEFAULT},
+    {"requestOTRAlways", IDS_SETTINGS_REQUEST_OTR_ALWAYS},
+    {"requestOTRNever", IDS_SETTINGS_REQUEST_OTR_NEVER},
+
     {"braveSync", IDS_SETTINGS_BRAVE_SYNC_TITLE},
     {"braveSyncSetupActionLabel", IDS_SETTINGS_BRAVE_SYNC_SETUP_ACTION_LABEL},
     {"braveSyncSetupTitle", IDS_SETTINGS_BRAVE_SYNC_SETUP_TITLE},
@@ -633,6 +641,7 @@ void BraveAddCommonStrings(content::WebUIDataSource* html_source,
   html_source->AddString("ipfsDNSLinkLearnMoreURL", kDNSLinkLearnMoreURL);
   html_source->AddString("deAmpLearnMoreURL", kDeAmpLearnMoreUrl);
   html_source->AddString("debounceLearnMoreURL", kDebounceLearnMoreUrl);
+  html_source->AddString("requestOTRLearnMoreURL", kRequestOTRLearnMoreUrl);
   auto confirmation_phrase = brave_l10n::GetLocalizedResourceUTF16String(
       IDS_SETTINGS_WALLET_RESET_CONFIRMATION_PHRASE);
   html_source->AddString("walletResetConfirmationPhrase", confirmation_phrase);

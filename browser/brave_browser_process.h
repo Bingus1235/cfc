@@ -63,6 +63,10 @@ namespace misc_metrics {
 class MenuMetrics;
 }  // namespace misc_metrics
 
+namespace request_otr {
+class RequestOTRComponentInstaller;
+}  // namespace request_otr
+
 namespace ntp_background_images {
 class NTPBackgroundImagesService;
 }  // namespace ntp_background_images
@@ -98,6 +102,8 @@ class BraveBrowserProcess {
 #endif
   virtual debounce::DebounceComponentInstaller*
   debounce_component_installer() = 0;
+  virtual request_otr::RequestOTRComponentInstaller*
+  request_otr_component_installer() = 0;
   virtual brave::URLSanitizerComponentInstaller*
   URLSanitizerComponentInstaller() = 0;
   virtual brave_shields::HTTPSEverywhereService* https_everywhere_service() = 0;
