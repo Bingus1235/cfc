@@ -1,7 +1,7 @@
-/* Copyright (c) 2022 The Brave Authors. All rights reserved.
+/* Copyright (c) 2023 The Brave Authors. All rights reserved.
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this file,
- * You can obtain one at http://mozilla.org/MPL/2.0/. */
+ * You can obtain one at https://mozilla.org/MPL/2.0/. */
 
 #ifndef BRAVE_VENDOR_BAT_NATIVE_ADS_SRC_BAT_ADS_INTERNAL_ADS_SERVING_ELIGIBLE_ADS_PIPELINES_INLINE_CONTENT_ADS_ELIGIBLE_INLINE_CONTENT_ADS_V3_H_
 #define BRAVE_VENDOR_BAT_NATIVE_ADS_SRC_BAT_ADS_INTERNAL_ADS_SERVING_ELIGIBLE_ADS_PIPELINES_INLINE_CONTENT_ADS_ELIGIBLE_INLINE_CONTENT_ADS_V3_H_
@@ -36,23 +36,38 @@ class EligibleAdsV3 final : public EligibleAdsBase {
                 resource::AntiTargeting* anti_targeting);
 
   void GetForUserModel(
-      const targeting::UserModelInfo& user_model,
+      targeting::UserModelInfo user_model,
       const std::string& dimensions,
       GetEligibleAdsCallback<CreativeInlineContentAdList> callback) override;
 
  private:
+  void OnGetForUserModel(
+      targeting::UserModelInfo user_model,
+      const std::string& dimensions,
+      GetEligibleAdsCallback<CreativeInlineContentAdList> callback,
+      bool success,
+      const AdEventList& ad_events);
+
   void GetBrowsingHistory(
-      const targeting::UserModelInfo& user_model,
+      targeting::UserModelInfo user_model,
       const AdEventList& ad_events,
       const std::string& dimensions,
       GetEligibleAdsCallback<CreativeInlineContentAdList> callback);
 
   void GetEligibleAds(
-      const targeting::UserModelInfo& user_model,
+      targeting::UserModelInfo user_model,
       const AdEventList& ad_events,
       const std::string& dimensions,
       GetEligibleAdsCallback<CreativeInlineContentAdList> callback,
       const BrowsingHistoryList& browsing_history);
+
+  void OnGetEligibleAds(
+      const targeting::UserModelInfo& user_model,
+      const AdEventList& ad_events,
+      const BrowsingHistoryList& browsing_history,
+      GetEligibleAdsCallback<CreativeInlineContentAdList> callback,
+      bool success,
+      const CreativeInlineContentAdList& creative_ads);
 
   CreativeInlineContentAdList FilterCreativeAds(
       const CreativeInlineContentAdList& creative_ads,

@@ -1,23 +1,21 @@
-/* Copyright (c) 2021 The Brave Authors. All rights reserved.
+/* Copyright (c) 2023 The Brave Authors. All rights reserved.
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this file,
- * You can obtain one at http://mozilla.org/MPL/2.0/. */
+ * You can obtain one at https://mozilla.org/MPL/2.0/. */
 
 #ifndef BRAVE_VENDOR_BAT_NATIVE_ADS_SRC_BAT_ADS_INTERNAL_ADS_SERVING_CHOOSE_PREDICT_AD_USING_EMBEDDINGS_H_
 #define BRAVE_VENDOR_BAT_NATIVE_ADS_SRC_BAT_ADS_INTERNAL_ADS_SERVING_CHOOSE_PREDICT_AD_USING_EMBEDDINGS_H_
 
-#include <iostream>
 #include <vector>
 
 #include "absl/types/optional.h"
 #include "base/check_op.h"
-#include "base/notreached.h"
 #include "base/rand_util.h"
 #include "bat/ads/internal/ads/serving/choose/eligible_ads_predictor_util.h"
 #include "bat/ads/internal/ads/serving/choose/sample_ads.h"
 #include "bat/ads/internal/ads/serving/eligible_ads/pacing/pacing.h"
 #include "bat/ads/internal/ads/serving/targeting/user_model_info.h"
-#include "bat/ads/internal/base/numbers/number_util.h"
+#include "bat/ads/internal/common/numbers/number_util.h"
 #include "bat/ads/internal/processors/contextual/text_embedding/text_embedding_html_event_info.h"
 
 namespace ads {
@@ -31,7 +29,7 @@ absl::optional<T> MaybePredictAdUsingEmbeddings(
   const std::vector<T> paced_creative_ads = PaceCreativeAds(creative_ads);
 
   if (paced_creative_ads.empty()) {
-    return {};
+    return absl::nullopt;
   }
 
   const std::vector<int> votes_registry = ComputeVoteRegistry(
@@ -52,8 +50,7 @@ absl::optional<T> MaybePredictAdUsingEmbeddings(
     }
   }
 
-  NOTREACHED();
-  return {};
+  return absl::nullopt;
 }
 
 }  // namespace ads

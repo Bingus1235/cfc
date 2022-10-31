@@ -103,15 +103,18 @@ void Serving::MaybeServeAd() {
     return;
   }
 
-  targeting::BuildUserModel([=](const targeting::UserModelInfo user_model) {
-    DCHECK(eligible_ads_);
-    eligible_ads_->GetForUserModel(
-        user_model, base::BindOnce(&Serving::OnGetForUserModel,
-                                  base::Unretained(this), user_model));
-    }
+  targeting::BuildUserModel(
+      base::BindOnce(&Serving::OnBuildUserModel, base::Unretained(this)));
 }
 
 ///////////////////////////////////////////////////////////////////////////////
+
+void Serving::OnBuildUserModel(const targeting::UserModelInfo& user_model) {
+  DCHECK(eligible_ads_);
+  eligible_ads_->GetForUserModel(
+      user_model, base::BindOnce(&Serving::OnGetForUserModel,
+                                 base::Unretained(this), user_model));
+}
 
 void Serving::OnGetForUserModel(
     const targeting::UserModelInfo& user_model,

@@ -1,7 +1,7 @@
-/* Copyright (c) 2022 The Brave Authors. All rights reserved.
+/* Copyright (c) 2023 The Brave Authors. All rights reserved.
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this file,
- * You can obtain one at http://mozilla.org/MPL/2.0/. */
+ * You can obtain one at https://mozilla.org/MPL/2.0/. */
 
 #ifndef BRAVE_VENDOR_BAT_NATIVE_ADS_SRC_BAT_ADS_INTERNAL_CREATIVES_EMBEDDINGS_DATABASE_TABLE_H_
 #define BRAVE_VENDOR_BAT_NATIVE_ADS_SRC_BAT_ADS_INTERNAL_CREATIVES_EMBEDDINGS_DATABASE_TABLE_H_
@@ -31,7 +31,7 @@ class Embeddings final : public TableInterface {
       mojom::DBCommandInfo* command,
       const CreativeAdList& creative_ads) const;
 
-  void MigrateToV26(mojom::DBTransactionInfo* transaction);
+  static void MigrateToV26(mojom::DBTransactionInfo* transaction);
 };
 
 }  // namespace ads::database::table

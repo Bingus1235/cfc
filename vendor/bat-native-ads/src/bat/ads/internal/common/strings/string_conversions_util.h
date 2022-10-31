@@ -7,10 +7,16 @@
 #define BRAVE_VENDOR_BAT_NATIVE_ADS_SRC_BAT_ADS_INTERNAL_COMMON_STRINGS_STRING_CONVERSIONS_UTIL_H_
 
 #include <string>
+#include <vector>
 
 namespace ads {
 
 std::string BoolToString(bool value);
+
+std::vector<float> ConvertStringToVector(const std::string& string,
+                                         const std::string& delimiter);
+std::string ConvertVectorToString(const std::vector<float>& vector,
+                                  const std::string& delimiter);
 
 }  // namespace ads
 

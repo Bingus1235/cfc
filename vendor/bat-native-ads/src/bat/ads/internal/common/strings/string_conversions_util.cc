@@ -5,6 +5,10 @@
 
 #include "bat/ads/internal/common/strings/string_conversions_util.h"
 
+#include "base/strings/string_number_conversions.h"
+#include "base/strings/string_split.h"
+#include "base/strings/string_util.h"
+
 namespace ads {
 
 namespace {
@@ -16,6 +20,30 @@ constexpr char kFalse[] = "false";
 
 std::string BoolToString(const bool value) {
   return value ? kTrue : kFalse;
+}
+
+std::vector<float> ConvertStringToVector(const std::string& string,
+                                         const std::string& delimiter) {
+  const std::vector<std::string> vector_string = base::SplitString(
+      string, delimiter, base::TRIM_WHITESPACE, base::SPLIT_WANT_NONEMPTY);
+  std::vector<float> vector;
+  for (const auto& element_string : vector_string) {
+    double element;
+    base::StringToDouble(element_string, &element);
+    vector.push_back(static_cast<float>(element));
+  }
+
+  return vector;
+}
+
+std::string ConvertVectorToString(const std::vector<float>& vector,
+                                  const std::string& delimiter) {
+  std::vector<std::string> string_vector;
+  for (const auto& element : vector) {
+    string_vector.push_back(base::NumberToString(element));
+  }
+
+  return base::JoinString(string_vector, delimiter);
 }
 
 }  // namespace ads

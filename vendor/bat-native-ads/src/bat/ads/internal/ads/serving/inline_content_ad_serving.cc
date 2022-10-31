@@ -8,6 +8,7 @@
 #include <utility>
 
 #include "base/check.h"
+#include "base/functional/bind.h"
 #include "base/rand_util.h"
 #include "bat/ads/inline_content_ad_info.h"
 #include "bat/ads/internal/ads/serving/eligible_ads/pipelines/inline_content_ads/eligible_inline_content_ads_base.h"
@@ -69,7 +70,14 @@ void Serving::MaybeServeAd(const std::string& dimensions,
     return;
   }
 
-  targeting::BuildUserModel([=](const targeting::UserModelInfo user_model) {
+  targeting::BuildUserModel(base::BindOnce(&Serving::OnBuildUserModel,
+                                           base::Unretained(this), dimensions,
+                                           std::move(callback)));
+}
+
+void Serving::OnBuildUserModel(const std::string& dimensions,
+                               MaybeServeInlineContentAdCallback callback,
+                               const targeting::UserModelInfo& user_model) {
   DCHECK(eligible_ads_);
   eligible_ads_->GetForUserModel(
       user_model, dimensions,
