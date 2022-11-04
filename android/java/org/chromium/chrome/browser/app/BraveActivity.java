@@ -34,6 +34,7 @@ import androidx.fragment.app.FragmentManager;
 import androidx.fragment.app.FragmentTransaction;
 
 import com.android.billingclient.api.Purchase;
+import com.brave.braveandroidplaylist.util.ViewUtils;
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import com.wireguard.android.backend.GoBackend;
 import com.wireguard.android.backend.Tunnel;
@@ -841,10 +842,16 @@ public abstract class BraveActivity<C extends ChromeActivityComponent> extends C
         }
     }
 
+    private void showPlaylistButton() {
+        ViewUtils.showPlaylistButton(BraveActivity.this, findViewById(android.R.id.content),
+                SharedPreferencesManager.getInstance().readBoolean(
+                        BravePreferenceKeys.SHOULD_SHOW_PLAYLIST_ONBOARDING, true));
+    }
+
     @Override
     public void finishNativeInitialization() {
         super.finishNativeInitialization();
-
+        showPlaylistButton();
         BraveVpnNativeWorker.getInstance().reloadPurchasedState();
 
         BraveHelper.maybeMigrateSettings();
