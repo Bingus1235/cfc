@@ -446,7 +446,11 @@ void PlaylistService::AddMediaFilesFromActiveTabToPlaylist(
 
 void PlaylistService::FindMediaFilesFromActiveTab(
     FindMediaFilesFromActiveTabCallback callback) {
+  LOG(ERROR) << "BravePlaylist : "
+             << "FindMediaFilesFromActiveTab 1";
   DCHECK(delegate_);
+  LOG(ERROR) << "BravePlaylist : "
+             << "FindMediaFilesFromActiveTab 2";
 
   auto* contents = delegate_->GetActiveWebContents();
   if (!contents) {
@@ -454,6 +458,8 @@ void PlaylistService::FindMediaFilesFromActiveTab(
     return;
   }
 
+  LOG(ERROR) << "BravePlaylist : "
+             << "FindMediaFilesFromActiveTab 4";
   PlaylistDownloadRequestManager::Request request;
   auto current_url = contents->GetVisibleURL();
   if (ShouldDownloadOnBackground(contents)) {
@@ -612,6 +618,11 @@ void PlaylistService::OnThumbnailDownloaded(const std::string& id,
   UpdatePlaylistItemValue(
       id, base::Value(ConvertPlaylistItemToValue(playlist_item)));
   NotifyPlaylistChanged({PlaylistChangeParams::Type::kItemThumbnailReady, id});
+}
+
+void PlaylistService::GetDefaultPlaylistId(
+    GetDefaultPlaylistIdCallback callback) {
+  std::move(callback).Run(GetDefaultSaveTargetListID());
 }
 
 void PlaylistService::RemovePlaylist(const std::string& playlist_id) {
