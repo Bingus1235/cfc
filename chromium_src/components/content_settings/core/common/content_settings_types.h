@@ -22,6 +22,7 @@
   BRAVE_SOLANA,                                                                \
   BRAVE_GOOGLE_SIGN_IN,                                                        \
   BRAVE_HTTPS_UPGRADE,                                                         \
+  BRAVE_LOCALHOST_ACCESS,                                                      \
   NUM_TYPES
 // clang-format on
 

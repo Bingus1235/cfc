@@ -18,8 +18,12 @@
 
 // `kWidevine` handled by an override in `WidevinePermissionRequest` and the
 // Brave Ethereum/Solana permission has its own permission request prompt.
+// TODO: update text for localhost permission
 #define BRAVE_ENUM_ITEMS_FOR_SWITCH                      \
   case RequestType::kBraveGoogleSignInPermission:        \
+    message_id = IDS_GOOGLE_SIGN_IN_PERMISSION_FRAGMENT; \
+    break;                                               \
+  case RequestType::kBraveLocalhostAccessPermission:     \
     message_id = IDS_GOOGLE_SIGN_IN_PERMISSION_FRAGMENT; \
     break;                                               \
   case RequestType::kBraveEthereum:                      \

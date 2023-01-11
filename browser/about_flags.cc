@@ -73,6 +73,7 @@ using brave_shields::features::kBraveDarkModeBlock;
 using brave_shields::features::kBraveDomainBlock;
 using brave_shields::features::kBraveDomainBlock1PES;
 using brave_shields::features::kBraveExtensionNetworkBlocking;
+using brave_shields::features::kBraveLocalhostAccessPermission;
 using brave_shields::features::kBraveReduceLanguage;
 using brave_shields::features::kCosmeticFilteringSyncLoad;
 
@@ -177,6 +178,11 @@ constexpr char kBraveGoogleSignInPermissionName[] =
     "Enable Google Sign-In Permission Prompt";
 constexpr char kBraveGoogleSignInPermissionDescription[] =
     "Enable permissioning access to legacy Google Sign-In";
+
+constexpr char kBraveLocalhostAccessPermissionName[] =
+    "Enable Localhost access Permission Prompt";
+constexpr char kBraveLocalhostAccessPermissionDescription[] =
+    "Enable permissioning access to localhost connections";
 
 constexpr char kBraveExtensionNetworkBlockingName[] =
     "Enable extension network blocking";
@@ -732,6 +738,10 @@ constexpr char kRestrictEventSourcePoolDescription[] =
         flag_descriptions::kBraveGoogleSignInPermissionName,                \
         flag_descriptions::kBraveGoogleSignInPermissionDescription, kOsAll, \
         FEATURE_VALUE_TYPE(kBraveGoogleSignInPermission)},                  \
+    {"brave-localhost-access-permission",                                         \
+        flag_descriptions::kBraveLocalhostAccessPermissionName,                   \
+        flag_descriptions::kBraveLocalhostAccessPermissionDescription, kOsAll,    \
+        FEATURE_VALUE_TYPE(kBraveLocalhostAccessPermission)},                     \
     {"brave-extension-network-blocking",                                    \
      flag_descriptions::kBraveExtensionNetworkBlockingName,                 \
      flag_descriptions::kBraveExtensionNetworkBlockingDescription, kOsAll,  \
