@@ -24,25 +24,29 @@ UserReactions::~UserReactions() {
 
 ///////////////////////////////////////////////////////////////////////////////
 
+// TODO(tmancey): Change ad_content.brand to segment
 void UserReactions::OnDidLikeAd(const AdContentInfo& ad_content) {
   account_->Deposit(ad_content.creative_instance_id, ad_content.type,
-                    ConfirmationType::kUpvoted);
+                    ad_content.brand, ConfirmationType::kUpvoted);
 }
 
+// TODO(tmancey): Change ad_content.brand to segment
 void UserReactions::OnDidDislikeAd(const AdContentInfo& ad_content) {
   account_->Deposit(ad_content.creative_instance_id, ad_content.type,
-                    ConfirmationType::kDownvoted);
+                    ad_content.brand, ConfirmationType::kDownvoted);
 }
 
+// TODO(tmancey): Change ad_content.brand to segment
 void UserReactions::OnDidMarkAdAsInappropriate(
     const AdContentInfo& ad_content) {
   account_->Deposit(ad_content.creative_instance_id, ad_content.type,
-                    ConfirmationType::kFlagged);
+                    ad_content.brand, ConfirmationType::kFlagged);
 }
 
+// TODO(tmancey): Change ad_content.brand to segment
 void UserReactions::OnDidSaveAd(const AdContentInfo& ad_content) {
   account_->Deposit(ad_content.creative_instance_id, ad_content.type,
-                    ConfirmationType::kSaved);
+                    ad_content.brand, ConfirmationType::kSaved);
 }
 
 }  // namespace ads

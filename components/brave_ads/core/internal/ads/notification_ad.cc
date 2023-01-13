@@ -151,7 +151,7 @@ void NotificationAd::OnNotificationAdServed(const NotificationAdInfo& ad) {
 void NotificationAd::OnNotificationAdViewed(const NotificationAdInfo& ad) {
   HistoryManager::GetInstance()->Add(ad, ConfirmationType::kViewed);
 
-  account_->Deposit(ad.creative_instance_id, ad.type,
+  account_->Deposit(ad.creative_instance_id, ad.type, ad.segment,
                     ConfirmationType::kViewed);
 
   CovariateManager::GetInstance()->SetNotificationAdServedAt(base::Time::Now());
@@ -166,7 +166,7 @@ void NotificationAd::OnNotificationAdClicked(const NotificationAdInfo& ad) {
 
   HistoryManager::GetInstance()->Add(ad, ConfirmationType::kClicked);
 
-  account_->Deposit(ad.creative_instance_id, ad.type,
+  account_->Deposit(ad.creative_instance_id, ad.type, ad.segment,
                     ConfirmationType::kClicked);
 
   processor::EpsilonGreedyBandit::Process(
@@ -182,7 +182,7 @@ void NotificationAd::OnNotificationAdDismissed(const NotificationAdInfo& ad) {
 
   HistoryManager::GetInstance()->Add(ad, ConfirmationType::kDismissed);
 
-  account_->Deposit(ad.creative_instance_id, ad.type,
+  account_->Deposit(ad.creative_instance_id, ad.type, ad.segment,
                     ConfirmationType::kDismissed);
 
   processor::EpsilonGreedyBandit::Process(

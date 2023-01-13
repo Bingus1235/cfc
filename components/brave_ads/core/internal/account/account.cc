@@ -125,6 +125,7 @@ void Account::Process() {
 
 void Account::Deposit(const std::string& creative_instance_id,
                       const AdType& ad_type,
+                      const std::string& segment,
                       const ConfirmationType& confirmation_type) const {
   DCHECK(!creative_instance_id.empty());
   DCHECK_NE(AdType::kUndefined, ad_type.value());
@@ -136,10 +137,10 @@ void Account::Deposit(const std::string& creative_instance_id,
     return;
   }
 
-  deposit->GetValue(
-      creative_instance_id,
-      base::BindOnce(&Account::OnGetDepositValue, base::Unretained(this),
-                     creative_instance_id, ad_type, confirmation_type));
+  deposit->GetValue(creative_instance_id,
+                    base::BindOnce(&Account::OnGetDepositValue,
+                                   base::Unretained(this), creative_instance_id,
+                                   ad_type, segment, confirmation_type));
 }
 
 // static
@@ -164,6 +165,7 @@ void Account::MaybeGetIssuers() const {
 
 void Account::OnGetDepositValue(const std::string& creative_instance_id,
                                 const AdType& ad_type,
+                                const std::string& segment,
                                 const ConfirmationType& confirmation_type,
                                 const bool success,
                                 const double value) const {
@@ -172,21 +174,24 @@ void Account::OnGetDepositValue(const std::string& creative_instance_id,
     return;
   }
 
-  ProcessDeposit(creative_instance_id, ad_type, confirmation_type, value);
+  ProcessDeposit(creative_instance_id, ad_type, segment, confirmation_type,
+                 value);
 }
 
 void Account::ProcessDeposit(const std::string& creative_instance_id,
                              const AdType& ad_type,
+                             const std::string& segment,
                              const ConfirmationType& confirmation_type,
                              const double value) const {
-  transactions::Add(
-      creative_instance_id, value, ad_type, confirmation_type,
-      base::BindOnce(&Account::OnDepositProcessed, base::Unretained(this),
-                     creative_instance_id, ad_type, confirmation_type));
+  transactions::Add(creative_instance_id, value, ad_type, confirmation_type,
+                    base::BindOnce(&Account::OnDepositProcessed,
+                                   base::Unretained(this), creative_instance_id,
+                                   ad_type, segment, confirmation_type));
 }
 
 void Account::OnDepositProcessed(const std::string& creative_instance_id,
                                  const AdType& ad_type,
+                                 const std::string& segment,
                                  const ConfirmationType& confirmation_type,
                                  const bool success,
                                  const TransactionInfo& transaction) const {

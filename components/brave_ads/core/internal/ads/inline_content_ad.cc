@@ -79,7 +79,7 @@ void InlineContentAd::OnInlineContentAdServed(const InlineContentAdInfo& ad) {
 void InlineContentAd::OnInlineContentAdViewed(const InlineContentAdInfo& ad) {
   HistoryManager::GetInstance()->Add(ad, ConfirmationType::kViewed);
 
-  account_->Deposit(ad.creative_instance_id, ad.type,
+  account_->Deposit(ad.creative_instance_id, ad.type, ad.segment,
                     ConfirmationType::kViewed);
 
   privacy::p2a::RecordAdImpression(ad);
@@ -90,7 +90,7 @@ void InlineContentAd::OnInlineContentAdClicked(const InlineContentAdInfo& ad) {
 
   HistoryManager::GetInstance()->Add(ad, ConfirmationType::kClicked);
 
-  account_->Deposit(ad.creative_instance_id, ad.type,
+  account_->Deposit(ad.creative_instance_id, ad.type, ad.segment,
                     ConfirmationType::kClicked);
 }
 
