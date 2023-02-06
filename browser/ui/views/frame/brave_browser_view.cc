@@ -19,6 +19,7 @@
 #include "brave/browser/ui/tabs/features.h"
 #include "brave/browser/ui/views/brave_actions/brave_actions_container.h"
 #include "brave/browser/ui/views/brave_actions/brave_shields_action_view.h"
+#include "brave/browser/ui/views/brave_rewards/tip_panel_bubble_host.h"
 #include "brave/browser/ui/views/brave_shields/cookie_list_opt_in_bubble_host.h"
 #include "brave/browser/ui/views/frame/brave_contents_layout_manager.h"
 #include "brave/browser/ui/views/frame/vertical_tab_strip_region_view.h"
@@ -164,6 +165,8 @@ BraveBrowserView::BraveBrowserView(std::unique_ptr<Browser> browser)
     brave_rewards::RewardsPanelCoordinator::CreateForBrowser(browser_.get(),
                                                              rewards_service);
   }
+
+  brave_rewards::TipPanelBubbleHost::MaybeCreateForBrowser(browser_.get());
 
   brave_shields::CookieListOptInBubbleHost::MaybeCreateForBrowser(
       browser_.get());

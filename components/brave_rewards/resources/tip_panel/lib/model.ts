@@ -42,7 +42,7 @@ export interface Model {
   getState: () => ModelState
   addListener: (callback: ModelStateListener) => () => void
   onInitialRender: () => void
-  sendContribution: (amount: number, monthly: boolean) => Promise<void>
+  sendContribution: (amount: number, monthly: boolean) => Promise<boolean>
   reconnectWallet: () => void
   shareContribution: () => void
 }
@@ -79,7 +79,7 @@ export function defaultModel (): Model {
     getState () { return state },
     addListener () { return () => {} },
     onInitialRender () {},
-    async sendContribution (amount: number, monthly: boolean) {},
+    async sendContribution (amount: number, monthly: boolean) { return false },
     reconnectWallet () {},
     shareContribution () {}
   }

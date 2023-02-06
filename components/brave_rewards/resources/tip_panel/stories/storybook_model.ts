@@ -51,6 +51,7 @@ export function createModel (): Model {
       console.log('sendContribution', amount, monthly)
       await new Promise((resolve) => setTimeout(resolve, 3000))
       console.log('send complete')
+      return true
     },
     reconnectWallet: actionLogger('reconnectWallet'),
     shareContribution: actionLogger('shareContribution')

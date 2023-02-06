@@ -76,6 +76,7 @@ struct PublisherBanner {
   string logo;
   string provider;
   map<string, string> links;
+  string web3URL;
   PublisherStatus status = PublisherStatus.NOT_VERIFIED;
 };
 

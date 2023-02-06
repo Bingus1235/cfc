@@ -22,6 +22,7 @@
 #include "brave/browser/extensions/brave_component_loader.h"
 #include "brave/browser/profiles/profile_util.h"
 #include "brave/browser/ui/brave_rewards/rewards_panel/rewards_panel_coordinator.h"
+#include "brave/browser/ui/views/brave_rewards/tip_panel_bubble_host.h"
 #include "brave/common/extensions/api/brave_rewards.h"
 #include "brave/components/brave_adaptive_captcha/brave_adaptive_captcha_service.h"
 #include "brave/components/brave_ads/browser/ads_service.h"
@@ -403,12 +404,37 @@ ExtensionFunction::ResponseAction BraveRewardsTipSiteFunction::Run() {
                             base::NumberToString(params->tab_id)));
   }
 
+  auto* browser = chrome::FindBrowserWithWebContents(contents);
+  if (!browser) {
+    return RespondNow(Error(tabs_constants::kTabNotFoundError,
+                            base::NumberToString(params->tab_id)));
+  }
+
+  auto* panel_host = ::brave_rewards::TipPanelBubbleHost::FromBrowser(browser);
+  if (!panel_host) {
+    return RespondNow(Error(tabs_constants::kTabNotFoundError,
+                            base::NumberToString(params->tab_id)));
+  }
+
+  // TODO(zenparsing): Find out if the creator is registered. If the creator is
+  // not registered, then open the rewards panel instead.
+
+  // TODO(zenparsing): If Rewards is not enabled, open the Rewards panel
+  // instead.
+
+  // TODO(zenparsing): Get rewards user information. If the user is "limited",
+  // open the Rewards panel instead.
+
+  panel_host->ShowPanelForPublisher(params->publisher_key);
+
+  /*
   base::Value::Dict params_dict;
   params_dict.Set("publisherKey", params->publisher_key);
   params_dict.Set("entryPoint", params->entry_point);
   params_dict.Set(
       "url", contents ? contents->GetLastCommittedURL().spec() : std::string());
   ::brave_rewards::OpenTipDialog(contents, std::move(params_dict));
+  */
 
   return RespondNow(NoArguments());
 }
