@@ -5,8 +5,7 @@ version = 3
 [[package]]
 name = "adblock"
 version = "0.7.5"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "cd1931ebfdd243e303e815119c115c275198a98bab68c86dd157ee7c0c464a06"
+source = "git+https://github.com/djandries/adblock-rust#0e249fbf0cbe7fdc4798eb2d64c4f7177d3e8fa9"
 dependencies = [
  "base64 0.13.0",
  "bitflags",
@@ -24,17 +23,19 @@ dependencies = [
  "selectors 0.23.0",
  "serde",
  "serde_json",
+ "thiserror",
  "twoway",
  "url",
 ]
 
 [[package]]
-name = "adblock-ffi"
+name = "adblock-cxx"
 version = "0.1.0"
 dependencies = [
  "adblock",
- "libc",
+ "cxx",
  "serde_json",
+ "thiserror",
 ]
 
 [[package]]
@@ -247,7 +248,7 @@ dependencies = [
 name = "brave-rust"
 version = "0.1.0"
 dependencies = [
- "adblock-ffi",
+ "adblock-cxx",
  "brave-news-cxx",
  "brave-wallet-cxx",
  "challenge-bypass-ristretto-ffi",
