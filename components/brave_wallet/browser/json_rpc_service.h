@@ -378,6 +378,7 @@ class JsonRpcService : public KeyedService, public mojom::JsonRpcService {
                               const std::string& error_message)>;
   void GetNftStandard(const std::string& contract_address,
                       const std::string& chain_id,
+                      // Interfaces are checked in reverse order
                       std::vector<std::string> remaining_interfaces,
                       GetNftStandardCallback callback);
 

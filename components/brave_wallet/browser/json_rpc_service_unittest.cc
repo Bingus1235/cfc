@@ -6396,17 +6396,17 @@ TEST_F(JsonRpcServiceUnitTest, GetNftStandard) {
 
   // Valid inputs, supported response returned for the second interface ID
   // (ERC1155)
-  responses[kERC1155InterfaceId] = interface_supported_response;
   const std::string interface_not_supported_response = R"({
       "jsonrpc":"2.0",
       "id":1,
       "result":"0x0000000000000000000000000000000000000000000000000000000000000000"
   })";
-  responses[kERC721MetadataInterfaceId] = interface_not_supported_response;
+  responses[kERC721InterfaceId] = interface_not_supported_response;
+  responses[kERC1155InterfaceId] = interface_supported_response;
   SetGetNftStandardInterceptor(network, responses);
   TestGetNftStandard("0x06012c8cf97BEaD5deAe237070F9587f8E7A266d",
                      mojom::kMainnetChainId,
-                     {kERC721InterfaceId, kERC1155InterfaceId},
+                     {kERC1155InterfaceId, kERC721InterfaceId},
                      kERC1155InterfaceId, mojom::ProviderError::kSuccess, "");
 
   // Valid inputs, but no interfaces are supported yields success / nullopt
