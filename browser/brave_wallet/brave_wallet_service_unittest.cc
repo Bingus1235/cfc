@@ -37,6 +37,9 @@
 #include "components/prefs/scoped_user_pref_update.h"
 #include "components/sync_preferences/testing_pref_service_syncable.h"
 #include "content/public/test/browser_task_environment.h"
+#include "services/data_decoder/public/cpp/test_support/in_process_data_decoder.h"
+#include "services/network/public/cpp/weak_wrapper_shared_url_loader_factory.h"
+#include "services/network/test/test_url_loader_factory.h"
 #include "testing/gtest/include/gtest/gtest.h"
 #include "ui/base/l10n/l10n_util.h"
 #include "url/origin.h"
@@ -238,7 +241,11 @@ class TestBraveWalletServiceObserver
 class BraveWalletServiceUnitTest : public testing::Test {
  public:
   BraveWalletServiceUnitTest()
-      : task_environment_(base::test::TaskEnvironment::TimeSource::MOCK_TIME) {}
+      : task_environment_(base::test::TaskEnvironment::TimeSource::MOCK_TIME),
+        shared_url_loader_factory_(
+            base::MakeRefCounted<network::WeakWrapperSharedURLLoaderFactory>(
+                &url_loader_factory_)) {}
+
   ~BraveWalletServiceUnitTest() override = default;
 
  protected:
@@ -268,6 +275,8 @@ class BraveWalletServiceUnitTest : public testing::Test {
         KeyringServiceFactory::GetServiceForContext(profile_.get());
     json_rpc_service_ =
         JsonRpcServiceFactory::GetServiceForContext(profile_.get());
+    json_rpc_service_->SetAPIRequestHelperForTesting(
+        shared_url_loader_factory_);
     tx_service = TxServiceFactory::GetServiceForContext(profile_.get());
     service_ = std::make_unique<BraveWalletService>(
         BraveWalletServiceDelegate::Create(profile_.get()), keyring_service_,
@@ -301,6 +310,7 @@ class BraveWalletServiceUnitTest : public testing::Test {
         mojom::kMainnetChainId, mojom::CoinType::ETH,
         "0x06012c8cf97BEaD5deAe237070F9587f8E7A266d");
     ASSERT_TRUE(erc721_token_);
+    ASSERT_TRUE(erc721_token_->is_nft);
     ASSERT_EQ(erc721_token_->symbol, "CK");
 
     wrapped_sol_ = GetRegistry()->GetTokenByAddress(
@@ -359,9 +369,41 @@ class BraveWalletServiceUnitTest : public testing::Test {
   mojom::BlockchainTokenPtr GetBatToken() { return bat_token_.Clone(); }
 
   PrefService* GetPrefs() { return profile_->GetPrefs(); }
+  GURL GetNetwork(const std::string& chain_id, mojom::CoinType coin) {
+    return brave_wallet::GetNetworkURL(GetPrefs(), chain_id, coin);
+  }
+
   TestingPrefServiceSimple* GetLocalState() { return local_state_->Get(); }
   BlockchainRegistry* GetRegistry() {
     return BlockchainRegistry::GetInstance();
+  }
+
+  void SetGetNftStandardInterceptor(
+      const GURL& expected_url,
+      const std::map<std::string, std::string>& interface_id_to_response) {
+    url_loader_factory_.SetInterceptor(base::BindLambdaForTesting(
+        [&, expected_url,
+         interface_id_to_response](const network::ResourceRequest& request) {
+          EXPECT_EQ(request.url, expected_url);
+          base::StringPiece request_string(request.request_body->elements()
+                                               ->at(0)
+                                               .As<network::DataElementBytes>()
+                                               .AsStringPiece());
+          // Check if any of the interface ids are in the request
+          // if so, return the response for that interface id
+          // if not, do nothing
+          for (const auto& [interface_id, response] :
+               interface_id_to_response) {
+            bool request_is_checking_interface =
+                request_string.find(interface_id.substr(2)) !=
+                std::string::npos;
+            if (request_is_checking_interface) {
+              url_loader_factory_.ClearResponses();
+              url_loader_factory_.AddResponse(expected_url.spec(), response);
+              return;
+            }
+          }
+        }));
   }
 
   void GetUserAssets(const std::string& chain_id,
@@ -691,6 +733,9 @@ class BraveWalletServiceUnitTest : public testing::Test {
   mojom::BlockchainTokenPtr sol_usdc_;
   mojom::BlockchainTokenPtr sol_tsla_;
   mojom::BlockchainTokenPtr fil_token_;
+  network::TestURLLoaderFactory url_loader_factory_;
+  scoped_refptr<network::SharedURLLoaderFactory> shared_url_loader_factory_;
+  data_decoder::test::InProcessDataDecoder in_process_data_decoder_;
 };
 
 TEST_F(BraveWalletServiceUnitTest, GetUserAssets) {
@@ -894,6 +939,12 @@ TEST_F(BraveWalletServiceUnitTest, AddUserAsset) {
   EXPECT_EQ(tokens.size(), 2u);
   EXPECT_EQ(tokens[0], eth_0xaa36a7_token);
   EXPECT_EQ(tokens[1], token1_0xaa36a7);
+
+  // Add token with is_nft = true.
+  // mojom::BlockchainTokenPtr nft_token = GetToken1();
+  // nft_token->is_nft = true;
+  // AddUserAsset(nft_token.Clone(), &success);
+  // EXPECT_TRUE(success);
 }
 
 TEST_F(BraveWalletServiceUnitTest, RemoveUserAsset) {
@@ -1293,6 +1344,16 @@ TEST_F(BraveWalletServiceUnitTest, ERC721TokenAddRemoveSetUserAssetVisible) {
   erc721_token_1->token_id = "0x1";
 
   // Add ERC721 token without tokenId will fail.
+  auto network = GetNetwork(mojom::kSepoliaChainId, mojom::CoinType::ETH);
+  std::map<std::string, std::string> responses;
+  const std::string interface_supported_response = R"({
+      "jsonrpc":"2.0",
+      "id":1,
+      "result":"0x0000000000000000000000000000000000000000000000000000000000000001"
+  })";
+  responses[kERC721InterfaceId] = interface_supported_response;
+  responses[kERC1155InterfaceId] = interface_supported_response;
+  SetGetNftStandardInterceptor(network, responses);
   AddUserAsset(std::move(erc721_token_with_empty_token_id), &success);
   EXPECT_FALSE(success);
 
@@ -1307,10 +1368,14 @@ TEST_F(BraveWalletServiceUnitTest, ERC721TokenAddRemoveSetUserAssetVisible) {
   // Add to another chain should success
   auto erc721_token_1_0x1 = erc721_token_1.Clone();
   erc721_token_1_0x1->chain_id = "0x1";
+  network = GetNetwork(mojom::kMainnetChainId, mojom::CoinType::ETH);
+  SetGetNftStandardInterceptor(network, responses);
   AddUserAsset(erc721_token_1_0x1.Clone(), &success);
   EXPECT_TRUE(success);
 
   // Add ERC721 token with token_id = 2 should success.
+  network = GetNetwork(mojom::kSepoliaChainId, mojom::CoinType::ETH);
+  SetGetNftStandardInterceptor(network, responses);
   AddUserAsset(erc721_token_2.Clone(), &success);
   EXPECT_TRUE(success);
 
