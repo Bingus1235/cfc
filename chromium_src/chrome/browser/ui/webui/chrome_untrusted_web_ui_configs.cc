@@ -10,6 +10,7 @@
 #include "brave/browser/ui/webui/brave_wallet/market/market_ui.h"
 #include "brave/browser/ui/webui/brave_wallet/nft/nft_ui.h"
 #include "brave/browser/ui/webui/brave_wallet/trezor/trezor_ui.h"
+#include "brave/browser/ui/webui/chat_ui/chat_ui.h"
 #include "brave/components/brave_vpn/common/buildflags/buildflags.h"
 #include "brave/components/playlist/common/buildflags/buildflags.h"
 #include "build/build_config.h"
@@ -45,6 +46,8 @@ void RegisterChromeUntrustedWebUIConfigs() {
       std::make_unique<trezor::UntrustedTrezorUIConfig>());
   content::WebUIConfigMap::GetInstance().AddUntrustedWebUIConfig(
       std::make_unique<nft::UntrustedNftUIConfig>());
+  content::WebUIConfigMap::GetInstance().AddUntrustedWebUIConfig(
+      std::make_unique<UntrustedChatUIConfig>());
 #if BUILDFLAG(ENABLE_BRAVE_VPN)
   if (brave_vpn::IsBraveVPNEnabled()) {
     content::WebUIConfigMap::GetInstance().AddUntrustedWebUIConfig(

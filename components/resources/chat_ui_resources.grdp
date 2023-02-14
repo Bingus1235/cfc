@@ -1,0 +1,4 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<grit-part>
+  <include name="IDR_CHAT_UI_HTML" file="../chat_ui/resources/page/chat_ui.html" type="BINDATA" />
+</grit-part>

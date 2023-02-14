@@ -61,3 +61,5 @@ const char kPlaylistURL[] = "chrome-untrusted://playlist/";
 const char kSpeedreaderPanelURL[] = "chrome://brave-speedreader.top-chrome";
 const char kSpeedreaderPanelHost[] = "brave-speedreader.top-chrome";
 const char kCommandsHost[] = "commands";
+const char kChatUIURL[] = "chrome-untrusted://chat/";
+const char kChatUIHost[] = "chat";

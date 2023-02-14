@@ -1,0 +1,16 @@
+import("//brave/components/common/typescript.gni")
+
+transpile_web_ui("chat_ui") {
+  resource_name = "chat_ui"
+  entry_points = [ [
+        "chat_ui",
+        rebase_path("chat_ui.tsx"),
+      ] ]
+}
+
+pack_web_resources("generated_resources") {
+  resource_name = "chat_ui"
+  output_dir =
+      "$root_gen_dir/brave/components/chat_ui/resources/page"
+  deps = [ ":chat_ui" ]
+}
