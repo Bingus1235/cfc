@@ -449,6 +449,7 @@ export function refreshVisibleTokenInfo (targetNetwork?: BraveWallet.NetworkInfo
         decimals: network.decimals,
         isErc20: false,
         isErc721: false,
+        isErc1155: false,
         isNft: false,
         logo: network.iconUrls[0] ?? '',
         name: network.symbolName,
@@ -607,7 +608,7 @@ export function refreshBalances () {
         return Promise.all(visibleTokens.map(async (token) => {
           let balanceInfo = emptyBalance
           if (networks.some(n => n.chainId === token.chainId)) {
-            if (token.isErc721) {
+            if (token.isErc721) { // TODO
               balanceInfo =
                 await jsonRpcService.getERC721TokenBalance(token.contractAddress, token.tokenId ?? '', account.address, token?.chainId ?? '')
             } else {

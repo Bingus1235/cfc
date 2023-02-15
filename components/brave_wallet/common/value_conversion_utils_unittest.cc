@@ -279,7 +279,7 @@ TEST(ValueConversionUtilsUnitTest, ValueToBlockchainToken) {
 
   mojom::BlockchainTokenPtr expected_token = mojom::BlockchainToken::New(
       "0x0D8775F648430679A709E98d2b0Cb6250d2887EF", "Basic Attention Token",
-      "bat.png", true, false, false, "BAT", 18, true, "", "", "0x1",
+      "bat.png", true, false, false, false, "BAT", 18, true, "", "", "0x1",
       mojom::CoinType::ETH);
 
   mojom::BlockchainTokenPtr token = ValueToBlockchainToken(
@@ -315,8 +315,8 @@ TEST(ValueConversionUtilsUnitTest, ValueToBlockchainToken) {
 
   expected_token = mojom::BlockchainToken::New(
       "0x06012c8cf97BEaD5deAe237070F9587f8E7A266d", "Crypto Kitties",
-      "CryptoKitties-Kitty-13733.svg", false, true, true, "CK", 0, true, "", "",
-      "0x1", mojom::CoinType::ETH);
+      "CryptoKitties-Kitty-13733.svg", false, true, false, true, "CK", 0, true,
+      "", "", "0x1", mojom::CoinType::ETH);
 
   token = ValueToBlockchainToken(json_value->GetDict(), "0x1",
                                  mojom::CoinType::ETH);

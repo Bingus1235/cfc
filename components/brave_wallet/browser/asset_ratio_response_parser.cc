@@ -248,12 +248,15 @@ mojom::BlockchainTokenPtr ParseTokenInfo(const base::Value& json_value,
 
   bool is_erc20 = base::EqualsCaseInsensitiveASCII(*token_type, "ERC20");
   bool is_erc721 = base::EqualsCaseInsensitiveASCII(*token_type, "ERC721");
-  if (!is_erc20 && !is_erc721)  // unsupported token
+  bool is_erc1155 = base::EqualsCaseInsensitiveASCII(*token_type, "ERC1155");
+  if (!is_erc20 && !is_erc721 && !is_erc1155) {  // unsupported token
     return nullptr;
+  }
 
   return mojom::BlockchainToken::New(
       eth_addr.ToChecksumAddress(), *name, "" /* logo */, is_erc20, is_erc721,
-      is_erc721 /* is_nft */, *symbol, decimals, true, "", "", chain_id, coin);
+      is_erc1155, is_erc721 || is_erc1155 /* is_nft */, *symbol, decimals, true,
+      "", "", chain_id, coin);
 }
 
 bool ParseCoinMarkets(const base::Value& json_value,
