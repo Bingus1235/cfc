@@ -136,6 +136,18 @@ const char solana_token_list_json[] = R"(
     }
   })";
 
+const char interface_supported_response[] = R"({
+      "jsonrpc":"2.0",
+      "id":1,
+      "result":"0x0000000000000000000000000000000000000000000000000000000000000001"
+  })";
+
+const char interface_not_supported_response[] = R"({
+      "jsonrpc":"2.0",
+      "id":1,
+      "result":"0x0000000000000000000000000000000000000000000000000000000000000000"
+  })";
+
 }  // namespace
 
 namespace brave_wallet {
@@ -939,12 +951,58 @@ TEST_F(BraveWalletServiceUnitTest, AddUserAsset) {
   EXPECT_EQ(tokens.size(), 2u);
   EXPECT_EQ(tokens[0], eth_0xaa36a7_token);
   EXPECT_EQ(tokens[1], token1_0xaa36a7);
+}
 
-  // Add token with is_nft = true.
-  // mojom::BlockchainTokenPtr nft_token = GetToken1();
-  // nft_token->is_nft = true;
-  // AddUserAsset(nft_token.Clone(), &success);
-  // EXPECT_TRUE(success);
+TEST_F(BraveWalletServiceUnitTest, AddUserAssetNfts) {
+  bool success = false;
+
+  // is_erc721 is assigned based on supportsInterface call.
+  mojom::BlockchainTokenPtr erc721_token = mojom::BlockchainToken::New(
+      "0xBC4CA0EdA7647A8aB7C2061c2E118A18a936f13D", "BAYC", "bayc.png", false,
+      false, false, true, "BAYC", 0, true, "", "", mojom::kMainnetChainId,
+      mojom::CoinType::ETH);
+  auto network = GetNetwork(mojom::kMainnetChainId, mojom::CoinType::ETH);
+  std::map<std::string, std::string> responses;
+  responses[kERC721InterfaceId] = interface_supported_response;
+  responses[kERC1155InterfaceId] = interface_not_supported_response;
+  SetGetNftStandardInterceptor(network, responses);
+  AddUserAsset(erc721_token.Clone(), &success);
+  EXPECT_TRUE(success);
+  std::vector<mojom::BlockchainTokenPtr> tokens;
+  GetUserAssets(mojom::kMainnetChainId, mojom::CoinType::ETH, &tokens);
+  EXPECT_EQ(tokens.size(), 3u);
+  EXPECT_EQ(tokens[0], GetEthToken());
+  EXPECT_EQ(tokens[1], GetBatToken());
+  EXPECT_EQ(tokens[2], erc721_token);
+  EXPECT_TRUE(tokens[2]->is_nft);
+  EXPECT_TRUE(tokens[2]->is_erc721);
+
+  // is_erc1155 is assigned based on supportsInterface call.
+  // 0x28472a58a490c5e09a238847f66a68a47cc76f0f
+  mojom::BlockchainTokenPtr erc1155 = mojom::BlockchainToken::New(
+      "0x28472a58a490c5e09a238847f66a68a47cc76f0f", "ADIDAS", "adidas.png",
+      false, false, false, true, "ADIDAS", 0, true, "", "",
+      mojom::kMainnetChainId, mojom::CoinType::ETH);
+  responses[kERC721InterfaceId] = interface_not_supported_response;
+  responses[kERC1155InterfaceId] = interface_supported_response;
+  SetGetNftStandardInterceptor(network, responses);
+  AddUserAsset(erc1155.Clone(), &success);
+  EXPECT_TRUE(success);
+  GetUserAssets(mojom::kMainnetChainId, mojom::CoinType::ETH, &tokens);
+  EXPECT_EQ(tokens.size(), 4u);
+  EXPECT_EQ(tokens[0], GetEthToken());
+  EXPECT_EQ(tokens[1], GetBatToken());
+  EXPECT_EQ(tokens[2], erc721_token);
+  EXPECT_EQ(tokens[3], erc1155);
+  EXPECT_TRUE(tokens[3]->is_nft);
+  EXPECT_TRUE(tokens[3]->is_erc1155);
+
+  // if neither erc721 nor erc1155 is supported, adding fails
+  responses[kERC721InterfaceId] = interface_not_supported_response;
+  responses[kERC1155InterfaceId] = interface_not_supported_response;
+  SetGetNftStandardInterceptor(network, responses);
+  AddUserAsset(erc1155.Clone(), &success);
+  EXPECT_FALSE(success);
 }
 
 TEST_F(BraveWalletServiceUnitTest, RemoveUserAsset) {
@@ -1346,13 +1404,8 @@ TEST_F(BraveWalletServiceUnitTest, ERC721TokenAddRemoveSetUserAssetVisible) {
   // Add ERC721 token without tokenId will fail.
   auto network = GetNetwork(mojom::kSepoliaChainId, mojom::CoinType::ETH);
   std::map<std::string, std::string> responses;
-  const std::string interface_supported_response = R"({
-      "jsonrpc":"2.0",
-      "id":1,
-      "result":"0x0000000000000000000000000000000000000000000000000000000000000001"
-  })";
   responses[kERC721InterfaceId] = interface_supported_response;
-  responses[kERC1155InterfaceId] = interface_supported_response;
+  responses[kERC1155InterfaceId] = interface_not_supported_response;
   SetGetNftStandardInterceptor(network, responses);
   AddUserAsset(std::move(erc721_token_with_empty_token_id), &success);
   EXPECT_FALSE(success);
