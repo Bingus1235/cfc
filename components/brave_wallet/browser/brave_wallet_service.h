@@ -112,7 +112,6 @@ class BraveWalletService : public KeyedService,
                         const absl::optional<std::string>& standard,
                         mojom::ProviderError error,
                         const std::string& error_message);
-
   void RemoveUserAsset(mojom::BlockchainTokenPtr token,
                        RemoveUserAssetCallback callback) override;
   void SetUserAssetVisible(mojom::BlockchainTokenPtr token,

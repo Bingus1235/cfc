@@ -322,7 +322,6 @@ class BraveWalletServiceUnitTest : public testing::Test {
         mojom::kMainnetChainId, mojom::CoinType::ETH,
         "0x06012c8cf97BEaD5deAe237070F9587f8E7A266d");
     ASSERT_TRUE(erc721_token_);
-    ASSERT_TRUE(erc721_token_->is_nft);
     ASSERT_EQ(erc721_token_->symbol, "CK");
 
     wrapped_sol_ = GetRegistry()->GetTokenByAddress(
@@ -955,33 +954,35 @@ TEST_F(BraveWalletServiceUnitTest, AddUserAsset) {
 
 TEST_F(BraveWalletServiceUnitTest, AddUserAssetNfts) {
   bool success = false;
+  std::map<std::string, std::string> responses;
+  std::vector<mojom::BlockchainTokenPtr> tokens;
+  GURL network = GetNetwork(mojom::kMainnetChainId, mojom::CoinType::ETH);
 
-  // is_erc721 is assigned based on supportsInterface call.
+  // is_erc721 is set to true based on supportsInterface call results.
   mojom::BlockchainTokenPtr erc721_token = mojom::BlockchainToken::New(
       "0xBC4CA0EdA7647A8aB7C2061c2E118A18a936f13D", "BAYC", "bayc.png", false,
-      false, false, true, "BAYC", 0, true, "", "", mojom::kMainnetChainId,
+      false, false, true, "BAYC", 0, true, "0x1", "", mojom::kMainnetChainId,
       mojom::CoinType::ETH);
-  auto network = GetNetwork(mojom::kMainnetChainId, mojom::CoinType::ETH);
-  std::map<std::string, std::string> responses;
   responses[kERC721InterfaceId] = interface_supported_response;
   responses[kERC1155InterfaceId] = interface_not_supported_response;
   SetGetNftStandardInterceptor(network, responses);
   AddUserAsset(erc721_token.Clone(), &success);
   EXPECT_TRUE(success);
-  std::vector<mojom::BlockchainTokenPtr> tokens;
   GetUserAssets(mojom::kMainnetChainId, mojom::CoinType::ETH, &tokens);
-  EXPECT_EQ(tokens.size(), 3u);
-  EXPECT_EQ(tokens[0], GetEthToken());
-  EXPECT_EQ(tokens[1], GetBatToken());
-  EXPECT_EQ(tokens[2], erc721_token);
-  EXPECT_TRUE(tokens[2]->is_nft);
-  EXPECT_TRUE(tokens[2]->is_erc721);
+  ASSERT_EQ(tokens.size(), 3u);
+  EXPECT_EQ(tokens[2]->contract_address, erc721_token->contract_address);
+  EXPECT_EQ(tokens[2]->symbol, erc721_token->symbol);
+  EXPECT_EQ(tokens[2]->name, erc721_token->name);
+  EXPECT_EQ(tokens[2]->chain_id, erc721_token->chain_id);
+  EXPECT_EQ(tokens[2]->decimals, erc721_token->decimals);
+  EXPECT_EQ(tokens[2]->is_erc721, true);
+  EXPECT_EQ(tokens[2]->is_erc1155, false);
+  EXPECT_EQ(tokens[2]->is_erc20, false);
 
-  // is_erc1155 is assigned based on supportsInterface call.
-  // 0x28472a58a490c5e09a238847f66a68a47cc76f0f
+  // is_erc1155 is set to true based on supportsInterface call.
   mojom::BlockchainTokenPtr erc1155 = mojom::BlockchainToken::New(
-      "0x28472a58a490c5e09a238847f66a68a47cc76f0f", "ADIDAS", "adidas.png",
-      false, false, false, true, "ADIDAS", 0, true, "", "",
+      "0x28472a58A490c5e09A238847F66A68a47cC76f0f", "ADIDAS", "adidas.png",
+      false, false, false, true, "ADIDAS", 0, true, "0x1", "",
       mojom::kMainnetChainId, mojom::CoinType::ETH);
   responses[kERC721InterfaceId] = interface_not_supported_response;
   responses[kERC1155InterfaceId] = interface_supported_response;
@@ -989,15 +990,17 @@ TEST_F(BraveWalletServiceUnitTest, AddUserAssetNfts) {
   AddUserAsset(erc1155.Clone(), &success);
   EXPECT_TRUE(success);
   GetUserAssets(mojom::kMainnetChainId, mojom::CoinType::ETH, &tokens);
-  EXPECT_EQ(tokens.size(), 4u);
-  EXPECT_EQ(tokens[0], GetEthToken());
-  EXPECT_EQ(tokens[1], GetBatToken());
-  EXPECT_EQ(tokens[2], erc721_token);
-  EXPECT_EQ(tokens[3], erc1155);
-  EXPECT_TRUE(tokens[3]->is_nft);
-  EXPECT_TRUE(tokens[3]->is_erc1155);
+  ASSERT_EQ(tokens.size(), 4u);
+  EXPECT_EQ(tokens[3]->contract_address, erc1155->contract_address);
+  EXPECT_EQ(tokens[3]->symbol, erc1155->symbol);
+  EXPECT_EQ(tokens[3]->name, erc1155->name);
+  EXPECT_EQ(tokens[3]->chain_id, erc1155->chain_id);
+  EXPECT_EQ(tokens[3]->decimals, erc1155->decimals);
+  EXPECT_EQ(tokens[3]->is_erc721, false);
+  EXPECT_EQ(tokens[3]->is_erc1155, true);
+  EXPECT_EQ(tokens[3]->is_erc20, false);
 
-  // if neither erc721 nor erc1155 is supported, adding fails
+  // If neither erc721 nor erc1155 is supported, AddUserAsset returns false.
   responses[kERC721InterfaceId] = interface_not_supported_response;
   responses[kERC1155InterfaceId] = interface_not_supported_response;
   SetGetNftStandardInterceptor(network, responses);
@@ -1873,6 +1876,8 @@ TEST_F(BraveWalletServiceUnitTest, MigrateUserAssetsAddIsERC1155) {
   ASSERT_TRUE(GetPrefs()->HasPrefPath(kBraveWalletUserAssets));
   BraveWalletService::MigrateUserAssetsAddIsERC1155(GetPrefs());
 
+  // Add `"is_erc1155": false` key/values to the expected kBraveWalletUserAssets
+  // json after migrating.
   base::ReplaceSubstringsAfterOffset(
       &json, 0, "\"is_erc721\": false",
       R"("is_erc721": false, "is_erc1155": false)");

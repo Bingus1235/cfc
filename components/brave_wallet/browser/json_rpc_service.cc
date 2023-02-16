@@ -2498,7 +2498,7 @@ void JsonRpcService::OnGetSupportsInterface(
 void JsonRpcService::GetNftStandard(
     const std::string& contract_address,
     const std::string& chain_id,
-    std::vector<std::string> remaining_interfaces,
+    const std::vector<std::string>& remaining_interfaces,
     GetNftStandardCallback callback) {
   auto network_url = GetNetworkURL(prefs_, chain_id, mojom::CoinType::ETH);
   if (!EthAddress::IsValidAddress(contract_address) ||
@@ -2516,14 +2516,13 @@ void JsonRpcService::GetNftStandard(
     return;
   }
 
-  // Check the first interface in the list.
-  auto interface_id = remaining_interfaces.back();
-
-  // GetSupportsInterface to check if the contract supports the interface
+  // Check the next interface, which is at the end of the vector.
+  const std::string& interface_id = remaining_interfaces.back();
   auto internal_callback =
       base::BindOnce(&JsonRpcService::OnGetNftStandard,
                      weak_ptr_factory_.GetWeakPtr(), contract_address, chain_id,
-                     std::move(remaining_interfaces), std::move(callback));
+                     base::OwnedRef(remaining_interfaces), std::move(callback));
+
   GetSupportsInterface(contract_address, interface_id, chain_id,
                        std::move(internal_callback));
 }
@@ -2531,7 +2530,7 @@ void JsonRpcService::GetNftStandard(
 void JsonRpcService::OnGetNftStandard(
     const std::string& contract_address,
     const std::string& chain_id,
-    std::vector<std::string> remaining_interfaces,
+    std::vector<std::string>& remaining_interfaces,
     GetNftStandardCallback callback,
     bool is_supported,
     mojom::ProviderError error,
@@ -2556,7 +2555,7 @@ void JsonRpcService::OnGetNftStandard(
     std::move(callback).Run(absl::nullopt, mojom::ProviderError::kSuccess, "");
     return;
   }
-  GetNftStandard(contract_address, chain_id, std::move(remaining_interfaces),
+  GetNftStandard(contract_address, chain_id, remaining_interfaces,
                  std::move(callback));
 }
 

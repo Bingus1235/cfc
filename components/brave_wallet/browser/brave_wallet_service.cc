@@ -352,8 +352,8 @@ bool BraveWalletService::AddUserAsset(mojom::BlockchainTokenPtr token,
   if (network_id.empty())
     return false;
 
-  // Verify input token ID for ERC721.
-  if (token->is_erc721) {
+  // Verify input token ID for ERC721 and ERC1155 tokens
+  if (token->is_erc721 || token->is_erc1155) {
     uint256_t token_id_uint = 0;
     if (!HexValueToUint256(token->token_id, &token_id_uint)) {
       return false;
@@ -385,11 +385,15 @@ bool BraveWalletService::AddUserAsset(mojom::BlockchainTokenPtr token,
   value.Set("logo", token->logo);
   value.Set("is_erc20", token->is_erc20);
   value.Set("is_erc721", token->is_erc721);
+  value.Set("is_erc1155", token->is_erc1155);
   value.Set("is_nft", token->is_nft);
   value.Set("decimals", token->decimals);
   value.Set("visible", true);
   value.Set("token_id", token->token_id);
   value.Set("coingecko_id", token->coingecko_id);
+
+  // LOG value is_erc1155
+  LOG(ERROR) << "value.is_erc1155: " << value.FindBool("is_erc1155").value();
 
   user_assets_list->Append(std::move(value));
 
@@ -424,11 +428,10 @@ bool BraveWalletService::AddUserAsset(mojom::BlockchainTokenPtr token) {
 
 void BraveWalletService::AddUserAsset(mojom::BlockchainTokenPtr token,
                                       AddUserAssetCallback callback) {
-  // If token is an NFT fetch the standard before adding it.
+  std::vector<std::string> interfaces_to_check = GetSupportedNftInterfaces();
   if (token->is_nft) {
     json_rpc_service_->GetNftStandard(
-        token->contract_address, token->chain_id,
-        {kERC1155InterfaceId, kERC721InterfaceId},
+        token->contract_address, token->chain_id, interfaces_to_check,
         base::BindOnce(&BraveWalletService::OnGetNftStandard,
                        weak_ptr_factory_.GetWeakPtr(), std::move(token),
                        std::move(callback)));
@@ -444,11 +447,11 @@ void BraveWalletService::OnGetNftStandard(
     const absl::optional<std::string>& standard,
     mojom::ProviderError error,
     const std::string& error_message) {
-  VLOG(0) << "BraveWalletService::OnGetNftStandard 0";
   if (error != mojom::ProviderError::kSuccess || !standard) {
     std::move(callback).Run(AddUserAsset(std::move(token)));
     return;
   }
+
   if (standard.value() == kERC721InterfaceId) {
     token->is_erc721 = true;
     token->is_erc1155 = false;

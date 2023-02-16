@@ -379,12 +379,12 @@ class JsonRpcService : public KeyedService, public mojom::JsonRpcService {
   void GetNftStandard(const std::string& contract_address,
                       const std::string& chain_id,
                       // Interfaces are checked in reverse order
-                      std::vector<std::string> remaining_interfaces,
+                      const std::vector<std::string>& remaining_interfaces,
                       GetNftStandardCallback callback);
 
   void OnGetNftStandard(const std::string& contract_address,
                         const std::string& chain_id,
-                        std::vector<std::string> remaining_interfaces,
+                        std::vector<std::string>& remaining_interfaces,
                         GetNftStandardCallback callback,
                         bool is_supported,
                         mojom::ProviderError error,

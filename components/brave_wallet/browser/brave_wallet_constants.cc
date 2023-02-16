@@ -614,4 +614,13 @@ bool HasJupiterFeesForTokenMint(const std::string& mint) {
   return base::Contains(mints, mint);
 }
 
+const std::vector<std::string>& GetSupportedNftInterfaces() {
+  static base::NoDestructor<std::vector<std::string>> interfaces({
+      kERC721InterfaceId,
+      kERC1155InterfaceId,
+  });
+
+  return *interfaces;
+}
+
 }  // namespace brave_wallet
