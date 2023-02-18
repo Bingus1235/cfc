@@ -31,7 +31,7 @@ void BraveRegisterLocalStatePrefs(PrefRegistrySimple* registry) {
   brave_stats::RegisterLocalStatePrefs(registry);
   brave_wallet::RegisterLocalStatePrefs(registry);
   decentralized_dns::RegisterLocalStatePrefs(registry);
-#if BUILDFLAG(BRAVE_P3A_ENABLED)
+#if defined(OFFICIAL_BUILD)
   p3a::P3AService::RegisterPrefs(registry, false);
 #endif
 }

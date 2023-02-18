@@ -123,9 +123,9 @@ BraveBrowserProcessImpl::BraveBrowserProcessImpl(StartupData* startup_data)
   // Create P3A Service early to catch more histograms. The full initialization
   // should be started once browser process impl is ready.
   p3a_service();
-#if BUILDFLAG(BRAVE_P3A_ENABLED)
+#if defined(OFFICIAL_BUILD)
   histogram_braveizer_ = p3a::HistogramsBraveizer::Create();
-#endif  // BUILDFLAG(BRAVE_P3A_ENABLED)
+#endif  // defined(OFFICIAL_BUILD)
 
   // initialize ads stats updater helper
   InitBraveStatsUpdaterHelper();
@@ -365,7 +365,7 @@ void BraveBrowserProcessImpl::OnTorEnabledChanged() {
 #endif
 
 p3a::P3AService* BraveBrowserProcessImpl::p3a_service() {
-#if BUILDFLAG(BRAVE_P3A_ENABLED)
+#if defined(OFFICIAL_BUILD)
   if (p3a_service_) {
     return p3a_service_.get();
   }
@@ -377,7 +377,7 @@ p3a::P3AService* BraveBrowserProcessImpl::p3a_service() {
   return p3a_service_.get();
 #else
   return nullptr;
-#endif  // BUILDFLAG(BRAVE_P3A_ENABLED)
+#endif  // defined(OFFICIAL_BUILD)
 }
 
 brave::BraveReferralsService*

@@ -23,7 +23,7 @@
 #include "brave/browser/gcm_driver/brave_gcm_channel_status.h"
 #endif
 
-#if BUILDFLAG(BRAVE_P3A_ENABLED)
+#if defined(OFFICIAL_BUILD)
 #include "brave/components/p3a/pref_names.h"
 #endif
 
@@ -33,7 +33,7 @@ BravePrivacyHandler::BravePrivacyHandler() {
       kStatsReportingEnabled,
       base::BindRepeating(&BravePrivacyHandler::OnStatsUsagePingEnabledChanged,
                           base::Unretained(this)));
-#if BUILDFLAG(BRAVE_P3A_ENABLED)
+#if defined(OFFICIAL_BUILD)
   local_state_change_registrar_.Add(
       p3a::kP3AEnabled,
       base::BindRepeating(&BravePrivacyHandler::OnP3AEnabledChanged,
@@ -48,7 +48,7 @@ BravePrivacyHandler::~BravePrivacyHandler() {
 void BravePrivacyHandler::RegisterMessages() {
   profile_ = Profile::FromWebUI(web_ui());
 
-#if BUILDFLAG(BRAVE_P3A_ENABLED)
+#if defined(OFFICIAL_BUILD)
   web_ui()->RegisterMessageCallback(
       "setP3AEnabled", base::BindRepeating(&BravePrivacyHandler::SetP3AEnabled,
                                            base::Unretained(this)));
@@ -133,15 +133,23 @@ void BravePrivacyHandler::OnStatsUsagePingEnabledChanged() {
   }
 }
 
-#if BUILDFLAG(BRAVE_P3A_ENABLED)
 void BravePrivacyHandler::SetP3AEnabled(const base::Value::List& args) {
+#if defined(OFFICIAL_BUILD)
   SetLocalStateBooleanEnabled(p3a::kP3AEnabled, args);
+#endif
 }
 
 void BravePrivacyHandler::GetP3AEnabled(const base::Value::List& args) {
+#if defined(OFFICIAL_BUILD)
   GetLocalStateBooleanEnabled(p3a::kP3AEnabled, args);
+#else
+  CHECK_EQ(args.size(), 1U);
+  AllowJavascript();
+  ResolveJavascriptCallback(args[0], base::Value(false));
+#endif
 }
 
+#if defined(OFFICIAL_BUILD)
 void BravePrivacyHandler::OnP3AEnabledChanged() {
   if (IsJavascriptAllowed()) {
     PrefService* local_state = g_browser_process->local_state();

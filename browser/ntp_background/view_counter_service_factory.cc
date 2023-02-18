@@ -84,13 +84,13 @@ KeyedService* ViewCounterServiceFactory::BuildServiceInstanceFor(
         nullptr,
 #endif
         ads_service, profile->GetPrefs(), g_browser_process->local_state(),
-#if BUILDFLAG(BRAVE_P3A_ENABLED)
+#if defined(OFFICIAL_BUILD)
         std::make_unique<NTPP3AHelperImpl>(
             g_browser_process->local_state(),
             g_brave_browser_process->p3a_service(), ads_service),
 #else
         nullptr,
-#endif  // BUILDFLAG(BRAVE_P3A_ENABLED)
+#endif  // defined(OFFICIAL_BUILD)
         is_supported_locale);
   }
 

@@ -33,14 +33,14 @@ namespace {
 //
 // For profile specific values, see browser/profiles/profile_util.cc
 void RecordInitialP3AValues() {
-#if !BUILDFLAG(IS_ANDROID)
+#if !defined(IS_ANDROID)
   if (first_run::IsChromeFirstRun()) {
     RecordImporterP3A(importer::ImporterType::TYPE_UNKNOWN);
   }
 
   BraveNewTabMessageHandler::RecordInitialP3AValues(
       g_browser_process->local_state());
-#endif  // !BUILDFLAG(IS_ANDROID)
+#endif  // !defined(IS_ANDROID)
 
   brave_shields::MaybeRecordShieldsUsageP3A(brave_shields::kNeverClicked,
                                             g_browser_process->local_state());
@@ -72,11 +72,11 @@ void BraveBrowserMainExtraParts::PostBrowserStart() {
 
 void BraveBrowserMainExtraParts::PreMainMessageLoopRun() {
   // Disabled on mobile platforms, see for instance issues/6176
-#if BUILDFLAG(BRAVE_P3A_ENABLED)
+#if defined(OFFICIAL_BUILD)
   // TODO(iefremov): Maybe find a better place for this initialization.
   g_brave_browser_process->p3a_service()->Init(
       g_browser_process->shared_url_loader_factory());
-#endif  // BUILDFLAG(BRAVE_P3A_ENABLED)
+#endif  // BUILDFLAG(OFFICIAL_BUILD)
 
   RecordInitialP3AValues();
 
@@ -84,5 +84,5 @@ void BraveBrowserMainExtraParts::PreMainMessageLoopRun() {
 #if !BUILDFLAG(IS_ANDROID)
   brave::BraveWindowTracker::CreateInstance(g_browser_process->local_state());
   brave::BraveUptimeTracker::CreateInstance(g_browser_process->local_state());
-#endif  // !BUILDFLAG(IS_ANDROID)
+#endif  // !defined(IS_ANDROID)
 }

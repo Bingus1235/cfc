@@ -21,7 +21,7 @@
 #include "components/prefs/pref_service.h"
 #include "ui/base/l10n/l10n_util.h"
 
-#if BUILDFLAG(BRAVE_P3A_ENABLED)
+#if defined(OFFICIAL_BUILD)
 #include "brave/components/p3a/pref_names.h"
 #endif
 
@@ -158,7 +158,7 @@ void WelcomeDOMHandler::SetLocalStateBooleanEnabled(
 }
 
 void WelcomeDOMHandler::SetP3AEnabled(const base::Value::List& args) {
-#if BUILDFLAG(BRAVE_P3A_ENABLED)
+#if defined(OFFICIAL_BUILD)
   SetLocalStateBooleanEnabled(p3a::kP3AEnabled, args);
 #endif
 }

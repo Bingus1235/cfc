@@ -42,9 +42,9 @@ class BravePrivacyHandler : public settings::SettingsPageUIHandler {
   void GetStatsUsagePingEnabled(const base::Value::List& args);
   void OnStatsUsagePingEnabledChanged();
 
-#if BUILDFLAG(BRAVE_P3A_ENABLED)
   void SetP3AEnabled(const base::Value::List& args);
   void GetP3AEnabled(const base::Value::List& args);
+#if defined(OFFICIAL_BUILD)
   void OnP3AEnabledChanged();
 #endif
 

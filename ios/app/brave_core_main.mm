@@ -458,7 +458,7 @@ static bool CustomLogHandler(int severity,
 
 - (void)initializeP3AServiceForChannel:(NSString*)channel
                          weekOfInstall:(NSString*)weekOfInstall {
-#if BUILDFLAG(BRAVE_P3A_ENABLED)
+#if defined(OFFICIAL_BUILD)
   _p3a_service = base::MakeRefCounted<p3a::P3AService>(
       GetApplicationContext()->GetLocalState(),
       base::SysNSStringToUTF8(channel), base::SysNSStringToUTF8(weekOfInstall),
@@ -466,7 +466,7 @@ static bool CustomLogHandler(int severity,
   _p3a_service->InitCallbacks();
   _p3a_service->Init(GetApplicationContext()->GetSharedURLLoaderFactory());
   _histogram_braveizer = p3a::HistogramsBraveizer::Create();
-#endif  // BUILDFLAG(BRAVE_P3A_ENABLED)
+#endif  // defined(OFFICIAL_BUILD)
 }
 
 - (BraveP3AUtils*)p3aUtils {

@@ -10,7 +10,6 @@ import("//testing/test.gni")
 buildflag_header("buildflags") {
   header = "buildflags.h"
   flags = [
-    "BRAVE_P3A_ENABLED=$brave_p3a_enabled",
     "P3A_JSON_UPLOAD_URL=\"$p3a_json_upload_url\"",
     "P3A_CREATIVE_UPLOAD_URL=\"$p3a_creative_upload_url\"",
     "P2A_JSON_UPLOAD_URL=\"$p2a_json_upload_url\"",
