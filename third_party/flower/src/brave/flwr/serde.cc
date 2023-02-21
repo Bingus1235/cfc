@@ -6,7 +6,6 @@
 #include "brave/third_party/flower/src/brave/flwr/serde.h"
 
 #include <sstream>
-#include <vector>
 
 #include "base/strings/string_util.h"
 #include "brave/third_party/flower/src/proto/flwr/proto/transport.pb.h"
