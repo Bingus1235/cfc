@@ -1006,6 +1006,28 @@ TEST_F(BraveWalletServiceUnitTest, AddUserAssetNfts) {
   SetGetNftStandardInterceptor(network, responses);
   AddUserAsset(erc1155.Clone(), &success);
   EXPECT_FALSE(success);
+
+  // A second ERC1155 token with same contract address, but different
+  // token id is added.
+  mojom::BlockchainTokenPtr erc1155_2 = mojom::BlockchainToken::New(
+      "0x28472a58A490c5e09A238847F66A68a47cC76f0f", "ADIDAS", "adidas.png",
+      false, false, false, true, "ADIDAS", 0, true, "0x2", "",
+      mojom::kMainnetChainId, mojom::CoinType::ETH);
+  responses[kERC721InterfaceId] = interface_not_supported_response;
+  responses[kERC1155InterfaceId] = interface_supported_response;
+  SetGetNftStandardInterceptor(network, responses);
+  AddUserAsset(erc1155_2.Clone(), &success);
+  EXPECT_TRUE(success);
+  GetUserAssets(mojom::kMainnetChainId, mojom::CoinType::ETH, &tokens);
+  ASSERT_EQ(tokens.size(), 5u);
+  EXPECT_EQ(tokens[4]->contract_address, erc1155_2->contract_address);
+  EXPECT_EQ(tokens[4]->symbol, erc1155_2->symbol);
+  EXPECT_EQ(tokens[4]->name, erc1155_2->name);
+  EXPECT_EQ(tokens[4]->chain_id, erc1155_2->chain_id);
+  EXPECT_EQ(tokens[4]->decimals, erc1155_2->decimals);
+  EXPECT_EQ(tokens[4]->is_erc721, false);
+  EXPECT_EQ(tokens[4]->is_erc1155, true);
+  EXPECT_EQ(tokens[4]->is_erc20, false);
 }
 
 TEST_F(BraveWalletServiceUnitTest, RemoveUserAsset) {

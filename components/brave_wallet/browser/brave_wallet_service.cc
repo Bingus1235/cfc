@@ -106,7 +106,7 @@ decltype(std::declval<T>().begin()) FindAsset(
     T* user_assets_list,
     const std::string& address,
     const std::string& token_id,
-    bool is_erc721,
+    bool is_nft,
     const std::string& address_key = "address") {
   static_assert(std::is_same<std::decay_t<T>, base::Value::List>::value,
                 "Only call with base::Value::List");
@@ -120,7 +120,7 @@ decltype(std::declval<T>().begin()) FindAsset(
         const std::string* address_value = dict->FindString(address_key);
         bool found = address_value && *address_value == address;
 
-        if (found && is_erc721) {
+        if (found && is_nft) {
           const std::string* token_id_ptr = dict->FindString("token_id");
           found = token_id_ptr && *token_id_ptr == token_id;
         }
@@ -374,7 +374,7 @@ bool BraveWalletService::AddUserAsset(mojom::BlockchainTokenPtr token,
   DCHECK(user_assets_list);
 
   auto it =
-      FindAsset(user_assets_list, *address, token->token_id, token->is_erc721);
+      FindAsset(user_assets_list, *address, token->token_id, token->is_nft);
   if (it != user_assets_list->end())
     return false;
 
@@ -391,9 +391,6 @@ bool BraveWalletService::AddUserAsset(mojom::BlockchainTokenPtr token,
   value.Set("visible", true);
   value.Set("token_id", token->token_id);
   value.Set("coingecko_id", token->coingecko_id);
-
-  // LOG value is_erc1155
-  LOG(ERROR) << "value.is_erc1155: " << value.FindBool("is_erc1155").value();
 
   user_assets_list->Append(std::move(value));
 
