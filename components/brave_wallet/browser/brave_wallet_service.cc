@@ -32,6 +32,7 @@
 #include "components/grit/brave_components_strings.h"
 #include "components/prefs/pref_service.h"
 #include "components/prefs/scoped_user_pref_update.h"
+#include "services/network/public/cpp/shared_url_loader_factory.h"
 #include "ui/base/l10n/l10n_util.h"
 #include "url/origin.h"
 
@@ -150,6 +151,7 @@ base::Value::Dict GetEthNativeAssetFromChain(
 namespace brave_wallet {
 
 BraveWalletService::BraveWalletService(
+    scoped_refptr<network::SharedURLLoaderFactory> url_loader_factory,
     std::unique_ptr<BraveWalletServiceDelegate> delegate,
     KeyringService* keyring_service,
     JsonRpcService* json_rpc_service,
@@ -163,7 +165,8 @@ BraveWalletService::BraveWalletService(
       profile_prefs_(profile_prefs),
       brave_wallet_p3a_(this, keyring_service, profile_prefs, local_state),
       asset_discovery_manager_(
-          std::make_unique<AssetDiscoveryManager>(this,
+          std::make_unique<AssetDiscoveryManager>(url_loader_factory,
+                                                  this,
                                                   json_rpc_service,
                                                   keyring_service,
                                                   profile_prefs)),

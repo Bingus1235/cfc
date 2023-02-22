@@ -60,12 +60,14 @@ class BraveWalletService : public KeyedService,
   using AddSuggestTokenCallback =
       base::OnceCallback<void(bool, mojom::ProviderError, const std::string&)>;
 
-  BraveWalletService(std::unique_ptr<BraveWalletServiceDelegate> delegate,
-                     KeyringService* keyring_service,
-                     JsonRpcService* json_rpc_service,
-                     TxService* tx_service,
-                     PrefService* profile_prefs,
-                     PrefService* local_state);
+  BraveWalletService(
+      scoped_refptr<network::SharedURLLoaderFactory> url_loader_factory,
+      std::unique_ptr<BraveWalletServiceDelegate> delegate,
+      KeyringService* keyring_service,
+      JsonRpcService* json_rpc_service,
+      TxService* tx_service,
+      PrefService* profile_prefs,
+      PrefService* local_state);
 
   ~BraveWalletService() override;
 
@@ -327,6 +329,7 @@ class BraveWalletService : public KeyedService,
   std::unique_ptr<AssetDiscoveryManager> asset_discovery_manager_;
   mojo::ReceiverSet<mojom::BraveWalletService> receivers_;
   PrefChangeRegistrar pref_change_registrar_;
+  scoped_refptr<network::SharedURLLoaderFactory> url_loader_factory_;
   base::WeakPtrFactory<BraveWalletService> weak_ptr_factory_;
 };
 

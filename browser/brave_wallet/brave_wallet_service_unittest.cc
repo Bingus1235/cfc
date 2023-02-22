@@ -37,6 +37,8 @@
 #include "components/prefs/scoped_user_pref_update.h"
 #include "components/sync_preferences/testing_pref_service_syncable.h"
 #include "content/public/test/browser_task_environment.h"
+#include "services/network/public/cpp/weak_wrapper_shared_url_loader_factory.h"
+#include "services/network/test/test_url_loader_factory.h"
 #include "testing/gtest/include/gtest/gtest.h"
 #include "ui/base/l10n/l10n_util.h"
 #include "url/origin.h"
@@ -238,7 +240,11 @@ class TestBraveWalletServiceObserver
 class BraveWalletServiceUnitTest : public testing::Test {
  public:
   BraveWalletServiceUnitTest()
-      : task_environment_(base::test::TaskEnvironment::TimeSource::MOCK_TIME) {}
+      : task_environment_(base::test::TaskEnvironment::TimeSource::MOCK_TIME),
+        shared_url_loader_factory_(
+            base::MakeRefCounted<network::WeakWrapperSharedURLLoaderFactory>(
+                &url_loader_factory_)) {}
+
   ~BraveWalletServiceUnitTest() override = default;
 
  protected:
@@ -270,6 +276,7 @@ class BraveWalletServiceUnitTest : public testing::Test {
         JsonRpcServiceFactory::GetServiceForContext(profile_.get());
     tx_service = TxServiceFactory::GetServiceForContext(profile_.get());
     service_ = std::make_unique<BraveWalletService>(
+        shared_url_loader_factory_,
         BraveWalletServiceDelegate::Create(profile_.get()), keyring_service_,
         json_rpc_service_, tx_service, GetPrefs(), local_state_->Get());
     observer_ = std::make_unique<TestBraveWalletServiceObserver>();
@@ -680,6 +687,8 @@ class BraveWalletServiceUnitTest : public testing::Test {
   TxService* tx_service;
   std::unique_ptr<TestBraveWalletServiceObserver> observer_;
   base::test::ScopedFeatureList scoped_feature_list_;
+  scoped_refptr<network::SharedURLLoaderFactory> shared_url_loader_factory_;
+  network::TestURLLoaderFactory url_loader_factory_;
 
   mojom::BlockchainTokenPtr token1_;
   mojom::BlockchainTokenPtr token2_;

@@ -25,15 +25,47 @@
 #include "brave/components/brave_wallet/common/solana_utils.h"
 #include "components/prefs/pref_service.h"
 #include "components/prefs/scoped_user_pref_update.h"
+#include "services/network/public/cpp/shared_url_loader_factory.h"
 #include "ui/base/l10n/l10n_util.h"
+
+namespace {
+
+net::NetworkTrafficAnnotationTag GetNetworkTrafficAnnotationTag() {
+  return net::DefineNetworkTrafficAnnotation("asset_discovery_manager", R"(
+      semantics {
+        sender: "Asset Discovery Manager"
+        description:
+          "This service is used to discover crypto assets"on behalf "
+          "of the user interacting with the native Brave wallet."
+        trigger:
+          "Triggered by uses of the native Brave wallet."
+        data:
+          "NFT assets."
+        destination: WEBSITE
+      }
+      policy {
+        cookies_allowed: NO
+        setting:
+          "You can enable or disable this feature on chrome://flags."
+        policy_exception_justification:
+          "Not implemented."
+      }
+    )");
+}
+
+}  // namespace
 
 namespace brave_wallet {
 
-AssetDiscoveryManager::AssetDiscoveryManager(BraveWalletService* wallet_service,
-                                             JsonRpcService* json_rpc_service,
-                                             KeyringService* keyring_service,
-                                             PrefService* prefs)
-    : wallet_service_(wallet_service),
+AssetDiscoveryManager::AssetDiscoveryManager(
+    scoped_refptr<network::SharedURLLoaderFactory> url_loader_factory,
+    BraveWalletService* wallet_service,
+    JsonRpcService* json_rpc_service,
+    KeyringService* keyring_service,
+    PrefService* prefs)
+    : api_request_helper_(new api_request_helper::APIRequestHelper(GetNetworkTrafficAnnotationTag(),
+                                               url_loader_factory)),
+      wallet_service_(wallet_service),
       json_rpc_service_(json_rpc_service),
       keyring_service_(keyring_service),
       prefs_(prefs),

@@ -158,10 +158,12 @@ class AssetDiscoveryManagerUnitTest : public testing::Test {
         shared_url_loader_factory_);
     tx_service = TxServiceFactory::GetServiceForContext(profile_.get());
     wallet_service_ = std::make_unique<BraveWalletService>(
+        shared_url_loader_factory_,
         BraveWalletServiceDelegate::Create(profile_.get()), keyring_service_,
         json_rpc_service_, tx_service, GetPrefs(), GetLocalState());
     asset_discovery_manager_ = std::make_unique<AssetDiscoveryManager>(
-        wallet_service_.get(), json_rpc_service_, keyring_service_, GetPrefs());
+        shared_url_loader_factory_, wallet_service_.get(), json_rpc_service_,
+        keyring_service_, GetPrefs());
     asset_discovery_manager_->SetSupportedChainsForTesting(
         GetAssetDiscoverySupportedEthChainsForTest());
     wallet_service_observer_ =

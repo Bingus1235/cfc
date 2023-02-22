@@ -31,10 +31,12 @@ class KeyringService;
 
 class AssetDiscoveryManager : public mojom::KeyringServiceObserver {
  public:
-  AssetDiscoveryManager(BraveWalletService* wallet_service,
-                        JsonRpcService* json_rpc_service,
-                        KeyringService* keyring_service,
-                        PrefService* prefs);
+  AssetDiscoveryManager(
+      scoped_refptr<network::SharedURLLoaderFactory> url_loader_factory,
+      BraveWalletService* wallet_service,
+      JsonRpcService* json_rpc_service,
+      KeyringService* keyring_service,
+      PrefService* prefs);
 
   AssetDiscoveryManager(const AssetDiscoveryManager&) = delete;
   AssetDiscoveryManager& operator=(AssetDiscoveryManager&) = delete;
@@ -53,7 +55,6 @@ class AssetDiscoveryManager : public mojom::KeyringServiceObserver {
   void AutoLockMinutesChanged() override {}
   void SelectedAccountChanged(mojom::CoinType coin) override {}
 
-  using APIRequestResult = api_request_helper::APIRequestResult;
   using DiscoverAssetsCompletedCallbackForTesting =
       base::RepeatingCallback<void(
           std::vector<mojom::BlockchainTokenPtr> discovered_assets_for_chain)>;
@@ -164,6 +165,8 @@ class AssetDiscoveryManager : public mojom::KeyringServiceObserver {
   std::vector<std::string> supported_chains_for_testing_;
   DiscoverAssetsCompletedCallbackForTesting
       discover_assets_completed_callback_for_testing_;
+  scoped_refptr<network::SharedURLLoaderFactory> url_loader_factory_;
+  std::unique_ptr<api_request_helper::APIRequestHelper> api_request_helper_;
   raw_ptr<BraveWalletService> wallet_service_;
   raw_ptr<JsonRpcService> json_rpc_service_;
   raw_ptr<KeyringService> keyring_service_;
