@@ -7,6 +7,7 @@
 
 #include "base/bind.h"
 #include "base/values.h"
+#include "brave/components/brave_shields/common/features.h"
 #include "brave/components/constants/pref_names.h"
 #include "brave/components/de_amp/common/features.h"
 #include "brave/components/debounce/common/features.h"
@@ -88,6 +89,10 @@ void BravePrivacyHandler::AddLoadTimeData(content::WebUIDataSource* data_source,
   data_source->AddBoolean(
       "isGoogleSignInFeatureEnabled",
       google_sign_in_permission::IsGoogleSignInFeatureEnabled());
+  data_source->AddBoolean(
+      "isLocalhostAccessFeatureEnabled",
+      base::FeatureList::IsEnabled(
+          brave_shields::features::kBraveLocalhostAccessPermission));
 }
 
 void BravePrivacyHandler::SetLocalStateBooleanEnabled(

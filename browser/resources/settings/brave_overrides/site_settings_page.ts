@@ -104,7 +104,6 @@ RegisterPolymerComponentReplacement(
             let currentIndex = indexForAutoplay
             const isGoogleSignInFeatureEnabled = loadTimeData.getBoolean('isGoogleSignInFeatureEnabled')
             if (isGoogleSignInFeatureEnabled) {
-              let indexForGoogleSignIn = currentIndex + 1
               currentIndex++
               const googleSignInItem = {
                 route: routes.SITE_SETTINGS_GOOGLE_SIGN_IN,
@@ -114,11 +113,24 @@ RegisterPolymerComponentReplacement(
                 enabledLabel: 'siteSettingsGoogleSignInAsk',
                 disabledLabel: 'siteSettingsGoogleSignInBlock'
               }
-              lists_.permissionsAdvanced.splice(indexForGoogleSignIn, 0, googleSignInItem)
+              lists_.permissionsAdvanced.splice(currentIndex, 0, googleSignInItem)
+            }
+            const isLocalhostAccessFeatureEnabled = loadTimeData.getBoolean('isLocalhostAccessFeatureEnabled')
+            if (isLocalhostAccessFeatureEnabled) {
+              currentIndex++
+              const localhostAccessItem = {
+                route: routes.SITE_SETTINGS_LOCALHOST_ACCESS,
+                id: 'localhostAccess',
+                label: 'siteSettingsLocalhostAccess',
+                icon: 'settings:devices',
+                enabledLabel: 'siteSettingsLocalhostAccessAsk',
+                disabledLabel: 'siteSettingsLocalhostAccessBlock'
+              }
+              lists_.permissionsAdvanced.splice(currentIndex, 0, localhostAccessItem)
             }
             const isNativeBraveWalletEnabled = loadTimeData.getBoolean('isNativeBraveWalletFeatureEnabled')
             if (isNativeBraveWalletEnabled) {
-              let indexForEthereum = currentIndex + 1
+              currentIndex++
               const ethereumItem = {
                 route: routes.SITE_SETTINGS_ETHEREUM,
                 id: 'ethereum',
@@ -127,8 +139,8 @@ RegisterPolymerComponentReplacement(
                 enabledLabel: 'siteSettingsEthereumAsk',
                 disabledLabel: 'siteSettingsEthereumBlock'
               }
-              lists_.permissionsAdvanced.splice(indexForEthereum, 0, ethereumItem)
-              let indexForSolana = indexForEthereum + 1
+              lists_.permissionsAdvanced.splice(currentIndex, 0, ethereumItem)
+              currentIndex++
               const solanaItem = {
                 route: routes.SITE_SETTINGS_SOLANA,
                 id: 'solana',
@@ -137,7 +149,7 @@ RegisterPolymerComponentReplacement(
                 enabledLabel: 'siteSettingsSolanaAsk',
                 disabledLabel: 'siteSettingsSolanaBlock'
               }
-              lists_.permissionsAdvanced.splice(indexForSolana, 0, solanaItem)
+              lists_.permissionsAdvanced.splice(currentIndex, 0, solanaItem)
             }
           }
         }
