@@ -738,10 +738,11 @@ constexpr char kRestrictEventSourcePoolDescription[] =
         flag_descriptions::kBraveGoogleSignInPermissionName,                \
         flag_descriptions::kBraveGoogleSignInPermissionDescription, kOsAll, \
         FEATURE_VALUE_TYPE(kBraveGoogleSignInPermission)},                  \
-    {"brave-localhost-access-permission",                                         \
-        flag_descriptions::kBraveLocalhostAccessPermissionName,                   \
-        flag_descriptions::kBraveLocalhostAccessPermissionDescription, kOsAll,    \
-        FEATURE_VALUE_TYPE(kBraveLocalhostAccessPermission)},                     \
+    {"brave-localhost-access-permission",                                   \
+        flag_descriptions::kBraveLocalhostAccessPermissionName,             \
+        flag_descriptions::kBraveLocalhostAccessPermissionDescription,      \
+        kOsAll,                                                             \
+        FEATURE_VALUE_TYPE(kBraveLocalhostAccessPermission)},               \
     {"brave-extension-network-blocking",                                    \
      flag_descriptions::kBraveExtensionNetworkBlockingName,                 \
      flag_descriptions::kBraveExtensionNetworkBlockingDescription, kOsAll,  \

@@ -79,7 +79,7 @@ function InsertLocalhostAccessSubpage (
   pages: Element)
 {
   pages.insertAdjacentHTML(
-    'beforeend', 
+    'beforeend',
     getTrustedHTML`
         <template is="dom-if" route-path="/content/localhostAccess" no-search>
         <settings-subpage>
@@ -88,7 +88,7 @@ function InsertLocalhostAccessSubpage (
             category="[[contentSettingsTypesEnum_.LOCALHOST_ACCESS]]">
           </category-default-setting>
           <category-setting-exceptions
-            id="localhostAccessExceptions"
+            id="localhostExceptions"
             category="[[contentSettingsTypesEnum_.LOCALHOST_ACCESS]]">
           </category-setting-exceptions>
         </settings-subpage>
@@ -122,16 +122,16 @@ function InsertLocalhostAccessSubpage (
           'toggle-on-label',
           I18nBehavior.i18n('siteSettingsLocalhostAccessAsk'))
       }
-      const localhostAccessExceptions =
-        localhostAccessTemplate.content.getElementById('localhostAccessExceptions')
-      if (!localhostAccessExceptions) {
+      const localhostExceptions =
+        localhostAccessTemplate.content.getElementById('localhostExceptions')
+      if (!localhostExceptions) {
         console.error(
           '[Brave Settings Overrides] Couldn\'t find localhost access exceptions')
       } else {
-        localhostAccessExceptions.setAttribute(
+        localhostExceptions.setAttribute(
           'block-header',
           I18nBehavior.i18n('siteSettingsLocalhostAccessBlockExceptions'))
-        localhostAccessExceptions.setAttribute(
+        localhostExceptions.setAttribute(
           'allow-header',
           I18nBehavior.i18n('siteSettingsLocalhostAccessAllowExceptions'))
       }
