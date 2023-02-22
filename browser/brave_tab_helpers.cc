@@ -14,6 +14,7 @@
 #include "brave/browser/brave_shields/brave_shields_web_contents_observer.h"
 #include "brave/browser/brave_stats/brave_stats_tab_helper.h"
 #include "brave/browser/brave_wallet/brave_wallet_tab_helper.h"
+#include "brave/browser/chat_ui/chat_ui_tab_helper.h"
 #include "brave/browser/ephemeral_storage/ephemeral_storage_tab_helper.h"
 #include "brave/browser/misc_metrics/page_metrics_tab_helper.h"
 #include "brave/browser/ntp_background/ntp_tab_helper.h"
@@ -140,6 +141,8 @@ void AttachTabHelpers(content::WebContents* web_contents) {
     ntp_background_images::NTPTabHelper::CreateForWebContents(web_contents);
     misc_metrics::PageMetricsTabHelper::CreateForWebContents(web_contents);
   }
+
+  ChatUITabHelper::CreateForWebContents(web_contents);
 }
 
 }  // namespace brave

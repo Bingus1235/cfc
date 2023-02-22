@@ -1,0 +1,33 @@
+# Copyright (c) 2023 The Brave Authors. All rights reserved.
+# This Source Code Form is subject to the terms of the Mozilla Public
+# License, v. 2.0. If a copy of the MPL was not distributed with this file,
+# You can obtain one at https://mozilla.org/MPL/2.0/.
+
+import("//build/buildflag_header.gni")
+
+declare_args() {
+  brave_ai_partner_key = ""
+}
+
+source_set("api") {
+  sources = [
+    "chat_ui_api_request.cc",
+    "chat_ui_api_request.h",
+  ]
+  deps = [
+    "//base",
+    "//brave/components/chat_ui/browser:buildflags",
+    "//brave/components/chat_ui/common",
+    "//brave/components/api_request_helper",
+    "//components/prefs",
+    "//net/traffic_annotation",
+    "//services/network/public/cpp",
+    "//third_party/icu",
+    "//url",
+  ]
+}
+
+buildflag_header("buildflags") {
+  header = "buildflags.h"
+  flags = [ "BRAVE_AI_PARTNER_KEY=\"$brave_ai_partner_key\"" ]
+}
