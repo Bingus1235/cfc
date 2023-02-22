@@ -34,7 +34,7 @@ export type tabs = 'network' | 'details'
 
 export interface Props {
   originInfo: SerializableOriginInfo
-  networkPayload: BraveWallet.NetworkInfo
+  networkPayload?: BraveWallet.NetworkInfo
   panelType: 'add' | 'change'
   onCancel: () => void
   onApproveAddNetwork: () => void
@@ -50,8 +50,8 @@ function AllowAddChangeNetworkPanel (props: Props) {
     onApproveAddNetwork,
     onApproveChangeNetwork
   } = props
-  const rpcUrl = networkPayload.rpcEndpoints[networkPayload.activeRpcEndpointIndex]?.url || ''
-  const blockUrl = networkPayload.blockExplorerUrls.length ? networkPayload.blockExplorerUrls[0] : ''
+  const rpcUrl = networkPayload?.rpcEndpoints[networkPayload.activeRpcEndpointIndex]?.url || ''
+  const blockUrl = networkPayload?.blockExplorerUrls.length ? networkPayload.blockExplorerUrls[0] : ''
 
   const [selectedTab, setSelectedTab] = React.useState<tabs>('network')
   const onSelectTab = (tab: tabs) => () => {
@@ -107,7 +107,7 @@ function AllowAddChangeNetworkPanel (props: Props) {
         <MessageBox>
           <MessageBoxColumn>
             <NetworkTitle>{getLocale('braveWalletAllowAddNetworkName')}</NetworkTitle>
-            <NetworkDetail>{networkPayload.chainName}</NetworkDetail>
+            <NetworkDetail>{networkPayload?.chainName}</NetworkDetail>
           </MessageBoxColumn>
           <MessageBoxColumn>
             <NetworkTitle>{getLocale('braveWalletAllowAddNetworkUrl')}</NetworkTitle>
@@ -117,15 +117,15 @@ function AllowAddChangeNetworkPanel (props: Props) {
             <>
               <MessageBoxColumn>
                 <NetworkTitle>{getLocale('braveWalletAllowAddNetworkChainID')}</NetworkTitle>
-                <NetworkDetail>{networkPayload.chainId}</NetworkDetail>
+                <NetworkDetail>{networkPayload?.chainId}</NetworkDetail>
               </MessageBoxColumn>
               <MessageBoxColumn>
                 <NetworkTitle>{getLocale('braveWalletAllowAddNetworkCurrencySymbol')}</NetworkTitle>
-                <NetworkDetail>{networkPayload.symbol}</NetworkDetail>
+                <NetworkDetail>{networkPayload?.symbol}</NetworkDetail>
               </MessageBoxColumn>
               <MessageBoxColumn>
                 <NetworkTitle>{getLocale('braveWalletWatchListTokenDecimals')}</NetworkTitle>
-                <NetworkDetail>{networkPayload.decimals}</NetworkDetail>
+                <NetworkDetail>{networkPayload?.decimals}</NetworkDetail>
               </MessageBoxColumn>
               <MessageBoxColumn>
                 <NetworkTitle>{getLocale('braveWalletAllowAddNetworkExplorer')}</NetworkTitle>

@@ -8,16 +8,17 @@ import * as React from 'react'
 // Selectors
 import { WalletSelectors } from '../../../../../common/selectors'
 import { useUnsafeWalletSelector } from '../../../../../common/hooks/use-safe-selector'
+import { networkEntityAdapter } from '../../../../../common/slices/entities/network.entity'
 
 // Types
 import { BraveWallet } from '../../../../../constants/types'
 
 // Utils
 import { getLocale } from '../../../../../../common/locale'
-import { getTokensNetwork } from '../../../../../utils/network-utils'
 import Amount from '../../../../../utils/amount'
 import { computeFiatAmount } from '../../../../../utils/pricing-utils'
 import { formatTokenBalanceWithSymbol } from '../../../../../utils/balance-utils'
+import { useGetAllNetworksQuery } from '../../../../../common/slices/api.slice'
 
 // Components
 import {
@@ -48,9 +49,16 @@ export const TokenListItem = (props: Props) => {
   const { onClick, token, balance } = props
 
   // Wallet Selectors
-  const networks = useUnsafeWalletSelector(WalletSelectors.networkList)
   const spotPrices = useUnsafeWalletSelector(WalletSelectors.transactionSpotPrices)
   const defaultCurrencies = useUnsafeWalletSelector(WalletSelectors.defaultCurrencies)
+
+  // Queries
+  const { tokensNetwork } = useGetAllNetworksQuery(undefined, {
+    selectFromResult: (result) => ({
+      tokensNetwork: result.data?.entities[networkEntityAdapter.selectId(token)]
+    }),
+    skip: !token
+  })
 
   // Memos
   const AssetIconWithPlaceholder = React.useMemo(() => {
@@ -60,13 +68,6 @@ export const TokenListItem = (props: Props) => {
       marginRight: 0
     })
   }, [token?.isErc721])
-
-  const tokensNetwork = React.useMemo(() => {
-    if (token) {
-      return getTokensNetwork(networks, token)
-    }
-    return undefined
-  }, [token, networks])
 
   const fiatBalance = React.useMemo(() => {
     return computeFiatAmount(spotPrices, {

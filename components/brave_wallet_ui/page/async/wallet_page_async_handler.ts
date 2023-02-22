@@ -36,9 +36,10 @@ import {
 import { NewUnapprovedTxAdded } from '../../common/constants/action_types'
 import { Store } from '../../common/async/types'
 import { getTokenParam } from '../../utils/api-utils'
-import { getTokensNetwork } from '../../utils/network-utils'
 import { addIpfsGateway } from '../../utils/string-utils'
 import { getLocale } from '../../../common/locale'
+import { walletApi } from '../../common/slices/api.slice'
+import { networkEntityAdapter } from '../../common/slices/entities/network.entity'
 
 const handler = new AsyncActionHandler()
 
@@ -291,14 +292,26 @@ handler.on(WalletPageActions.openWalletSettings.type, async (store) => {
   })
 })
 
-handler.on(WalletPageActions.getNFTMetadata.type, async (store, payload: BraveWallet.BlockchainToken) => {
+handler.on(WalletPageActions.getNFTMetadata.type, async (store: Store, payload: BraveWallet.BlockchainToken) => {
   store.dispatch(WalletPageActions.setIsFetchingNFTMetadata(true))
   const result = await getNFTMetadata(payload)
   if (!result?.error) {
     const response = result?.response && JSON.parse(result.response)
-    const tokenNetwork = getTokensNetwork(getWalletState(store).networkList, payload)
+
+    const networksRegistry = await store.dispatch(
+      walletApi.endpoints.getAllNetworks.initiate(undefined)
+    ).unwrap()
+
+    const tokenNetwork =
+      networksRegistry.entities[
+        networkEntityAdapter.selectId({
+          chainId: payload.chainId,
+          coin: payload.coin
+        })
+      ]
+
     const nftMetadata: NFTMetadataReturnType = {
-      chainName: tokenNetwork.chainName,
+      chainName: tokenNetwork?.chainName || '',
       tokenType: payload.coin === BraveWallet.CoinType.ETH
         ? 'ERC721'
         : payload.coin === BraveWallet.CoinType.SOL

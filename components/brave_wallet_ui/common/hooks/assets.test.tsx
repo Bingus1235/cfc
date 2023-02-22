@@ -55,8 +55,8 @@ const renderHookOptionsWithCustomStore = (store: any) => ({
 })
 
 describe('useAssets hook', () => {
-  it('Selected account has balances, should return expectedResult', () => {
-    const { result } = renderHook(
+  it('Selected account has balances, should return expectedResult', async () => {
+    const { result, waitForValueToChange } = renderHook(
       () => useAssets(),
       renderHookOptionsWithCustomStore(
         createMockStore({
@@ -72,6 +72,9 @@ describe('useAssets hook', () => {
         })
       )
     )
+
+    await waitForValueToChange(() => result.current.panelUserAssetList)
+
     expect(result.current.panelUserAssetList).toEqual(mockVisibleList)
   })
 

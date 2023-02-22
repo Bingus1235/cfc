@@ -22,7 +22,7 @@ import { SwapExchangeProxy } from '../../../common/constants/registry'
 
 // Hooks
 import { useTransactionParser } from '../../../common/hooks'
-import { useSafeWalletSelector, useUnsafeWalletSelector } from '../../../common/hooks/use-safe-selector'
+import { useSafeWalletSelector } from '../../../common/hooks/use-safe-selector'
 
 // Components
 import { TransactionIntentDescription } from './transaction-intent-description'
@@ -42,6 +42,7 @@ import {
   ToCircle,
   TransactionDetailRow
 } from './style'
+import { useDefaultNetworksQuery } from '../../../common/hooks/use-networks'
 
 export interface Props {
   selectedNetwork?: BraveWallet.NetworkInfo
@@ -57,8 +58,10 @@ export const TransactionsListItem = ({
   onSelectTransaction
 }: Props) => {
   // redux
-  const defaultNetworks = useUnsafeWalletSelector(WalletSelectors.defaultNetworks)
   const defaultFiatCurrency = useSafeWalletSelector(WalletSelectors.defaultFiatCurrency)
+  
+  // queries
+  const { defaultNetworks } = useDefaultNetworksQuery()
 
   // methods
   const onClickTransaction = () => {

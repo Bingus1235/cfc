@@ -55,6 +55,7 @@ import { StatusBubble } from '../../shared/style'
 import { TransactionStatusTooltip } from '../transaction-status-tooltip'
 import { Tooltip } from '../../shared'
 import { serializedTimeDeltaToJSDate } from '../../../utils/datetime-utils'
+import { useDefaultNetworksQuery } from '../../../common/hooks/use-networks'
 
 export interface Props {
   transaction: SerializableTransactionInfo
@@ -86,8 +87,10 @@ const TransactionDetailPanel = (props: Props) => {
   const {
     transactions,
     transactionProviderErrorRegistry,
-    defaultNetworks
   } = useSelector((state: { wallet: WalletState }) => state.wallet)
+  
+  // queries
+  const { defaultNetworks } = useDefaultNetworksQuery()
 
   const transactionsNetwork = React.useMemo(() => {
     return getNetworkFromTXDataUnion(transaction.txDataUnion, defaultNetworks, selectedNetwork)

@@ -24,6 +24,7 @@ import usePricing from './pricing'
 import useTokenInfo from './token'
 import { useLib } from './useLib'
 import { useSafeWalletSelector } from './use-safe-selector'
+import { useGetSelectedChainQuery } from '../slices/api.slice'
 
 // Constants
 import { WalletState, BraveWallet } from '../../constants/types'
@@ -32,6 +33,8 @@ import {
   UpdateUnapprovedTransactionNonceType
 } from '../constants/action_types'
 import { isSolanaTransaction, sortTransactionByDate } from '../../utils/tx-utils'
+import { useDefaultNetworksQuery } from './use-networks'
+
 
 export const usePendingTransactions = () => {
   // redux
@@ -39,18 +42,21 @@ export const usePendingTransactions = () => {
   const {
     accounts,
     transactions,
-    selectedNetwork,
     selectedPendingTransaction: transactionInfo,
     userVisibleTokensInfo: visibleTokens,
     transactionSpotPrices,
     gasEstimates,
     fullTokenList,
     pendingTransactions,
-    defaultNetworks
   } = useSelector((state: { wallet: WalletState }) => state.wallet)
   const hasFeeEstimatesError = useSafeWalletSelector(
     WalletSelectors.hasFeeEstimatesError
   )
+    
+  // queries
+  const { data: selectedNetwork } = useGetSelectedChainQuery()
+  const { defaultNetworks } = useDefaultNetworksQuery()
+
 
   const transactionGasEstimates = transactionInfo?.txDataUnion.ethTxData1559?.gasEstimation
 

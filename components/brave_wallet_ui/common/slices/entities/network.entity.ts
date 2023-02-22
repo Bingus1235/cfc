@@ -10,25 +10,43 @@ import {
   EntityId
 } from '@reduxjs/toolkit'
 import { BraveWallet } from '../../../constants/types'
+import { getEntitiesListFromEntityState } from '../../../utils/entities.utils'
 
 export type NetworkEntityAdaptor = EntityAdapter<BraveWallet.NetworkInfo> & {
-  selectId: (network: { chainId: string }) => EntityId
+  selectId: (network: { chainId: string, coin: BraveWallet.CoinType }) => EntityId
 }
 
 export const networkEntityAdapter: NetworkEntityAdaptor =
   createEntityAdapter<BraveWallet.NetworkInfo>({
-    selectId: ({ chainId }) => chainId
+    selectId: ({ chainId, coin }): string =>
+      chainId === BraveWallet.LOCALHOST_CHAIN_ID
+        ? `${chainId}-${coin}`
+        : chainId
   })
 
 export type NetworkEntityAdaptorState = ReturnType<
   typeof networkEntityAdapter['getInitialState']
 > & {
+  defaultIdByCoinType: Record<BraveWallet.CoinType, EntityId>
+  defaultIds: string[]
+  hiddenIds: string[]
+  hiddenIdsByCoinType: Record<BraveWallet.CoinType, EntityId[]>
   idsByCoinType: Record<BraveWallet.CoinType, EntityId[]>
+  mainnetIds: string[]
+  onRampIds: string[]
+  visibleIds: string[]
 }
 
 export const networkEntityInitialState: NetworkEntityAdaptorState = {
   ...networkEntityAdapter.getInitialState(),
-  idsByCoinType: {}
+  defaultIdByCoinType: {},
+  defaultIds: [],
+  hiddenIds: [],
+  hiddenIdsByCoinType: {},
+  idsByCoinType: {},
+  mainnetIds: [],
+  onRampIds: [],
+  visibleIds: []
 }
 
 //
@@ -57,3 +75,48 @@ export const makeSelectAllChainIdsForCoinTypeFromQueryResult = () => {
     (registry, coinType) => registry.idsByCoinType[coinType]
   )
 }
+
+export const selectVisibleNetworksFromQueryResult = createDraftSafeSelector(
+  [selectNetworksRegistryFromQueryResult],
+  (registry) => getEntitiesListFromEntityState(registry, registry.visibleIds)
+)
+
+export const selectHiddenNetworksFromQueryResult = createDraftSafeSelector(
+  [selectNetworksRegistryFromQueryResult],
+  (registry) => getEntitiesListFromEntityState(registry, registry.hiddenIds)
+)
+
+export const selectDefaultNetworksFromQueryResult = createDraftSafeSelector(
+  [selectNetworksRegistryFromQueryResult],
+  (registry) => getEntitiesListFromEntityState(registry, registry.defaultIds)
+)
+
+export const selectMainnetsFromQueryResult = createDraftSafeSelector(
+  [selectNetworksRegistryFromQueryResult],
+  (registry) => getEntitiesListFromEntityState(registry, registry.mainnetIds)
+)
+
+export const selectOnrampNetworksFromQueryResult = createDraftSafeSelector(
+  [selectNetworksRegistryFromQueryResult],
+  (registry) => getEntitiesListFromEntityState(registry, registry.onRampIds)
+)
+
+// export const selectAllChainIdsForCoinTypeFromQueryResult = () => {
+//   return createDraftSafeSelector(
+//     [
+//       selectNetworksRegistryFromQueryResult,
+//       (_, coinType: BraveWallet.CoinType) => coinType
+//     ],
+//     (registry, coinType) => getEntitiesListFromEntityState(registry, registry.idsByCoinType[coinType])
+//   )
+// }
+
+// export const selectAllChainIdsForCoinTypeFromQueryResult = () => {
+//   return createDraftSafeSelector(
+//     [
+//       selectNetworksRegistryFromQueryResult,
+//       (_, coinType: BraveWallet.CoinType) => coinType
+//     ],
+//     (registry, coinType) => getEntitiesListFromEntityState(registry, registry.idsByCoinType[coinType])
+//   )
+// }

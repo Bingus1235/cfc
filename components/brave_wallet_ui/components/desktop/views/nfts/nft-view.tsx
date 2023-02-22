@@ -11,10 +11,14 @@ import {
   SupportedTestNetworks,
   WalletState
 } from '../../../../constants/types'
+import { AllNetworksOption } from '../../../../options/network-filter-options'
+
+// hooks
+import { useNetworksListQuery } from '../../../../common/hooks/use-networks'
+// import { useGetNetworksQuery } from '../../../../common/slices/api.slice'
 
 // components
 import { Nfts } from './components/nfts'
-import { AllNetworksOption } from '../../../../options/network-filter-options'
 
 interface Props {
   onToggleShowIpfsBanner: () => void
@@ -22,9 +26,12 @@ interface Props {
 
 export const NftView = ({ onToggleShowIpfsBanner }: Props) => {
   // redux
-  const networkList = useSelector(({ wallet }: { wallet: WalletState }) => wallet.networkList)
   const userVisibleTokensInfo = useSelector(({ wallet }: { wallet: WalletState }) => wallet.userVisibleTokensInfo)
   const selectedNetworkFilter = useSelector(({ wallet }: { wallet: WalletState }) => wallet.selectedNetworkFilter)
+  
+  // queries
+  // const { data: networkList = [] } = useGetNetworksQuery()
+  const { networks: networkList = [] } = useNetworksListQuery()
 
   // memos
   const nonFungibleTokens = React.useMemo(() => {

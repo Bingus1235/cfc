@@ -27,13 +27,16 @@ import {
 import * as WalletActions from '../actions/wallet_actions'
 
 // Utils
-import { getFilecoinKeyringIdFromNetwork, getNetworkInfo, getNetworksByCoinType } from '../../utils/network-utils'
+import {
+  getFilecoinKeyringIdFromNetwork,
+  getNetworksByCoinType
+} from '../../utils/network-utils'
 import { getTokenParam, getFlattenedAccountBalances } from '../../utils/api-utils'
 import Amount from '../../utils/amount'
 import { sortTransactionByDate } from '../../utils/tx-utils'
 import { addLogoToToken, getBatTokensFromList, getNativeTokensFromList, getUniqueAssets } from '../../utils/asset-utils'
 import { loadTimeData } from '../../../common/loadTimeData'
-import { walletApi } from '../slices/api.slice'
+import { queryNetworksList, walletApi } from '../slices/api.slice'
 
 import getAPIProxy from './bridge'
 import { Dispatch, State } from './types'
@@ -48,6 +51,8 @@ import FilecoinLedgerBridgeKeyring from '../hardware/ledgerjs/fil_ledger_bridge_
 import { deserializeOrigin, makeSerializableTransaction } from '../../utils/model-serialization-utils'
 import { WalletPageActions } from '../../page/actions'
 import { LOCAL_STORAGE_KEYS } from '../../common/constants/local-storage-keys'
+import { getEntitiesListFromEntityState } from '../../utils/entities.utils'
+import { NetworkEntityAdaptorState } from '../slices/entities/network.entity'
 
 export const getERC20Allowance = (
   contractAddress: string,
@@ -437,10 +442,26 @@ export async function hasJupiterFeesForMint (mint: string): Promise<boolean> {
   return (await swapService.hasJupiterFeesForTokenMint(mint)).result
 }
 
+let visibleTokensTimeoutRef: NodeJS.Timeout
+
 export function refreshVisibleTokenInfo (targetNetwork?: BraveWallet.NetworkInfo) {
   return async (dispatch: Dispatch, getState: () => State) => {
     const { braveWalletService } = getAPIProxy()
-    const { wallet: { networkList } } = getState()
+
+    // this can still return `undefined` when the request is already in-flight
+    const networkRegistry: NetworkEntityAdaptorState = await dispatch(
+      walletApi.endpoints.getAllNetworks.initiate()
+    ).unwrap()
+
+    if (!networkRegistry) {
+      // failed to fetch, reschedule the refresh
+      visibleTokensTimeoutRef = setTimeout(() => {
+        dispatch(refreshVisibleTokenInfo(targetNetwork))
+      }, 32)
+      return
+    } else {
+      clearTimeout(visibleTokensTimeoutRef)
+    }
 
     async function inner (network: BraveWallet.NetworkInfo) {
       // Creates a network's Native Asset if not returned
@@ -473,7 +494,11 @@ export function refreshVisibleTokenInfo (targetNetwork?: BraveWallet.NetworkInfo
 
     const visibleAssets = targetNetwork
       ? await inner(targetNetwork)
-      : await Promise.all(networkList.map(async (item) => await inner(item)))
+      : await Promise.all(
+          getEntitiesListFromEntityState(networkRegistry).map(
+            async (item) => await inner(item)
+          )
+        )
     const userVisibleTokensInfo = visibleAssets.flat(1)
     await dispatch(WalletActions.setVisibleTokensInfo(userVisibleTokensInfo))
     const nfts = userVisibleTokensInfo.filter((asset) => asset.isErc721 || asset.isNft)
@@ -530,7 +555,11 @@ function reportActiveWalletsToP3A (accounts: WalletAccountType[],
 export function refreshBalances () {
   return async (dispatch: Dispatch, getState: () => State) => {
     const { jsonRpcService } = getAPIProxy()
-    const { wallet: { accounts, userVisibleTokensInfo, networkList } } = getState()
+    const {
+      wallet: { accounts, userVisibleTokensInfo }
+    } = getState()
+
+    const networkList = await queryNetworksList(dispatch, 'visibleIds')
 
     const emptyBalance = {
       balance: '0x0',
@@ -659,7 +688,16 @@ export function refreshBalances () {
 export function refreshPrices () {
   return async (dispatch: Dispatch, getState: () => State) => {
     const { assetRatioService } = getAPIProxy()
-    const { wallet: { accounts, selectedPortfolioTimeline, userVisibleTokensInfo, defaultCurrencies, networkList } } = getState()
+    const {
+      wallet: {
+        accounts,
+        selectedPortfolioTimeline,
+        userVisibleTokensInfo,
+        defaultCurrencies
+      }
+    } = getState()
+    const networkList = await queryNetworksList(dispatch, 'visibleIds')
+
     const defaultFiatCurrency = defaultCurrencies.fiat.toLowerCase()
 
     // Return if userVisibleTokensInfo is empty
@@ -816,69 +854,18 @@ export function refreshTransactionHistory (address?: string) {
 
 export function refreshFullNetworkList () {
   return async (dispatch: Dispatch, getState: () => State) => {
-    const apiProxy = getAPIProxy()
-    const { jsonRpcService } = apiProxy
-    const { wallet: { isFilecoinEnabled, isSolanaEnabled } } = getState()
-
-    // Get All Networks
-    const filteredSupportedCoinTypes = SupportedCoinTypes.filter((coin) => {
-      // MULTICHAIN: While we are still in development for FIL and SOL,
-      // we will not use their networks unless enabled by brave://flags
-      return (
-        (coin === BraveWallet.CoinType.FIL && isFilecoinEnabled) ||
-        (coin === BraveWallet.CoinType.SOL && isSolanaEnabled) ||
-        coin === BraveWallet.CoinType.ETH
-      )
-    })
-
-    const networks = (await Promise.all(
-      filteredSupportedCoinTypes.map(async (coin: BraveWallet.CoinType) => {
-        const { networks } = await jsonRpcService.getAllNetworks(coin)
-        const { chainIds: hiddenChains } = await jsonRpcService.getHiddenNetworks(coin)
-        return networks.filter((n) => !hiddenChains.includes(n.chainId))
-      })
-    )).flat(1)
-
-    dispatch(WalletActions.setAllNetworks(networks))
-
-    const hiddenNetworks = (await Promise.all(
-      filteredSupportedCoinTypes.map(async (coin: BraveWallet.CoinType) => {
-        const { networks } = await jsonRpcService.getAllNetworks(coin)
-        const { chainIds: hiddenChains } = await jsonRpcService.getHiddenNetworks(coin)
-        return networks.filter((n) => hiddenChains.includes(n.chainId))
-      })
-    )).flat(1)
-
-    dispatch(WalletActions.setAllHiddenNetworks(hiddenNetworks))
+    await dispatch(
+      walletApi.endpoints.refreshFullNetworkList.initiate()
+    ).unwrap()
   }
 }
 
 export function refreshNetworkInfo () {
   return async (dispatch: Dispatch, getState: () => State) => {
-    // Get All Networks and set to state first
-    await dispatch(refreshFullNetworkList())
-
-    const apiProxy = getAPIProxy()
-    const { jsonRpcService } = apiProxy
-    const { wallet: { networkList } } = getState()
-
-    // Get default network for each coinType
-    const defaultNetworks = await Promise.all(SupportedCoinTypes.map(async (coin: BraveWallet.CoinType) => {
-      const coinsChainId = await jsonRpcService.getChainId(coin)
-      const network = getNetworkInfo(coinsChainId.chainId, coin, networkList)
-      return network
-    }))
-    dispatch(WalletActions.setDefaultNetworks(defaultNetworks))
-
-    // Get current selected networks info
-    const selectedCoin = await dispatch(
-      walletApi.endpoints.getSelectedCoin.initiate(undefined)
+    // refresh networks registry & selected network
+    await dispatch(
+      walletApi.endpoints.refreshNetworkInfo.initiate()
     ).unwrap()
-    const chainId = await jsonRpcService.getChainId(selectedCoin)
-
-    const currentNetwork = getNetworkInfo(chainId.chainId, selectedCoin, networkList)
-    dispatch(WalletActions.setNetwork(currentNetwork))
-    return currentNetwork
   }
 }
 
@@ -1119,19 +1106,22 @@ export async function isTokenPinningSupported (token: BraveWallet.BlockchainToke
 
 export function refreshPortfolioFilterOptions () {
   return async (dispatch: Dispatch, getState: () => State) => {
-    const { wallet: { accounts, networkList, selectedAccountFilter, selectedNetworkFilter } } = getState()
+    const { accounts, selectedAccountFilter, selectedNetworkFilter } =
+      getState().wallet
+
+    const networkList = await queryNetworksList(dispatch, 'visibleIds')
 
     if (
-      !networkList.some(network => network.chainId === selectedNetworkFilter.chainId) &&
-      selectedNetworkFilter.chainId !== AllNetworksOption.chainId
+      selectedNetworkFilter.chainId !== AllNetworksOption.chainId &&
+      !networkList.some(network => network.chainId === selectedNetworkFilter.chainId)
     ) {
       dispatch(WalletActions.setSelectedNetworkFilter(AllNetworksOptionDefault))
       window.localStorage.removeItem(LOCAL_STORAGE_KEYS.PORTFOLIO_NETWORK_FILTER_OPTION)
     }
 
     if (
-      !accounts.some(account => account.id === selectedAccountFilter) &&
-      selectedAccountFilter !== AllAccountsOption.id
+      selectedAccountFilter !== AllAccountsOption.id &&
+      !accounts.some(account => account.id === selectedAccountFilter)
     ) {
       dispatch(WalletActions.setSelectedAccountFilterItem(AllAccountsOption.id))
       window.localStorage.removeItem(LOCAL_STORAGE_KEYS.PORTFOLIO_ACCOUNT_FILTER_OPTION)

@@ -41,6 +41,12 @@ import { LedgerError } from '../../../../../common/hardware/ledgerjs/ledger-mess
 
 // hooks
 import { useLib } from '../../../../../common/hooks'
+import {
+  useGetAllNetworksQuery,
+  useGetSelectedChainQuery
+} from '../../../../../common/slices/api.slice'
+import { networkEntityInitialState } from '../../../../../common/slices/entities/network.entity'
+import { getEntitiesListFromEntityState } from '../../../../../utils/entities.utils'
 
 export interface Props {
   selectedAccountType: CreateAccountOptionsType
@@ -78,9 +84,11 @@ export const HardwareWalletConnect = ({ onSuccess, selectedAccountType }: Props)
 
   // redux
   const dispatch = useDispatch()
-  const selectedNetwork = useSelector(({ wallet }: { wallet: WalletState }) => wallet.selectedNetwork)
-  const defaultNetworks = useSelector(({ wallet }: { wallet: WalletState }) => wallet.defaultNetworks)
   const savedAccounts = useSelector(({ wallet }: { wallet: WalletState }) => wallet.accounts)
+  
+  // queries
+  const { data: selectedNetwork } = useGetSelectedChainQuery()
+  const { data: networksRegistry = networkEntityInitialState } = useGetAllNetworksQuery()
 
   // state
   const [selectedHardwareWallet, setSelectedHardwareWallet] = React.useState<HardwareVendor>(BraveWallet.LEDGER_HARDWARE_VENDOR)
@@ -217,6 +225,13 @@ export const HardwareWalletConnect = ({ onSuccess, selectedAccountType }: Props)
   }, [onConnectHardwareWallet, selectedHardwareWallet, accounts, selectedDerivationScheme, selectedAccountType, filecoinNetwork])
 
   // memos
+  const defaultNetworks = React.useMemo(() => {
+    return getEntitiesListFromEntityState(
+      networksRegistry,
+      networksRegistry.defaultIds
+    )
+  }, [networksRegistry])
+  
   const preAddedHardwareWalletAccounts = React.useMemo(() => {
     return savedAccounts.filter(account =>
       ['Ledger', 'Trezor'].includes(account.accountType)

@@ -11,6 +11,7 @@ import {
   getRampAssetSymbol
 } from '../../utils/asset-utils'
 import Amount from '../../utils/amount'
+import { networkEntityInitialState } from '../slices/entities/network.entity'
 
 // Types
 import {
@@ -23,11 +24,15 @@ import { WalletSelectors } from '../selectors'
 import { useIsMounted } from './useIsMounted'
 import { useLib } from './useLib'
 import { useUnsafeWalletSelector } from './use-safe-selector'
+import { useGetAllNetworksQuery } from '../slices/api.slice'
+import { getEntitiesListFromEntityState } from '../../utils/entities.utils'
 
 export const useMultiChainSellAssets = () => {
   // Redux
-  const networkList = useUnsafeWalletSelector(WalletSelectors.networkList)
   const defaultCurrencies = useUnsafeWalletSelector(WalletSelectors.defaultCurrencies)
+
+  // Queries
+  const { data: networksRegistry = networkEntityInitialState } = useGetAllNetworksQuery()
 
   // Hooks
   const isMounted = useIsMounted()
@@ -48,10 +53,8 @@ export const useMultiChainSellAssets = () => {
 
   // Memos
   const supportedSellAssetNetworks = React.useMemo((): BraveWallet.NetworkInfo[] => {
-    return networkList.filter(n =>
-      SupportedOffRampNetworks.includes(n.chainId)
-    )
-  }, [networkList])
+    return getEntitiesListFromEntityState(networksRegistry, SupportedOffRampNetworks)
+  }, [networksRegistry])
 
   const selectedSellAssetNetwork = React.useMemo((): BraveWallet.NetworkInfo | undefined => {
     if (selectedSellAsset?.chainId && selectedSellAsset?.coin) {

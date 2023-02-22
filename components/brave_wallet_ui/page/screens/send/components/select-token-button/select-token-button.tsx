@@ -6,8 +6,7 @@
 import * as React from 'react'
 
 // Selectors
-import { WalletSelectors } from '../../../../../common/selectors'
-import { useUnsafeWalletSelector } from '../../../../../common/hooks/use-safe-selector'
+import { networkEntityAdapter } from '../../../../../common/slices/entities/network.entity'
 
 // Assets
 import CaratDownIcon from '../../assets/carat-down-icon.svg'
@@ -17,8 +16,10 @@ import { BraveWallet, SendOptionTypes } from '../../../../../constants/types'
 
 // Utils
 import { getLocale } from '../../../../../../common/locale'
-import { getTokensNetwork } from '../../../../../utils/network-utils'
 import Amount from '../../../../../utils/amount'
+
+// Hooks
+import { useGetAllNetworksQuery } from '../../../../../common/slices/api.slice'
 
 // Components
 import {
@@ -47,8 +48,20 @@ interface Props {
 export const SelectTokenButton = (props: Props) => {
   const { onClick, token, selectedSendOption } = props
 
-  // Wallet Selectors
-  const networks = useUnsafeWalletSelector(WalletSelectors.networkList)
+  // Queries
+  const { tokensNetwork = undefined } = useGetAllNetworksQuery(undefined, {
+    selectFromResult: (result) => ({
+      tokensNetwork: token
+        ? result.data?.entities[
+            networkEntityAdapter.selectId({
+              chainId: token.chainId,
+              coin: token.coin
+            })
+          ]
+        : undefined
+    }),
+    skip: !token
+  })
 
   // Memos
   const AssetIconWithPlaceholder = React.useMemo(() => {
@@ -58,13 +71,6 @@ export const SelectTokenButton = (props: Props) => {
       marginRight: 0
     })
   }, [token?.isErc721])
-
-  const tokensNetwork = React.useMemo(() => {
-    if (token) {
-      return getTokensNetwork(networks, token)
-    }
-    return undefined
-  }, [token, networks])
 
   const buttonText = React.useMemo(() => {
     if (selectedSendOption === 'nft') {

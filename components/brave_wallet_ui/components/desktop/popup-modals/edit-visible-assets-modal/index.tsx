@@ -39,6 +39,7 @@ import {
 // hooks
 import { useAssetManagement, useTokenRegistry } from '../../../../common/hooks'
 import { useSelector } from 'react-redux'
+import { useGetSelectedChainQuery } from '../../../../common/slices/api.slice'
 
 export interface Props {
   onClose: () => void
@@ -47,8 +48,10 @@ export interface Props {
 const EditVisibleAssetsModal = ({ onClose }: Props) => {
   // redux
   const userVisibleTokensInfo = useSelector(({ wallet }: { wallet: WalletState }) => wallet.userVisibleTokensInfo)
-  const selectedNetwork = useSelector(({ wallet }: { wallet: WalletState }) => wallet.selectedNetwork)
-  const networkList = useSelector(({ wallet }: { wallet: WalletState }) => wallet.networkList)
+
+  // queries
+  const { data: selectedNetwork } = useGetSelectedChainQuery()
+  
   // custom hooks
   const {
     onUpdateVisibleAssets
@@ -263,9 +266,10 @@ const EditVisibleAssetsModal = ({ onClose }: Props) => {
 
   return (
     <PopupModal
-      title={showAddCustomToken
-        ? getLocale('braveWalletWatchlistAddCustomAsset')
-        : getLocale('braveWalletAccountsEditVisibleAssets')
+      title={
+        showAddCustomToken
+          ? getLocale('braveWalletWatchlistAddCustomAsset')
+          : getLocale('braveWalletAccountsEditVisibleAssets')
       }
       onClose={onClose}
     >
@@ -276,15 +280,18 @@ const EditVisibleAssetsModal = ({ onClose }: Props) => {
           </LoadingWrapper>
         ) : (
           <>
-            {showAddCustomToken
-              ? <AddAsset
+            {showAddCustomToken ? (
+              <AddAsset
                 contractAddress={tokenContractAddress}
                 onHideForm={toggleShowAddCustomToken}
               />
-              : <>
+            ) : (
+              <>
                 <NetworkFilterWithSearch
                   searchValue={searchValue}
-                  searchPlaceholder={getLocale('braveWalletWatchListSearchPlaceholder')}
+                  searchPlaceholder={getLocale(
+                    'braveWalletWatchListSearchPlaceholder'
+                  )}
                   searchAction={filterWatchlist}
                   searchAutoFocus={true}
                   selectedNetwork={selectedNetworkFilter}
@@ -292,38 +299,44 @@ const EditVisibleAssetsModal = ({ onClose }: Props) => {
                   showNetworkDropDown={showNetworkDropDown}
                   onSelectNetwork={onSelectAssetsNetwork}
                 />
-                {!searchValue.toLowerCase().startsWith('0x') &&
+                {!searchValue.toLowerCase().startsWith('0x') && (
                   <TopRow>
                     <NoAssetButton onClick={toggleShowAddCustomToken}>
                       {getLocale('braveWalletWatchlistAddCustomAsset')}
                     </NoAssetButton>
                   </TopRow>
-                }
-                {filteredTokenList.length === 0
-                  ? <NoAssetRow>
+                )}
+                {filteredTokenList.length === 0 ? (
+                  <NoAssetRow>
                     {searchValue.toLowerCase().startsWith('0x') ? (
-                      <NoAssetButton
-                        onClick={onClickSuggestAdd}>{getLocale('braveWalletWatchListSuggestion').replace('$1', searchValue)}</NoAssetButton>
+                      <NoAssetButton onClick={onClickSuggestAdd}>
+                        {getLocale('braveWalletWatchListSuggestion').replace(
+                          '$1',
+                          searchValue
+                        )}
+                      </NoAssetButton>
                     ) : (
-                      <NoAssetText>{getLocale('braveWalletWatchListNoAsset')} {searchValue}</NoAssetText>
+                      <NoAssetText>
+                        {getLocale('braveWalletWatchListNoAsset')} {searchValue}
+                      </NoAssetText>
                     )}
                   </NoAssetRow>
-                  : <VirtualizedVisibleAssetsList
+                ) : (
+                  <VirtualizedVisibleAssetsList
                     tokenList={filteredTokenList}
-                    networkList={networkList}
                     isCustomToken={isCustomToken}
                     onRemoveAsset={onRemoveAsset}
                     isAssetSelected={isAssetSelected}
                     onCheckWatchlistItem={onCheckWatchlistItem}
                   />
-                }
+                )}
                 <NavButton
                   onSubmit={onClickDone}
                   text={getLocale('braveWalletWatchListDoneButton')}
-                  buttonType='primary'
+                  buttonType="primary"
                 />
               </>
-            }
+            )}
           </>
         )}
       </StyledWrapper>

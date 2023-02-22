@@ -23,12 +23,12 @@ import { getLocale } from '../../../../../common/locale'
 import Amount from '../../../../utils/amount'
 import { getBalance, formatTokenBalanceWithSymbol } from '../../../../utils/balance-utils'
 import { computeFiatAmount } from '../../../../utils/pricing-utils'
-import { getTokensNetwork } from '../../../../utils/network-utils'
 import { endsWithAny } from '../../../../utils/string-utils'
 
 // Hooks
 import { usePreset, useBalanceUpdater, useSend } from '../../../../common/hooks'
 import { useOnClickOutside } from '../../../../common/hooks/useOnClickOutside'
+import { useGetAllNetworksQuery } from '../../../../common/slices/api.slice'
 
 // Styled Components
 import {
@@ -53,6 +53,7 @@ import { AddressMessage } from '../components/address-message/address-message'
 import { SelectTokenModal } from '../components/select-token-modal/select-token-modal'
 import { CopyAddress } from '../components/copy-address/copy-address'
 import { ChecksumInfoModal } from '../components/checksum-info-modal/checksum-info-modal'
+import { networkEntityInitialState } from '../../../../common/slices/entities/network.entity'
 
 interface Props {
   onShowSelectTokenModal: () => void
@@ -77,7 +78,10 @@ export const Send = (props: Props) => {
   const selectedAccount = useUnsafeWalletSelector(WalletSelectors.selectedAccount)
   const spotPrices = useUnsafeWalletSelector(WalletSelectors.transactionSpotPrices)
   const defaultCurrencies = useUnsafeWalletSelector(WalletSelectors.defaultCurrencies)
-  const networks = useUnsafeWalletSelector(WalletSelectors.networkList)
+
+  // queries
+  const { data: networksRegistry = networkEntityInitialState } =
+    useGetAllNetworksQuery()
 
   const {
     toAddressOrUrl,
@@ -268,12 +272,9 @@ export const Send = (props: Props) => {
         addressError !== getLocale('braveWalletNotValidChecksumAddressError'))
   }, [searchingForDomain, insufficientFundsError, addressError])
 
-  const selectedTokensNetwork = React.useMemo(() => {
-    if (selectedSendAsset) {
-      return getTokensNetwork(networks, selectedSendAsset)
-    }
-    return undefined
-  }, [selectedSendAsset, networks])
+  const selectedTokensNetwork = selectedSendAsset
+    ? networksRegistry?.entities[selectedSendAsset.chainId]
+    : undefined
 
   const hasAddressError = React.useMemo(() => {
     return searchingForDomain

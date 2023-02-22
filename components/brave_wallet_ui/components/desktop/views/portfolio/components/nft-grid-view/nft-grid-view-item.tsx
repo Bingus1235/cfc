@@ -11,11 +11,6 @@ import { BraveWallet } from '../../../../../../constants/types'
 // Utils
 import { stripERC20TokenImageURL, addIpfsGateway } from '../../../../../../utils/string-utils'
 import Amount from '../../../../../../utils/amount'
-import { getTokensNetwork } from '../../../../../../utils/network-utils'
-
-// selectors
-import { useUnsafeWalletSelector } from '../../../../../../common/hooks/use-safe-selector'
-import { WalletSelectors } from '../../../../../../common/selectors'
 
 // components
 import { NftIconWithNetworkIcon } from '../../../../../shared/nft-icon/nft-icon-with-network-icon'
@@ -32,6 +27,8 @@ import {
   DIVForClickableArea,
   NFTSymbol
 } from './style'
+import { networkEntityAdapter } from '../../../../../../common/slices/entities/network.entity'
+import { useGetAllNetworksQuery } from '../../../../../../common/slices/api.slice'
 
 interface Props {
   token: BraveWallet.BlockchainToken
@@ -45,8 +42,15 @@ export const NFTGridViewItem = (props: Props) => {
   const [showMore, setShowMore] = React.useState<boolean>(false)
   const [showEditModal, setShowEditModal] = React.useState<boolean>(false)
 
-  // redux
-  const networkList = useUnsafeWalletSelector(WalletSelectors.networkList)
+  // queries
+  const { tokenNetwork } = useGetAllNetworksQuery(undefined, {
+    selectFromResult: (result) => ({
+      tokenNetwork: token
+        ? result.data?.entities[networkEntityAdapter.selectId(token)]
+        : undefined
+    }),
+    skip: !token
+  })
 
   // methods
   const onToggleShowMore = React.useCallback((event: React.MouseEvent<HTMLButtonElement>) => {
@@ -85,7 +89,7 @@ export const NFTGridViewItem = (props: Props) => {
           <NftIconWithNetworkIcon
             icon={remoteImage}
             responsive={true}
-            tokensNetwork={getTokensNetwork(networkList, token)}
+            tokensNetwork={tokenNetwork}
           />
         </IconWrapper>
         <NFTText>{token.name} {token.tokenId ? '#' + new Amount(token.tokenId).toNumber() : ''}</NFTText>

@@ -59,6 +59,8 @@ import {
 import { DetailColumn } from '../transaction-box/style'
 import { getSolanaTransactionInstructionParamsAndType } from '../../../utils/solana-instruction-utils'
 import { Tooltip } from '../../shared'
+import { useGetAllNetworksQuery } from '../../../common/slices/api.slice'
+import { networkEntityInitialState } from '../../../common/slices/entities/network.entity'
 
 export interface Props {
   signMode: 'signTx' | 'signAllTxs'
@@ -77,10 +79,26 @@ export const SignTransactionPanel = ({ signMode }: Props) => {
   // redux
   const dispatch = useDispatch()
   const accounts = useUnsafeWalletSelector(WalletSelectors.accounts)
-  const defaultNetworks = useUnsafeWalletSelector(WalletSelectors.defaultNetworks)
-  const signTransactionRequests = useUnsafePanelSelector(PanelSelectors.signTransactionRequests)
-  const signAllTransactionsRequests = useUnsafePanelSelector(PanelSelectors.signAllTransactionsRequests)
-  const signTransactionData = signMode === 'signTx' ? signTransactionRequests : signAllTransactionsRequests
+  const signTransactionRequests = useUnsafePanelSelector(
+    PanelSelectors.signTransactionRequests
+  )
+  const signAllTransactionsRequests = useUnsafePanelSelector(
+    PanelSelectors.signAllTransactionsRequests
+  )
+
+  // queries
+  const { data: networksRegistry = networkEntityInitialState } =
+    useGetAllNetworksQuery()
+
+  const signTransactionData =
+    signMode === 'signTx'
+      ? signTransactionRequests
+      : signAllTransactionsRequests
+  
+  const network =
+    networksRegistry.entities[
+      networksRegistry.defaultIdByCoinType[signTransactionData[0].coin]
+    ]
 
   // state
   const [signStep, setSignStep] = React.useState<SignDataSteps>(SignDataSteps.SignRisk)
@@ -112,10 +130,6 @@ export const SignTransactionPanel = ({ signMode }: Props) => {
         : [(selectedQueueData as BraveWallet.SignTransactionRequest)?.txData?.solanaTxData]
     ).filter((data): data is BraveWallet.SolanaTxData => !!data)
   }, [selectedQueueData])
-
-  const network = React.useMemo(() => {
-    return defaultNetworks.find((n) => n.coin === signTransactionData[0].coin)
-  }, [defaultNetworks, signTransactionData])
 
   // methods
   const onCancel = React.useCallback(() => {

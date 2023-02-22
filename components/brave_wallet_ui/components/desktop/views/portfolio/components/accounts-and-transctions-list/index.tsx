@@ -15,10 +15,10 @@ import {
 // Utils
 import { getLocale } from '../../../../../../../common/locale'
 import Amount from '../../../../../../utils/amount'
-import { getTokensNetwork } from '../../../../../../utils/network-utils'
 import { WalletSelectors } from '../../../../../../common/selectors'
 import { getBalance } from '../../../../../../utils/balance-utils'
 import { ParsedTransaction } from '../../../../../../utils/tx-utils'
+import { networkEntityAdapter } from '../../../../../../common/slices/entities/network.entity'
 
 // Components
 import {
@@ -33,6 +33,10 @@ import { SellAssetModal } from '../../../../popup-modals/sell-asset-modal/sell-a
 // Hooks
 import { useUnsafeWalletSelector } from '../../../../../../common/hooks/use-safe-selector'
 import { useMultiChainSellAssets } from '../../../../../../common/hooks/use-multi-chain-sell-assets'
+import {
+  useGetAllNetworksQuery,
+  useGetSelectedChainQuery
+} from '../../../../../../common/slices/api.slice'
 
 // Styled Components
 import {
@@ -52,7 +56,6 @@ import {
 
 export interface Props {
   selectedAsset: BraveWallet.BlockchainToken | undefined
-  networkList: BraveWallet.NetworkInfo[]
   fullAssetFiatBalance: Amount
   formattedFullAssetBalance: string
   selectedAssetTransactions: ParsedTransaction[]
@@ -64,7 +67,6 @@ export const AccountsAndTransactionsList = ({
   fullAssetFiatBalance,
   formattedFullAssetBalance,
   selectedAssetTransactions,
-  networkList,
   onClickAddAccount
 }: Props) => {
   // redux
@@ -72,7 +74,20 @@ export const AccountsAndTransactionsList = ({
   const transactionSpotPrices = useUnsafeWalletSelector(WalletSelectors.transactionSpotPrices)
   const accounts = useUnsafeWalletSelector(WalletSelectors.accounts)
   const defaultCurrencies = useUnsafeWalletSelector(WalletSelectors.defaultCurrencies)
-  const selectedNetwork = useUnsafeWalletSelector(WalletSelectors.selectedNetwork)
+  
+  // queries
+  const { data: selectedNetwork } = useGetSelectedChainQuery()
+  
+  const { selectedAssetNetwork } = useGetAllNetworksQuery(undefined, {
+    selectFromResult: (result) => ({
+      selectedAssetNetwork: selectedAsset ? result.data?.entities[networkEntityAdapter.selectId({
+        chainId: selectedAsset.chainId,
+        coin: selectedAsset.coin
+      })] : selectedNetwork
+    }),
+    skip: !selectedAsset
+  })
+
 
   // hooks
   const {
@@ -89,17 +104,10 @@ export const AccountsAndTransactionsList = ({
   const [selectedSellAccount, setSelectedSellAccount] = React.useState<WalletAccountType>()
   const [showSellModal, setShowSellModal] = React.useState<boolean>(false)
 
-  const isNonFungibleToken = React.useMemo(() => {
-    return selectedAsset?.isErc721 || selectedAsset?.isNft
-  }, [selectedAsset])
-
-  const selectedAssetsNetwork = React.useMemo(() => {
-    if (!selectedAsset) {
-      return selectedNetwork
-    }
-    return getTokensNetwork(networkList, selectedAsset)
-  }, [selectedNetwork, selectedAsset, networkList])
-
+  // computed
+  const isNonFungibleToken = selectedAsset?.isErc721 || selectedAsset?.isNft
+  
+  // memos
   const filteredAccountsByCoinType = React.useMemo(() => {
     if (!selectedAsset) {
       return []
@@ -170,7 +178,7 @@ export const AccountsAndTransactionsList = ({
               name={account.name}
               address={account.address}
               assetBalance={getBalance(account, selectedAsset)}
-              selectedNetwork={selectedAssetsNetwork}
+              selectedNetwork={selectedAssetNetwork}
               hideBalances={hideBalances}
               isNft={isNonFungibleToken}
               showSellModal={() => onShowSellModal(account)}
@@ -206,7 +214,7 @@ export const AccountsAndTransactionsList = ({
       {showSellModal && selectedAsset &&
         <SellAssetModal
           selectedAsset={selectedAsset}
-          selectedAssetsNetwork={selectedAssetsNetwork}
+          selectedAssetsNetwork={selectedAssetNetwork}
           onClose={() => setShowSellModal(false)}
           sellAmount={sellAmount}
           setSellAmount={setSellAmount}

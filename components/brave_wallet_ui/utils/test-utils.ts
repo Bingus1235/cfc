@@ -15,7 +15,7 @@ import { createWalletReducer } from '../common/slices/wallet.slice'
 import { createPageReducer } from '../page/reducers/page_reducer'
 
 // mocks
-import { getMockedAPIProxy } from '../common/async/__mocks__/bridge'
+import { getMockedAPIProxy, WalletApiDataOverrides } from '../common/async/__mocks__/bridge'
 import { mockPageState } from '../stories/mock-data/mock-page-state'
 import { mockWalletState } from '../stories/mock-data/mock-wallet-state'
 import { AccountsTabState, createAccountsTabReducer } from '../page/reducers/accounts-tab-reducer'
@@ -28,13 +28,17 @@ export interface RootStateOverrides {
   walletStateOverride?: Partial<WalletState>
 }
 
-export const createMockStore = ({
-  accountTabStateOverride,
-  pageStateOverride,
-  panelStateOverride,
-  walletStateOverride
-}: RootStateOverrides) => {
+export const createMockStore = (
+  {
+    accountTabStateOverride,
+    pageStateOverride,
+    panelStateOverride,
+    walletStateOverride
+  }: RootStateOverrides,
+  apiOverrides?: WalletApiDataOverrides
+) => {
   // api
+  getMockedAPIProxy().applyOverrides(apiOverrides)
   const api = createWalletApi(getMockedAPIProxy)
   // redux
   const store = configureStore({
@@ -54,7 +58,8 @@ export const createMockStore = ({
       [api.reducerPath]: api.reducer
     },
     devTools: true,
-    middleware: (getDefaultMiddleware) => getDefaultMiddleware().concat(api.middleware)
+    middleware: (getDefaultMiddleware) =>
+      getDefaultMiddleware().concat(api.middleware)
   })
 
   const proxy = getMockedAPIProxy()
