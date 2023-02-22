@@ -343,15 +343,15 @@ void AssetDiscoveryManager::CompleteDiscoverAssets(
         std::move(discovered_assets_for_bucket_clone));
   }
 
-  // Do not emit event or modify remaining_chains_ count if
+  // Do not emit event or modify remaining_buckets_ count if
   // call was triggered by an AccountsAdded event
   if (triggered_by_accounts_added) {
     return;
   }
 
-  // Complete the call by decrementing remaining_chains_, storing the discovered
-  // assets for later, and emitting the event if this was the final chain to
-  // finish
+  // Complete the call by decrementing remaining_buckets_, storing the
+  // discovered assets for later, and emitting the event if this was the final
+  // chain to finish
   remaining_buckets_--;
   for (auto& asset : discovered_assets_for_bucket) {
     discovered_assets_.push_back(std::move(asset));

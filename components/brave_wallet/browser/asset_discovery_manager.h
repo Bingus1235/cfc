@@ -153,12 +153,12 @@ class AssetDiscoveryManager : public mojom::KeyringServiceObserver {
   // remaining_buckets_ is the number of 'buckets' of requets remaining for an
   // in-flight DiscoverAssetsOnAllSupportedChainsRefresh call to be completed.
   // When no call is in-flight, remaining_buckets_ is 0.  When a call is
-  // in-flight, remaining_chains_ is > 0 and the AssetDiscoverManager will
+  // in-flight, remaining_buckets_ is > 0 and the AssetDiscoverManager will
   // refuse to process additional  DiscoverAssetsOnAllSupportedChainsRefresh
   // calls.
   //
   // DiscoverAssetsOnAllSupportedChainsAccountsAdded does not read from or write
-  // to remaining_chains_ and thus those calls will always processed.
+  // to remaining_buckets_ and thus those calls will always processed.
   int remaining_buckets_ = 0;
   std::vector<mojom::BlockchainTokenPtr> discovered_assets_;
   std::vector<std::string> supported_chains_for_testing_;
