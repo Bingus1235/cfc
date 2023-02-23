@@ -592,6 +592,23 @@ GetEthBalanceScannerContractAddresses() {
   return *contract_addresses;
 }
 
+const base::flat_map<std::string, std::string>& SimpleHashChainIds() {
+  static base::NoDestructor<base::flat_map<std::string, std::string>>
+      chain_id_lookup({
+          {mojom::kMainnetChainId, "ethereum"},
+          {mojom::kSolanaMainnet, "solana"},
+          {mojom::kPolygonMainnetChainId, "polygon"},
+          {mojom::kArbitrumMainnetChainId, "arbitrum"},
+          {mojom::kOptimismMainnetChainId, "optimism"},
+          {mojom::kAvalancheMainnetChainId, "avalanche"},
+          {mojom::kBinanceSmartChainMainnetChainId, "bsc"},
+          {mojom::kGoerliChainId, "ethereum-goerli"},
+          {mojom::kSolanaTestnet, "solana-testnet"},
+          {mojom::kSolanaDevnet, "solana-devnet"},
+      });
+  return *chain_id_lookup;
+}
+
 bool HasJupiterFeesForTokenMint(const std::string& mint) {
   static std::vector<std::string> mints(
       {"So11111111111111111111111111111111111111112",     // wSOL

@@ -147,9 +147,14 @@ class AssetDiscoveryManager : public mojom::KeyringServiceObserver {
 
   friend class AssetDiscoveryManagerUnitTest;
   FRIEND_TEST_ALL_PREFIXES(AssetDiscoveryManagerUnitTest, DecodeMintAddress);
+  FRIEND_TEST_ALL_PREFIXES(AssetDiscoveryManagerUnitTest,
+                           GetSimpleHashNftsByWalletUrl);
 
   static absl::optional<SolanaAddress> DecodeMintAddress(
       const std::vector<uint8_t>& data);
+  static GURL GetSimpleHashNftsByWalletUrl(
+      const std::string& account_address,
+      const std::vector<std::string>& chain_ids);
 
   // remaining_buckets_ is the number of 'buckets' of requets remaining for an
   // in-flight DiscoverAssetsOnAllSupportedChainsRefresh call to be completed.

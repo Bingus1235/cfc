@@ -40,6 +40,7 @@ constexpr char kSardineClientTokensURL[] =
     "https://api.sardine.ai/v1/auth/client-tokens";
 constexpr char kTransakURL[] = "https://global.transak.com/";
 constexpr char kTransakApiKey[] = "985d14f0-4cf5-4a4c-8917-78107620d3b7";
+constexpr char kSimpleHashUrl[] = "https://api.simplehash.com";
 
 constexpr webui::LocalizedString kLocalizedStrings[] = {
     {"braveWalletSolanaSysvarRentProgram",
@@ -1225,6 +1226,7 @@ const std::string GetSardineNetworkName(const std::string& chain_id);
 const base::flat_map<std::string, std::string>& GetInfuraChainEndpoints();
 const base::flat_map<std::string, std::string>&
 GetEthBalanceScannerContractAddresses();
+const base::flat_map<std::string, std::string>& SimpleHashChainIds();
 bool HasJupiterFeesForTokenMint(const std::string& mint);
 
 }  // namespace brave_wallet

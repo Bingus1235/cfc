@@ -10,6 +10,7 @@
 
 #include "base/base64.h"
 #include "base/strings/strcat.h"
+#include "base/strings/stringprintf.h"
 #include "base/threading/platform_thread.h"
 #include "base/time/time.h"
 #include "brave/components/brave_wallet/browser/blockchain_registry.h"
@@ -25,6 +26,7 @@
 #include "brave/components/brave_wallet/common/solana_utils.h"
 #include "components/prefs/pref_service.h"
 #include "components/prefs/scoped_user_pref_update.h"
+#include "net/base/url_util.h"
 #include "services/network/public/cpp/shared_url_loader_factory.h"
 #include "ui/base/l10n/l10n_util.h"
 
@@ -63,8 +65,9 @@ AssetDiscoveryManager::AssetDiscoveryManager(
     JsonRpcService* json_rpc_service,
     KeyringService* keyring_service,
     PrefService* prefs)
-    : api_request_helper_(new api_request_helper::APIRequestHelper(GetNetworkTrafficAnnotationTag(),
-                                               url_loader_factory)),
+    : api_request_helper_(new api_request_helper::APIRequestHelper(
+          GetNetworkTrafficAnnotationTag(),
+          url_loader_factory)),
       wallet_service_(wallet_service),
       json_rpc_service_(json_rpc_service),
       keyring_service_(keyring_service),
@@ -451,6 +454,46 @@ absl::optional<SolanaAddress> AssetDiscoveryManager::DecodeMintAddress(
 
   std::vector<uint8_t> pub_key_bytes(data.begin(), data.begin() + 32);
   return SolanaAddress::FromBytes(pub_key_bytes);
+}
+
+// static
+// Creates a URL like
+// https://api.simplehash.com/api/v0/nfts/owners?chains={chains}&wallet_addresses={wallet_addresses}
+GURL AssetDiscoveryManager::GetSimpleHashNftsByWalletUrl(
+    const std::string& account_address,
+    const std::vector<std::string>& chain_ids) {
+  if (chain_ids.empty()) {
+    return GURL();
+  }
+
+  std::string urlStr =
+      base::StringPrintf("%s/api/v0/nfts/owners", kSimpleHashUrl);
+  const base::flat_map<std::string, std::string>& simple_hash_chain_ids =
+      SimpleHashChainIds();
+  std::string chain_ids_param;
+  for (const auto& chain_id : chain_ids) {
+    auto it = simple_hash_chain_ids.find(chain_id);
+    if (it != simple_hash_chain_ids.end()) {
+      if (!chain_ids_param.empty()) {
+        chain_ids_param += ",";
+      }
+      chain_ids_param += it->second;
+    }
+  }
+
+  if (chain_ids_param.empty()) {
+    return GURL();
+  }
+
+  GURL url = GURL(urlStr);
+
+  // Add the chain IDs to the URL as a query parameter
+  url = net::AppendQueryParameter(url, "chains", chain_ids_param);
+
+  // Add the wallet address as a query parameter to the URL
+  url = net::AppendQueryParameter(url, "wallet_addresses", account_address);
+
+  return GURL(url);
 }
 
 }  // namespace brave_wallet

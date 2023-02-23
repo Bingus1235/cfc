@@ -1306,4 +1306,34 @@ TEST_F(AssetDiscoveryManagerUnitTest, GetAssetDiscoverySupportedEthChains) {
   EXPECT_EQ(chains2.size(), chains3.size());
 }
 
+TEST_F(AssetDiscoveryManagerUnitTest, GetSimpleHashNftsByWalletUrl) {
+  // https://api.simplehash.com/api/v0/nfts/owners?chains={chains}&wallet_addresses={wallet_addresses}
+  // Empty chains yields empty URL
+  EXPECT_EQ(asset_discovery_manager_->GetSimpleHashNftsByWalletUrl(
+                "0x0000000000000000000000000000000000000000", {}),
+            GURL());
+
+  // One valid chain yields correct URL
+  EXPECT_EQ(asset_discovery_manager_->GetSimpleHashNftsByWalletUrl(
+                "0x0000000000000000000000000000000000000000",
+                {mojom::kMainnetChainId}),
+            GURL("https://api.simplehash.com/api/v0/nfts/"
+                 "owners?chains=ethereum&wallet_addresses="
+                 "0x0000000000000000000000000000000000000000"));
+
+  // Two valid chains yields correct URL
+  EXPECT_EQ(asset_discovery_manager_->GetSimpleHashNftsByWalletUrl(
+                "0x0000000000000000000000000000000000000000",
+                {mojom::kMainnetChainId, mojom::kOptimismMainnetChainId}),
+            GURL("https://api.simplehash.com/api/v0/nfts/"
+                 "owners?chains=ethereum%2Coptimism&wallet_addresses="
+                 "0x0000000000000000000000000000000000000000"));
+
+  // One invalid chain yields empty URL
+  EXPECT_EQ(asset_discovery_manager_->GetSimpleHashNftsByWalletUrl(
+                "0x0000000000000000000000000000000000000000",
+                {"chain ID not supported by SimpleHash"}),
+            GURL());
+}
+
 }  // namespace brave_wallet
