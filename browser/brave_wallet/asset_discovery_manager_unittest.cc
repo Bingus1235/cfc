@@ -6,6 +6,7 @@
 #include "brave/components/brave_wallet/browser/asset_discovery_manager.h"
 
 #include "base/base64.h"
+#include "base/json/json_reader.h"
 #include "base/memory/raw_ptr.h"
 #include "base/strings/strcat.h"
 #include "base/test/bind.h"
@@ -181,6 +182,29 @@ class AssetDiscoveryManagerUnitTest : public testing::Test {
         }));
   }
 
+  void SetInterceptors(std::map<GURL, std::string> responses) {
+    url_loader_factory_.SetInterceptor(base::BindLambdaForTesting(
+        [&, responses](const network::ResourceRequest& request) {
+          // If the request url is in responses, add that response
+          auto it = responses.find(request.url);
+          if (it != responses.end()) {
+            // Get the response string
+            std::string response = it->second;
+            url_loader_factory_.ClearResponses();
+            url_loader_factory_.AddResponse(request.url.spec(), response);
+          }
+        }));
+  }
+
+  void SetHTTPRequestTimeoutInterceptor() {
+    url_loader_factory_.SetInterceptor(base::BindLambdaForTesting(
+        [&](const network::ResourceRequest& request) {
+          url_loader_factory_.ClearResponses();
+          url_loader_factory_.AddResponse(request.url.spec(), "",
+                                          net::HTTP_REQUEST_TIMEOUT);
+        }));
+  }
+
   // SetInterceptorForDiscoverSolAssets takes a map of addresses to responses
   // and adds the response if the address if found in the request string
   void SetInterceptorForDiscoverSolAssets(
@@ -338,6 +362,27 @@ class AssetDiscoveryManagerUnitTest : public testing::Test {
     std::move(assets_last_discovered_at_test_fn)
         .Run(previous_assets_last_discovered_at,
              current_assets_last_discovered_at);
+  }
+
+  void TestFetchNFTsFromSimpleHash(
+      const std::string& account_address,
+      const std::vector<std::string>& chain_ids,
+      const std::vector<SimpleHashNFT>& expected_nfts) {
+    base::RunLoop run_loop;
+    asset_discovery_manager_->FetchNFTsFromSimpleHash(
+        account_address, chain_ids,
+        base::BindLambdaForTesting([&](const std::vector<SimpleHashNFT>& nfts) {
+          ASSERT_EQ(nfts.size(), expected_nfts.size());
+          for (size_t i = 0; i < nfts.size(); i++) {
+            EXPECT_EQ(nfts[i].chain, expected_nfts[i].chain);
+            EXPECT_EQ(nfts[i].contract_address,
+                      expected_nfts[i].contract_address);
+            EXPECT_EQ(nfts[i].token_id, expected_nfts[i].token_id);
+            EXPECT_EQ(nfts[i].type, expected_nfts[i].type);
+          }
+          run_loop.Quit();
+        }));
+    run_loop.Run();
   }
 
   PrefService* GetPrefs() { return profile_->GetPrefs(); }
@@ -1308,6 +1353,11 @@ TEST_F(AssetDiscoveryManagerUnitTest, GetAssetDiscoverySupportedEthChains) {
 
 TEST_F(AssetDiscoveryManagerUnitTest, GetSimpleHashNftsByWalletUrl) {
   // https://api.simplehash.com/api/v0/nfts/owners?chains={chains}&wallet_addresses={wallet_addresses}
+  // Empty address yields empty URL
+  EXPECT_EQ(asset_discovery_manager_->GetSimpleHashNftsByWalletUrl(
+                "", {mojom::kMainnetChainId}),
+            GURL(""));
+
   // Empty chains yields empty URL
   EXPECT_EQ(asset_discovery_manager_->GetSimpleHashNftsByWalletUrl(
                 "0x0000000000000000000000000000000000000000", {}),
@@ -1334,6 +1384,246 @@ TEST_F(AssetDiscoveryManagerUnitTest, GetSimpleHashNftsByWalletUrl) {
                 "0x0000000000000000000000000000000000000000",
                 {"chain ID not supported by SimpleHash"}),
             GURL());
+}
+
+TEST_F(AssetDiscoveryManagerUnitTest, ParseNFTsFromSimpleHash) {
+  std::string json;
+  absl::optional<base::Value> json_value;
+
+  // Non dictionary JSON response yields nullopt
+  json = R"([])";
+  json_value = base::JSONReader::Read(json);
+  ASSERT_TRUE(json_value);
+  auto result = asset_discovery_manager_->ParseNFTsFromSimpleHash(*json_value);
+  ASSERT_FALSE(result);
+
+  // Missing 'nfts' key yields nullopt
+  json = R"({"foo": "bar"})";
+  json_value = base::JSONReader::Read(json);
+  ASSERT_TRUE(json_value);
+  result = asset_discovery_manager_->ParseNFTsFromSimpleHash(*json_value);
+  ASSERT_FALSE(result);
+
+  // Dictionary type 'nfts' key yields nullopt
+  json = R"({"nfts": {}})";
+  json_value = base::JSONReader::Read(json);
+  ASSERT_TRUE(json_value);
+  result = asset_discovery_manager_->ParseNFTsFromSimpleHash(*json_value);
+  ASSERT_FALSE(result);
+
+  // Valid, 1 NFT
+  json = R"({
+    "next": null,
+    "previous": null,
+    "nfts": [
+      {
+        "nft_id": "polygon.0xbfb1e576de8ca6d99a74712208c1fa86b382c64c.428458408537",
+        "chain": "polygon",
+        "contract_address": "0xBfb1E576dE8ca6d99A74712208C1fA86b382c64c",
+        "token_id": "428458408537",
+        "contract": {
+          "type": "ERC1155"
+        }
+      }
+    ]
+  })";
+  json_value = base::JSONReader::Read(json);
+  ASSERT_TRUE(json_value);
+  result = asset_discovery_manager_->ParseNFTsFromSimpleHash(*json_value);
+  ASSERT_TRUE(result);
+  EXPECT_EQ(result.value().nfts.size(), 1u);
+  EXPECT_EQ(result.value().nfts[0].chain, "polygon");
+  EXPECT_EQ(result.value().nfts[0].contract_address,
+            "0xBfb1E576dE8ca6d99A74712208C1fA86b382c64c");
+  EXPECT_EQ(result.value().nfts[0].token_id, "428458408537");
+  EXPECT_EQ(result.value().nfts[0].type, "ERC1155");
+
+  // Valid, 2 NFTs
+  json = R"({
+    "next": "https://api.simplehash.com/api/v0/nfts/next",
+    "previous": null,
+    "nfts": [
+      {
+        "nft_id": "polygon.0xbfb1e576de8ca6d99a74712208c1fa86b382c64c.428458408537",
+        "chain": "polygon",
+        "contract_address": "0xBfb1E576dE8ca6d99A74712208C1fA86b382c64c",
+        "token_id": "428458408537",
+        "contract": {
+          "type": "ERC1155"
+        }
+      },
+      {
+        "nft_id": "ethereum.0x2222222222222222222222222222222222222222.222222222222",
+        "chain": "ethereum",
+        "contract_address": "0x2222222222222222222222222222222222222222",
+        "token_id": "2",
+        "contract": {
+          "type": "ERC721"
+        }
+      }
+    ]
+  })";
+  json_value = base::JSONReader::Read(json);
+  ASSERT_TRUE(json_value);
+  result = asset_discovery_manager_->ParseNFTsFromSimpleHash(*json_value);
+  ASSERT_TRUE(result);
+  EXPECT_EQ(result.value().next.spec(),
+            "https://api.simplehash.com/api/v0/nfts/next");
+  EXPECT_EQ(result.value().nfts.size(), 2u);
+  EXPECT_EQ(result.value().nfts[0].chain, "polygon");
+  EXPECT_EQ(result.value().nfts[0].token_id, "428458408537");
+  EXPECT_EQ(result.value().nfts[0].type, "ERC1155");
+  EXPECT_EQ(result.value().nfts[1].chain, "ethereum");
+  EXPECT_EQ(result.value().nfts[1].token_id, "2");
+  EXPECT_EQ(result.value().nfts[1].type, "ERC721");
+
+  // Valid, 5 results, but only 1 has all necessary keys yields 1 NFT
+  json = R"({
+    "next": "https://api.simplehash.com/api/v0/nfts/next",
+    "previous": null,
+    "nfts": [
+      {
+        "nft_id": "polygon.0xbfb1e576de8ca6d99a74712208c1fa86b382c64c.428458408537",
+        "chain": "polygon",
+        "contract_address": "0xBfb1E576dE8ca6d99A74712208C1fA86b382c64c",
+        "token_id": "428458408537",
+        "contract": {
+          "type": "ERC1155"
+        }
+      },
+      {
+        "nft_id": "ethereum.0x2222222222222222222222222222222222222222.222222222222",
+        "contract_address": "0x2222222222222222222222222222222222222222",
+        "token_id": "2",
+        "contract": {
+          "type": "ERC721"
+        }
+      },
+      {
+        "nft_id": "ethereum.0x3333333333333333333333333333333333333333.333333333333",
+        "chain": "ethereum",
+        "token_id": "2",
+        "contract": {
+          "type": "ERC721"
+        }
+      },
+      {
+        "nft_id": "ethereum.0x4444444444444444444444444444444444444444.444444444444",
+        "chain": "ethereum",
+        "contract_address": "0x4444444444444444444444444444444444444444",
+        "contract": {
+          "type": "ERC721"
+        }
+      },
+      {
+        "nft_id": "ethereum.0x5555555555555555555555555555555555555555.555555555555",
+        "chain": "ethereum",
+        "contract_address": "0x5555555555555555555555555555555555555555",
+        "token_id": "2"
+      }
+    ]
+  })";
+  json_value = base::JSONReader::Read(json);
+  ASSERT_TRUE(json_value);
+  result = asset_discovery_manager_->ParseNFTsFromSimpleHash(*json_value);
+  ASSERT_TRUE(result);
+  EXPECT_EQ(result.value().nfts.size(), 1u);
+}
+
+TEST_F(AssetDiscoveryManagerUnitTest, FetchNFTsFromSimpleHash) {
+  std::vector<SimpleHashNFT> expected_nfts;
+  std::string json;
+  std::string json2;
+  std::map<GURL, std::string> responses;
+  GURL url;
+
+  // Empty account address yields empty expected_nfts
+  TestFetchNFTsFromSimpleHash("", {mojom::kMainnetChainId}, expected_nfts);
+
+  // Empty chain IDs yields empty expected_nfts
+  TestFetchNFTsFromSimpleHash("0x0000000000000000000000000000000000000000", {},
+                              expected_nfts);
+
+  // Non 2xx response yields empty expected_nfts
+  SetHTTPRequestTimeoutInterceptor();
+  TestFetchNFTsFromSimpleHash("0x0000000000000000000000000000000000000000",
+                              {mojom::kMainnetChainId}, expected_nfts);
+
+  // 1 NFT is parsed
+  json = R"({
+    "next": null,
+    "previous": null,
+    "nfts": [
+      {
+        "nft_id": "polygon.0xbfb1e576de8ca6d99a74712208c1fa86b382c64c.428458408537",
+        "chain": "polygon",
+        "contract_address": "0xBfb1E576dE8ca6d99A74712208C1fA86b382c64c",
+        "token_id": "428458408537",
+        "contract": {
+          "type": "ERC1155"
+        }
+      }
+    ]
+  })";
+  SimpleHashNFT nft1;
+  nft1.chain = "polygon";
+  nft1.contract_address = "0xBfb1E576dE8ca6d99A74712208C1fA86b382c64c";
+  nft1.token_id = "428458408537";
+  nft1.type = "ERC1155";
+  url = GURL(
+      "https://api.simplehash.com/api/v0/nfts/"
+      "owners?chains=ethereum%2Coptimism&wallet_addresses="
+      "0x0000000000000000000000000000000000000000");
+  responses[url] = json;
+  SetInterceptors(responses);
+  TestFetchNFTsFromSimpleHash(
+      "0x0000000000000000000000000000000000000000",
+      {mojom::kMainnetChainId, mojom::kOptimismMainnetChainId}, {nft1});
+
+  // If 'next' page url is present, it should make another request
+  responses.clear();
+  json = R"({
+    "next": "https://api.simplehash.com/api/v0/nfts/next",
+    "previous": null,
+    "nfts": [
+      {
+        "nft_id": "polygon.0xbfb1e576de8ca6d99a74712208c1fa86b382c64c.428458408537",
+        "chain": "polygon",
+        "contract_address": "0xBfb1E576dE8ca6d99A74712208C1fA86b382c64c",
+        "token_id": "428458408537",
+        "contract": {
+          "type": "ERC1155"
+        }
+      }
+    ]
+  })";
+  responses[url] = json;
+  GURL next_url = GURL("https://api.simplehash.com/api/v0/nfts/next");
+  json2 = R"({
+    "next": null,
+    "previous": null,
+    "nfts": [
+      {
+        "nft_id": "ethereum.0x5555555555555555555555555555555555555555.555555555555",
+        "chain": "ethereum",
+        "contract_address": "0x5555555555555555555555555555555555555555",
+        "token_id": "555555555555",
+        "contract": {
+          "type": "ERC721"
+        }
+      }
+    ]
+  })";
+  responses[next_url] = json2;
+  SetInterceptors(responses);
+  SimpleHashNFT nft2;
+  nft2.chain = "ethereum";
+  nft2.contract_address = "0x5555555555555555555555555555555555555555";
+  nft2.token_id = "555555555555";
+  nft2.type = "ERC721";
+  TestFetchNFTsFromSimpleHash(
+      "0x0000000000000000000000000000000000000000",
+      {mojom::kMainnetChainId, mojom::kOptimismMainnetChainId}, {nft1, nft2});
 }
 
 }  // namespace brave_wallet

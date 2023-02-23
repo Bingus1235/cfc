@@ -59,15 +59,23 @@ net::NetworkTrafficAnnotationTag GetNetworkTrafficAnnotationTag() {
 
 namespace brave_wallet {
 
+SimpleHashNFT::SimpleHashNFT() = default;
+SimpleHashNFT::SimpleHashNFT(const SimpleHashNFT&) = default;
+SimpleHashNFT::~SimpleHashNFT() = default;
+
+FetchNFTsFromSimpleHashResult::FetchNFTsFromSimpleHashResult() = default;
+FetchNFTsFromSimpleHashResult::FetchNFTsFromSimpleHashResult(
+    const FetchNFTsFromSimpleHashResult&) = default;
+FetchNFTsFromSimpleHashResult::~FetchNFTsFromSimpleHashResult() = default;
+
 AssetDiscoveryManager::AssetDiscoveryManager(
     scoped_refptr<network::SharedURLLoaderFactory> url_loader_factory,
     BraveWalletService* wallet_service,
     JsonRpcService* json_rpc_service,
     KeyringService* keyring_service,
     PrefService* prefs)
-    : api_request_helper_(new api_request_helper::APIRequestHelper(
-          GetNetworkTrafficAnnotationTag(),
-          url_loader_factory)),
+    : api_request_helper_(new APIRequestHelper(GetNetworkTrafficAnnotationTag(),
+                                               url_loader_factory)),
       wallet_service_(wallet_service),
       json_rpc_service_(json_rpc_service),
       keyring_service_(keyring_service),
@@ -365,6 +373,261 @@ void AssetDiscoveryManager::MergeDiscoveredEthAssets(
                          triggered_by_accounts_added);
 }
 
+// Calls
+// https://api.simplehash.com/api/v0/nfts/owners?chains={chains}&wallet_addresses={wallet_addresses}
+void AssetDiscoveryManager::FetchNFTsFromSimpleHash(
+    const std::string& account_address,
+    const std::vector<std::string>& chain_ids,
+    FetchNFTsFromSimpleHashCallback callback) {
+  GURL url = GetSimpleHashNftsByWalletUrl(account_address, chain_ids);
+  if (!url.is_valid()) {
+    std::move(callback).Run({});
+    return;
+  }
+  std::vector<SimpleHashNFT> nfts_so_far;
+  auto internal_callback =
+      base::BindOnce(&AssetDiscoveryManager::OnFetchNFTsFromSimpleHash,
+                     weak_ptr_factory_.GetWeakPtr(),
+                     base::OwnedRef(nfts_so_far), std::move(callback));
+
+  api_request_helper_->Request("GET", url, "", "", true,
+                               std::move(internal_callback));
+}
+
+void AssetDiscoveryManager::OnFetchNFTsFromSimpleHash(
+    std::vector<SimpleHashNFT>& nfts_so_far,
+    FetchNFTsFromSimpleHashCallback callback,
+    APIRequestResult api_request_result) {
+  if (!api_request_result.Is2XXResponseCode()) {
+    std::move(callback).Run(std::move(nfts_so_far));
+    return;
+  }
+
+  // Invalid JSON becomes an empty string after sanitization
+  if (api_request_result.body().empty()) {
+    std::move(callback).Run(std::move(nfts_so_far));
+    return;
+  }
+
+  absl::optional<FetchNFTsFromSimpleHashResult> result =
+      ParseNFTsFromSimpleHash(api_request_result.value_body());
+  if (!result) {
+    std::move(callback).Run(std::move(nfts_so_far));
+    return;
+  }
+
+  // Add discovered NFTs to nfts_so_far
+  nfts_so_far.insert(nfts_so_far.end(), result->nfts.begin(),
+                     result->nfts.end());
+
+  // If there is a next page, fetch it
+  if (result.value().next.is_valid()) {
+    auto internal_callback =
+        base::BindOnce(&AssetDiscoveryManager::OnFetchNFTsFromSimpleHash,
+                       weak_ptr_factory_.GetWeakPtr(),
+                       base::OwnedRef(nfts_so_far), std::move(callback));
+    api_request_helper_->Request("GET", result.value().next, "", "", true,
+                                 std::move(internal_callback));
+    return;
+  }
+
+  // Otherwise, return the nfts_so_far
+  std::move(callback).Run(std::move(nfts_so_far));
+}
+
+absl::optional<FetchNFTsFromSimpleHashResult>
+AssetDiscoveryManager::ParseNFTsFromSimpleHash(const base::Value& json_value) {
+  // {
+  //   "next":
+  //   "https://api.simplehash.com/api/v0/nfts/owners?chains=polygon%2Cethereum&cursor=ZXZtLXBnLjB4YmZiMWU1NzZkZThjYTZkOTlhNzQ3MTIyMDhjMWZhODZiMzgyYzY0Yy4wMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDA0Mjg0NTg0MDg1MzdfMjAyMy0wMi0xMyAxMzozNjowMCswMDowMF9fbmV4dA&limit=1&wallet_addresses=0xB4B2802129071b2B9eBb8cBB01EA1E4D14B34961",
+  //   "previous": null,
+  //   "nfts": [
+  //     {
+  //       "nft_id":
+  //       "polygon.0xbfb1e576de8ca6d99a74712208c1fa86b382c64c.428458408537",
+  //       "chain": "polygon",
+  //       "contract_address": "0xBfb1E576dE8ca6d99A74712208C1fA86b382c64c",
+  //       "token_id": "428458408537",
+  //       "name": "EtherMail.io - Web3 wallet email + ENS / UD token",
+  //       "description": "\"Instead of needing to know your complete wallet
+  //       address by heart, you can simply use your Unstoppable or ENS Web3
+  //       domain. [Claim your Web3 email, while it's
+  //       available!](https://ethermail.io/alias?afid=63dd31e0793cf5d1041b9a1f)\n---
+  //       \n\n*💌 delivered by [walletads.io](https://www.walletads.io)*   \n*⚙️
+  //       [unsubscribe](https://unsubscribe.walletads.io)*\"", "previews": {
+  //         "image_small_url":
+  //         "https://lh3.googleusercontent.com/4MYVH4KA2f_mOaEHWPWx9sLu_9g9IuEr3ITdZ08f6iIDH74VjzGLE-Hre248cRwUC6V9AA4K3d0AD8Eayq_F9IH8wqfY1QvD7DA=s250",
+  //         "image_medium_url":
+  //         "https://lh3.googleusercontent.com/4MYVH4KA2f_mOaEHWPWx9sLu_9g9IuEr3ITdZ08f6iIDH74VjzGLE-Hre248cRwUC6V9AA4K3d0AD8Eayq_F9IH8wqfY1QvD7DA",
+  //         "image_large_url":
+  //         "https://lh3.googleusercontent.com/4MYVH4KA2f_mOaEHWPWx9sLu_9g9IuEr3ITdZ08f6iIDH74VjzGLE-Hre248cRwUC6V9AA4K3d0AD8Eayq_F9IH8wqfY1QvD7DA=s1000",
+  //         "image_opengraph_url":
+  //         "https://lh3.googleusercontent.com/4MYVH4KA2f_mOaEHWPWx9sLu_9g9IuEr3ITdZ08f6iIDH74VjzGLE-Hre248cRwUC6V9AA4K3d0AD8Eayq_F9IH8wqfY1QvD7DA=k-w1200-s2400-rj",
+  //         "blurhash": "UG5},po+N4WF%jbfRpoh%NohM}WCWBazWCof",
+  //         "predominant_color": "#061033"
+  //       },
+  //       "image_url":
+  //       "https://cdn.simplehash.com/assets/46772326f1eab2c765b2ebed4acf1c94f2e5fdbdd14eea8fb2b41af5b20521a3.gif",
+  //       "image_properties": {
+  //         "width": 500,
+  //         "height": 500,
+  //         "size": 4093120,
+  //         "mime_type": "image/gif"
+  //       },
+  //       "video_url": null,
+  //       "video_properties": null,
+  //       "audio_url": null,
+  //       "audio_properties": null,
+  //       "model_url": null,
+  //       "model_properties": null,
+  //       "background_color": null,
+  //       "external_url": null,
+  //       "created_date": "2023-02-10T09:43:42",
+  //       "status": "minted",
+  //       "token_count": 19995,
+  //       "owner_count": 17262,
+  //       "owners": [ { "owner_address":
+  //       "0xFF0EC440231Ef0cBbfe8e35E655ACE8112C3C575", "quantity": 2734,
+  //       "first_acquired_date": "2023-02-10T09:43:42", "last_acquired_date":
+  //       "2023-02-10T09:43:42" }], "last_sale": null, "first_created": {
+  //         "minted_to": "0xff0ec440231ef0cbbfe8e35e655ace8112c3c575",
+  //         "quantity": 20000,
+  //         "timestamp": "2023-02-10T09:43:42",
+  //         "block_number": 39129989,
+  //         "transaction":
+  //         "0xccaecd628480662848d20eb2af48132b17b1165eaf7cb7f5400cc0b80ca9f453",
+  //         "transaction_initiator":
+  //         "0xf58fb3aa94d603062daec9dd3c1d8fd8b8d0db77"
+  //       },
+  //       "contract": {
+  //         "type": "ERC1155",
+  //         "name": "ethermail.io",
+  //         "symbol": "ETHMAIL",
+  //         "deployed_by": "0xf58fb3aa94d603062daec9dd3c1d8fd8b8d0db77",
+  //         "deployed_via_contract": null
+  //       },
+  //       "collection": {
+  //         "collection_id": "f2526d49315d02894f4107daa36db47a",
+  //         "name": "Attention UD & ENS holders: announcing the ethermail.io
+  //         alias!", "description": "Attention UD & ENS Holders! 10m EMCs
+  //         raffled and airdropped upon signing up with EtherMail. Turn
+  //         0x3f...01b@ethermail.io into marc.eth@ethermail.io. [Claim your
+  //         Web3 email, while it's
+  //         available!](https://ethermail.io/alias?afid=63dd31e0793cf5d1041b9a1f)",
+  //         "image_url":
+  //         "https://lh3.googleusercontent.com/8NdkjxUAHEjW34DwdJiXFKciqwqeZWs2G0ocGWL6OalMPeykHdy0OFQnCPBEvSf0NTLEAHqAx4lsme87FjL4V6g0owAJPNvNhA",
+  //         "banner_image_url": null,
+  //         "external_url": null,
+  //         "twitter_username": null,
+  //         "discord_url": null,
+  //         "marketplace_pages": [
+  //           {
+  //             "marketplace_id": "opensea",
+  //             "marketplace_name": "OpenSea",
+  //             "marketplace_collection_id":
+  //             "attention-ud-ens-holders-announcing-the-ethermail", "nft_url":
+  //             "https://opensea.io/assets/matic/0xbfb1e576de8ca6d99a74712208c1fa86b382c64c/428458408537",
+  //             "collection_url":
+  //             "https://opensea.io/collection/attention-ud-ens-holders-announcing-the-ethermail",
+  //             "verified": false
+  //           }
+  //         ],
+  //         "metaplex_mint": null,
+  //         "metaplex_first_verified_creator": null,
+  //         "spam_score": 25,
+  //         "floor_prices": [
+  //           {
+  //             "marketplace_id": "opensea",
+  //             "marketplace_name": "OpenSea",
+  //             "value": 812761433454256,
+  //             "payment_token": {
+  //               "payment_token_id":
+  //               "polygon.0x7ceb23fd6bc0add59e62ac25578270cff1b9f619", "name":
+  //               "Wrapped Ether", "symbol": "WETH", "address":
+  //               "0x7ceB23fD6bC0adD59E62ac25578270cFf1b9f619", "decimals": 18
+  //             }
+  //           }
+  //         ],
+  //         "distinct_owner_count": 18166,
+  //         "distinct_nft_count": 2,
+  //         "total_quantity": 29994,
+  //         "top_contracts": [
+  //           "polygon.0xbfb1e576de8ca6d99a74712208c1fa86b382c64c"
+  //         ]
+  //       },
+  //       "rarity": {
+  //         "rank": null,
+  //         "score": null,
+  //         "unique_attributes": null
+  //       },
+  //       "extra_metadata": {
+  //         "attributes": [],
+  //         "__image_id": "127",
+  //         "image_original_url":
+  //         "ipfs://QmeCJnLGypZ8aqyCSH9jtxrKYzfpNdHdRydwVz9Zg9uZLh",
+  //         "animation_original_url": null,
+  //         "metadata_original_url":
+  //         "ipfs://QmbDck97MGAK9ea7fvRTPo3dXXaZckqrfZBU2ycoeTDBaQ"
+  //       }
+  //     }
+  //   ]
+  // }
+
+  if (!json_value.is_dict()) {
+    return absl::nullopt;
+  }
+
+  FetchNFTsFromSimpleHashResult result;
+  auto* next = json_value.FindStringKey("next");
+  if (next) {
+    result.next = GURL(*next);
+  }
+
+  const base::Value* nfts = json_value.FindKey("nfts");
+  if (!nfts || !nfts->is_list()) {
+    return absl::nullopt;
+  }
+  for (const auto& nft : nfts->GetList()) {
+    SimpleHashNFT simple_hash_nft;
+    auto* chain = nft.FindStringKey("chain");
+
+    // chain
+    if (!chain) {
+      continue;
+    }
+    simple_hash_nft.chain = *chain;
+
+    // contract_address
+    auto* contract_address = nft.FindStringKey("contract_address");
+    if (!contract_address) {
+      continue;
+    }
+    simple_hash_nft.contract_address = *contract_address;
+
+    // token_id
+    auto* token_id = nft.FindStringKey("token_id");
+    if (!token_id) {
+      continue;
+    }
+    simple_hash_nft.token_id = *token_id;
+
+    // contract.type
+    auto* contract = nft.FindDictKey("contract");
+    if (!contract) {
+      continue;
+    }
+    auto* type = contract->FindStringKey("type");
+    if (!type) {
+      continue;
+    }
+    simple_hash_nft.type = *type;
+
+    result.nfts.push_back(simple_hash_nft);
+  }
+
+  return result;
+}
+
 // Called when asset discovery has completed for
 void AssetDiscoveryManager::CompleteDiscoverAssets(
     std::vector<mojom::BlockchainTokenPtr> discovered_assets_for_bucket,
@@ -462,7 +725,7 @@ absl::optional<SolanaAddress> AssetDiscoveryManager::DecodeMintAddress(
 GURL AssetDiscoveryManager::GetSimpleHashNftsByWalletUrl(
     const std::string& account_address,
     const std::vector<std::string>& chain_ids) {
-  if (chain_ids.empty()) {
+  if (chain_ids.empty() || account_address.empty()) {
     return GURL();
   }
 

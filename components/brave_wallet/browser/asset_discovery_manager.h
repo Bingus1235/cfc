@@ -7,7 +7,9 @@
 #define BRAVE_COMPONENTS_BRAVE_WALLET_BROWSER_ASSET_DISCOVERY_MANAGER_H_
 
 #include <map>
+#include <memory>
 #include <string>
+#include <tuple>
 #include <utility>
 #include <vector>
 
@@ -25,6 +27,24 @@ class PrefService;
 
 namespace brave_wallet {
 
+struct SimpleHashNFT {
+  SimpleHashNFT();
+  SimpleHashNFT(const SimpleHashNFT& other);
+  ~SimpleHashNFT();
+  std::string chain;
+  std::string contract_address;
+  std::string token_id;
+  std::string type;
+};
+
+struct FetchNFTsFromSimpleHashResult {
+  FetchNFTsFromSimpleHashResult();
+  FetchNFTsFromSimpleHashResult(const FetchNFTsFromSimpleHashResult& other);
+  ~FetchNFTsFromSimpleHashResult();
+  GURL next;
+  std::vector<SimpleHashNFT> nfts;
+};
+
 class BraveWalletService;
 class JsonRpcService;
 class KeyringService;
@@ -41,6 +61,9 @@ class AssetDiscoveryManager : public mojom::KeyringServiceObserver {
   AssetDiscoveryManager(const AssetDiscoveryManager&) = delete;
   AssetDiscoveryManager& operator=(AssetDiscoveryManager&) = delete;
   ~AssetDiscoveryManager() override;
+
+  using APIRequestHelper = api_request_helper::APIRequestHelper;
+  using APIRequestResult = api_request_helper::APIRequestResult;
 
   // KeyringServiceObserver
   void KeyringCreated(const std::string& keyring_id) override {}
@@ -81,6 +104,8 @@ class AssetDiscoveryManager : public mojom::KeyringServiceObserver {
                            DiscoverAssetsOnAllSupportedChainsRefresh);
   FRIEND_TEST_ALL_PREFIXES(AssetDiscoveryManagerUnitTest,
                            GetAssetDiscoverySupportedEthChains);
+  FRIEND_TEST_ALL_PREFIXES(AssetDiscoveryManagerUnitTest,
+                           ParseNFTsFromSimpleHash);
 
   const std::vector<std::string>& GetAssetDiscoverySupportedEthChains();
 
@@ -123,6 +148,19 @@ class AssetDiscoveryManager : public mojom::KeyringServiceObserver {
       bool triggered_by_accounts_added,
       const std::vector<std::map<std::string, std::vector<std::string>>>&
           discovered_assets);
+
+  using FetchNFTsFromSimpleHashCallback =
+      base::OnceCallback<void(const std::vector<SimpleHashNFT>& nfts)>;
+  void FetchNFTsFromSimpleHash(const std::string& account_address,
+                               const std::vector<std::string>& chain_ids,
+                               FetchNFTsFromSimpleHashCallback callback);
+
+  void OnFetchNFTsFromSimpleHash(std::vector<SimpleHashNFT>& nfts_so_far,
+                                 FetchNFTsFromSimpleHashCallback callback,
+                                 APIRequestResult api_request_result);
+
+  absl::optional<FetchNFTsFromSimpleHashResult> ParseNFTsFromSimpleHash(
+      const base::Value& json_value);
 
   // CompleteDiscoverAssets signals that the discover assets request has
   // completed for a given chain_id
