@@ -46,6 +46,7 @@
 //            "symbol": "ETH",
 //            "is_erc20": false,
 //            "is_erc721": false,
+//            "is_erc1155": false,
 //            "decimals": 18,
 //            "visible": true
 //            ...
@@ -56,6 +57,7 @@
 //            "symbol": "BAT",
 //            "is_erc20": true,
 //            "is_erc721": false,
+//            "is_erc1155": false,
 //            "decimals": 18,
 //            "visible": true
 //            ...
@@ -66,6 +68,7 @@
 //            "symbol": "MOR",
 //            "is_erc20": true,
 //            "is_erc721": false,
+//            "is_erc1155": false,
 //            "decimals": 18,
 //            "visible": true
 //            ...
@@ -87,6 +90,7 @@
 //            "symbol": "SOL",
 //            "is_erc20": false,
 //            "is_erc721": false,
+//            "is_erc1155": false,
 //            "decimals": 9,
 //            "visible": true
 //            ...
@@ -139,6 +143,7 @@ base::Value::Dict GetEthNativeAssetFromChain(
   native_asset.Set("symbol", chain->symbol);
   native_asset.Set("is_erc20", false);
   native_asset.Set("is_erc721", false);
+  native_asset.Set("is_erc1155", false);
   native_asset.Set("is_nft", false);
   native_asset.Set("decimals", chain->decimals);
   native_asset.Set("visible", true);
@@ -948,6 +953,7 @@ base::Value::Dict BraveWalletService::GetDefaultEthereumAssets() {
   bat.Set("symbol", "BAT");
   bat.Set("is_erc20", true);
   bat.Set("is_erc721", false);
+  bat.Set("is_erc1155", false);
   bat.Set("is_nft", false);
   bat.Set("decimals", 18);
   bat.Set("visible", true);
@@ -980,6 +986,7 @@ base::Value::Dict BraveWalletService::GetDefaultSolanaAssets() {
   sol.Set("decimals", 9);
   sol.Set("is_erc20", false);
   sol.Set("is_erc721", false);
+  sol.Set("is_erc1155", false);
   sol.Set("is_nft", false);
   sol.Set("visible", true);
   sol.Set("logo", "sol.png");
@@ -1005,6 +1012,7 @@ base::Value::Dict BraveWalletService::GetDefaultFilecoinAssets() {
   fil.Set("decimals", 18);
   fil.Set("is_erc20", false);
   fil.Set("is_erc721", false);
+  fil.Set("is_erc1155", false);
   fil.Set("is_nft", false);
   fil.Set("visible", true);
   fil.Set("logo", "fil.png");

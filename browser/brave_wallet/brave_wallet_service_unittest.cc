@@ -348,6 +348,7 @@ class BraveWalletServiceUnitTest : public testing::Test {
     eth_token_->symbol = "ETH";
     eth_token_->is_erc20 = false;
     eth_token_->is_erc721 = false;
+    eth_token_->is_erc1155 = false;
     eth_token_->is_nft = false;
     eth_token_->decimals = 18;
     eth_token_->visible = true;
@@ -360,6 +361,7 @@ class BraveWalletServiceUnitTest : public testing::Test {
     bat_token_->symbol = "BAT";
     bat_token_->is_erc20 = true;
     bat_token_->is_erc721 = false;
+    bat_token_->is_erc1155 = false;
     bat_token_->decimals = 18;
     bat_token_->visible = true;
     bat_token_->logo = "bat.png";
@@ -1570,6 +1572,7 @@ TEST_F(BraveWalletServiceUnitTest, MigrateUserAssetEthContractAddress) {
     value.Set("symbol", "ETH");
     value.Set("is_erc20", false);
     value.Set("is_erc721", false);
+    value.Set("is_erc1155", false);
     value.Set("decimals", 18);
     value.Set("visible", true);
     user_assets_list.Append(std::move(value));
@@ -1606,6 +1609,7 @@ TEST_F(BraveWalletServiceUnitTest, MigrateMultichainUserAssets) {
     value.Set("symbol", "ETH");
     value.Set("is_erc20", false);
     value.Set("is_erc721", false);
+    value.Set("is_erc1155", false);
     value.Set("decimals", 18);
     value.Set("visible", true);
     base::Value::List mainnet_user_assets_list;
@@ -1618,6 +1622,7 @@ TEST_F(BraveWalletServiceUnitTest, MigrateMultichainUserAssets) {
     value2.Set("symbol", "BAT");
     value2.Set("is_erc20", true);
     value2.Set("is_erc721", false);
+    value2.Set("is_erc1155", false);
     value2.Set("decimals", 18);
     value2.Set("visible", true);
     mainnet_user_assets_list.Append(std::move(value2));
@@ -1628,6 +1633,7 @@ TEST_F(BraveWalletServiceUnitTest, MigrateMultichainUserAssets) {
     value3.Set("symbol", "ETH");
     value3.Set("is_erc20", false);
     value3.Set("is_erc721", false);
+    value3.Set("is_erc1155", false);
     value3.Set("decimals", 18);
     value3.Set("visible", true);
     base::Value::List rinkbey_user_assets_list;
