@@ -7,36 +7,17 @@
 
 #include <utility>
 
-#include "base/strings/string_number_conversions.h"
-#include "brave/browser/ui/brave_browser_window.h"
-#include "chrome/browser/ui/browser_finder.h"
-#include "content/public/browser/browser_context.h"
-#include "content/public/browser/storage_partition.h"
-#include "content/public/browser/web_contents.h"
-#include "ui/base/l10n/l10n_util.h"
-
 ChatUITabHelper::~ChatUITabHelper() = default;
 
 ChatUITabHelper::ChatUITabHelper(content::WebContents* web_contents)
     : content::WebContentsObserver(web_contents),
-      content::WebContentsUserData<ChatUITabHelper>(*web_contents) {
-  auto url_loader_factory = web_contents->GetBrowserContext()
-                                ->GetDefaultStoragePartition()
-                                ->GetURLLoaderFactoryForBrowserProcess();
-  api_helper_ = std::make_unique<chat_ui::ChatUIAPIRequest>(url_loader_factory);
+      content::WebContentsUserData<ChatUITabHelper>(*web_contents) {}
+
+void ChatUITabHelper::AddToConversationHistory(const ConversationTurn& turn) {
+  chat_history_.push_back(turn);
 }
 
-void ChatUITabHelper::DidStopLoading() {
-  Browser* browser = chrome::FindBrowserWithWebContents(web_contents());
-  DCHECK(browser);
-
-  auto* active_tab_web_contents =
-      browser->tab_strip_model()->GetActiveWebContents();
-
-  if (web_contents() != active_tab_web_contents) {
-    return;
-  }
-}
+void ChatUITabHelper::DidStopLoading() {}
 
 void ChatUITabHelper::WebContentsDestroyed() {}
 

@@ -1,4 +1,4 @@
-source_set("chat_ui") {
+source_set("chat_ui_tab_helper") {
   sources = [
     "chat_ui_tab_helper.cc",
     "chat_ui_tab_helper.h",
@@ -6,7 +6,7 @@ source_set("chat_ui") {
 
   deps = [
     "//base",
-    "//brave/components/chat_ui/browser:api",
+    "//brave/components/chat_ui/common:mojom",
     "//content/public/browser",
   ]
 }

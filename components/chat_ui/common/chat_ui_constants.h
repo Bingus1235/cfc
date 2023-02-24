@@ -9,6 +9,8 @@
 #include "build/buildflag.h"
 
 namespace chat_ui {
+constexpr char kHumanPrompt[] = "\n\nHuman:";
+constexpr char kAIPrompt[] = "\n\nAssistant:";
 constexpr char kUrlBase[] = "api.anthropic.com/";
 constexpr char kCompletionPath[] = "v1/complete";
 }  // namespace chat_ui

@@ -8,10 +8,14 @@
 
 #include <memory>
 #include <string>
+#include <vector>
 
-#include "brave/components/chat_ui/browser/chat_ui_api_request.h"
+#include "brave/components/chat_ui/common/chat_ui.mojom.h"
 #include "content/public/browser/web_contents_observer.h"
 #include "content/public/browser/web_contents_user_data.h"
+
+using chat_ui::mojom::CharacterType;
+using chat_ui::mojom::ConversationTurn;
 
 class ChatUITabHelper : public content::WebContentsObserver,
                         public content::WebContentsUserData<ChatUITabHelper> {
@@ -19,6 +23,11 @@ class ChatUITabHelper : public content::WebContentsObserver,
   ChatUITabHelper(const ChatUITabHelper&) = delete;
   ChatUITabHelper& operator=(const ChatUITabHelper&) = delete;
   ~ChatUITabHelper() override;
+
+  std::vector<ConversationTurn> GetConversationHistory() {
+    return chat_history_;
+  }
+  void AddToConversationHistory(const ConversationTurn& turn);
 
  private:
   friend class content::WebContentsUserData<ChatUITabHelper>;
@@ -29,7 +38,7 @@ class ChatUITabHelper : public content::WebContentsObserver,
   void DidStopLoading() override;
   void WebContentsDestroyed() override;
 
-  std::unique_ptr<chat_ui::ChatUIAPIRequest> api_helper_ = nullptr;
+  std::vector<ConversationTurn> chat_history_;
 
   WEB_CONTENTS_USER_DATA_KEY_DECL();
 };

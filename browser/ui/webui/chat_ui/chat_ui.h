@@ -9,6 +9,7 @@
 #include <memory>
 #include <string>
 
+#include "brave/components/chat_ui/common/chat_ui.mojom-forward.h"
 #include "content/public/browser/web_ui_controller.h"
 #include "content/public/browser/webui_config.h"
 #include "ui/webui/mojo_web_ui_controller.h"
@@ -20,6 +21,14 @@ class ChatUI : public ui::UntrustedWebUIController {
   ChatUI(const ChatUI&) = delete;
   ChatUI& operator=(const ChatUI&) = delete;
   ~ChatUI() override;
+
+  void BindInterface(
+      mojo::PendingReceiver<chat_ui::mojom::PageHandler> receiver);
+
+ private:
+  std::unique_ptr<chat_ui::mojom::PageHandler> page_handler_;
+
+  WEB_UI_CONTROLLER_TYPE_DECL();
 };
 
 class UntrustedChatUIConfig : public content::WebUIConfig {

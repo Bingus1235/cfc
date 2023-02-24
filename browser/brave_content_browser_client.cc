@@ -190,6 +190,7 @@ using extensions::ChromeContentBrowserClientExtensionsPart;
 #include "brave/browser/ui/webui/brave_shields/shields_panel_ui.h"
 #include "brave/browser/ui/webui/brave_wallet/wallet_page_ui.h"
 #include "brave/browser/ui/webui/brave_wallet/wallet_panel_ui.h"
+#include "brave/browser/ui/webui/chat_ui/chat_ui.h"
 #include "brave/browser/ui/webui/commands_ui.h"
 #include "brave/browser/ui/webui/new_tab_page/brave_new_tab_ui.h"
 #include "brave/browser/ui/webui/private_new_tab_page/brave_private_new_tab_ui.h"
@@ -201,6 +202,7 @@ using extensions::ChromeContentBrowserClientExtensionsPart;
 #include "brave/components/brave_rewards/common/features.h"
 #include "brave/components/brave_shields/common/brave_shields_panel.mojom.h"
 #include "brave/components/brave_shields/common/cookie_list_opt_in.mojom.h"
+#include "brave/components/chat_ui/common/chat_ui.mojom.h"
 #include "brave/components/commands/common/commands.mojom.h"
 #include "brave/components/commands/common/features.h"
 #endif
@@ -491,6 +493,7 @@ void BraveContentBrowserClient::RegisterWebUIInterfaceBrokers(
   if (base::FeatureList::IsEnabled(commands::features::kBraveCommands)) {
     registry.ForWebUI<commands::CommandsUI>().Add<CommandsService>();
   }
+  registry.ForWebUI<ChatUI>().Add<chat_ui::mojom::PageHandler>();
 #endif
 }
 
@@ -615,6 +618,8 @@ void BraveContentBrowserClient::RegisterBrowserInterfaceBindersForFrame(
   }
   content::RegisterWebUIControllerInterfaceBinder<
       brave_rewards::mojom::PanelHandlerFactory, RewardsPanelUI>(map);
+  content::RegisterWebUIControllerInterfaceBinder<chat_ui::mojom::PageHandler,
+                                                  ChatUI>(map);
 #endif
 
 // Brave News

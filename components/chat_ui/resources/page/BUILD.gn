@@ -6,6 +6,7 @@ transpile_web_ui("chat_ui") {
         "chat_ui",
         rebase_path("chat_ui.tsx"),
       ] ]
+  deps = [ "//brave/components/chat_ui/common:mojom_js" ]
 }
 
 pack_web_resources("generated_resources") {

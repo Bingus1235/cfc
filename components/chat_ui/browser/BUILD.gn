@@ -16,13 +16,12 @@ source_set("api") {
   ]
   deps = [
     "//base",
+    "//brave/components/api_request_helper",
     "//brave/components/chat_ui/browser:buildflags",
     "//brave/components/chat_ui/common",
-    "//brave/components/api_request_helper",
     "//components/prefs",
     "//net/traffic_annotation",
     "//services/network/public/cpp",
-    "//third_party/icu",
     "//url",
   ]
 }

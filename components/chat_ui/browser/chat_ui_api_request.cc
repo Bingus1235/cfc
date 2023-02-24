@@ -68,12 +68,16 @@ void ChatUIAPIRequest::QueryPrompt(ResponseCallback callback,
                      weak_ptr_factory_.GetWeakPtr(), std::move(callback));
 
   base::Value::Dict dict;
+  base::Value::List stop_sequences;
+  stop_sequences.Append("Human:");
+
   dict.Set("prompt", prompt);
   dict.Set("max_tokens_to_sample", 200);
   dict.Set("temperature", 1);
   dict.Set("top_k", -1);
   dict.Set("top_p", 0.999);
   dict.Set("model", "claude-v1");
+  dict.Set("stop_sequences", std::move(stop_sequences));
   dict.Set("stream", false);
 
   base::flat_map<std::string, std::string> headers;
@@ -91,7 +95,19 @@ void ChatUIAPIRequest::OnGetResponse(
   // requests. |body| will be empty when the response from service is invalid
   // json.
   const bool success = result.response_code() == 200;
-  std::move(callback).Run(result.body(), success);
+  std::string answer = result.body();
+  const base::Value* completion = result.value_body().FindKey("completion");
+
+  if (!success) {
+    VLOG(1) << __func__ << " Response from API was not HTTP 200 (Received "
+            << result.response_code() << ")";
+  }
+
+  if (success && completion && completion->is_string()) {
+    answer = completion->GetString();
+  }
+
+  std::move(callback).Run(answer, success);
 }
 
 }  // namespace chat_ui

@@ -5,7 +5,10 @@
 
 #include "brave/browser/ui/webui/chat_ui/chat_ui.h"
 
+#include <utility>
+
 #include "brave/browser/ui/webui/brave_webui_source.h"
+#include "brave/browser/ui/webui/chat_ui/chat_ui_page_handler.h"
 #include "brave/components/chat_ui/resources/page/grit/chat_ui_generated_map.h"
 #include "brave/components/constants/webui_url_constants.h"
 #include "chrome/browser/ui/webui/webui_util.h"
@@ -39,6 +42,12 @@ ChatUI::ChatUI(content::WebUI* web_ui) : ui::UntrustedWebUIController(web_ui) {
 
 ChatUI::~ChatUI() = default;
 
+void ChatUI::BindInterface(
+    mojo::PendingReceiver<chat_ui::mojom::PageHandler> receiver) {
+  page_handler_ = std::make_unique<ChatUIPageHandler>(
+      web_ui()->GetWebContents(), std::move(receiver));
+}
+
 std::unique_ptr<content::WebUIController>
 UntrustedChatUIConfig::CreateWebUIController(content::WebUI* web_ui) {
   return std::make_unique<ChatUI>(web_ui);
@@ -46,3 +55,5 @@ UntrustedChatUIConfig::CreateWebUIController(content::WebUI* web_ui) {
 
 UntrustedChatUIConfig::UntrustedChatUIConfig()
     : WebUIConfig(content::kChromeUIUntrustedScheme, kChatUIHost) {}
+
+WEB_UI_CONTROLLER_TYPE_IMPL(ChatUI)
