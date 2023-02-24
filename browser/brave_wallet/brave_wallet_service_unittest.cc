@@ -348,6 +348,7 @@ class BraveWalletServiceUnitTest : public testing::Test {
     eth_token_->symbol = "ETH";
     eth_token_->is_erc20 = false;
     eth_token_->is_erc721 = false;
+    eth_token_->is_nft = false;
     eth_token_->decimals = 18;
     eth_token_->visible = true;
     eth_token_->chain_id = "0x1";
@@ -2218,7 +2219,7 @@ TEST_F(BraveWalletServiceUnitTest, AddSuggestToken) {
     AddSuggestToken(custom_token.Clone(), custom_token.Clone(), true);
     auto token = service_->GetUserAsset(
         custom_token->contract_address, custom_token->token_id,
-        custom_token->is_erc721, chain_id, mojom::CoinType::ETH);
+        custom_token->is_nft, chain_id, mojom::CoinType::ETH);
     EXPECT_EQ(token, custom_token);
 
     // Case 2: Suggested token exists (has an entry with the same contract
@@ -2229,7 +2230,7 @@ TEST_F(BraveWalletServiceUnitTest, AddSuggestToken) {
                     true);
     token = service_->GetUserAsset(usdc_from_user_assets->contract_address,
                                    usdc_from_user_assets->token_id,
-                                   usdc_from_user_assets->is_erc721, chain_id,
+                                   usdc_from_user_assets->is_nft, chain_id,
                                    mojom::CoinType::ETH);
     EXPECT_EQ(token, usdc_from_user_assets);
 
@@ -2241,12 +2242,12 @@ TEST_F(BraveWalletServiceUnitTest, AddSuggestToken) {
         service_->SetUserAssetVisible(usdc_from_user_assets.Clone(), false));
     token = service_->GetUserAsset(usdc_from_user_assets->contract_address,
                                    usdc_from_user_assets->token_id,
-                                   usdc_from_user_assets->is_erc721, chain_id,
+                                   usdc_from_user_assets->is_nft, chain_id,
                                    mojom::CoinType::ETH);
     AddSuggestToken(usdc_from_request.Clone(), token.Clone(), true);
     token = service_->GetUserAsset(usdc_from_user_assets->contract_address,
                                    usdc_from_user_assets->token_id,
-                                   usdc_from_user_assets->is_erc721, chain_id,
+                                   usdc_from_user_assets->is_nft, chain_id,
                                    mojom::CoinType::ETH);
     EXPECT_EQ(token, usdc_from_user_assets);
 
@@ -2256,11 +2257,10 @@ TEST_F(BraveWalletServiceUnitTest, AddSuggestToken) {
     ASSERT_TRUE(service_->RemoveUserAsset(usdc_from_user_assets.Clone()));
     AddSuggestToken(usdc_from_request.Clone(),
                     usdc_from_blockchain_registry.Clone(), true);
-    token =
-        service_->GetUserAsset(usdc_from_blockchain_registry->contract_address,
-                               usdc_from_blockchain_registry->token_id,
-                               usdc_from_blockchain_registry->is_erc721,
-                               chain_id, mojom::CoinType::ETH);
+    token = service_->GetUserAsset(
+        usdc_from_blockchain_registry->contract_address,
+        usdc_from_blockchain_registry->token_id,
+        usdc_from_blockchain_registry->is_nft, chain_id, mojom::CoinType::ETH);
     EXPECT_EQ(token, usdc_from_blockchain_registry);
 
     mojom::BlockchainTokenPtr usdt_from_user_assets =
@@ -2281,7 +2281,7 @@ TEST_F(BraveWalletServiceUnitTest, AddSuggestToken) {
                     true);
     token = service_->GetUserAsset(usdt_from_user_assets->contract_address,
                                    usdt_from_user_assets->token_id,
-                                   usdt_from_user_assets->is_erc721, chain_id,
+                                   usdt_from_user_assets->is_nft, chain_id,
                                    mojom::CoinType::ETH);
     EXPECT_EQ(token, usdt_from_user_assets);
 
@@ -2293,12 +2293,12 @@ TEST_F(BraveWalletServiceUnitTest, AddSuggestToken) {
         service_->SetUserAssetVisible(usdt_from_user_assets.Clone(), false));
     token = service_->GetUserAsset(usdt_from_user_assets->contract_address,
                                    usdt_from_user_assets->token_id,
-                                   usdt_from_user_assets->is_erc721, chain_id,
+                                   usdt_from_user_assets->is_nft, chain_id,
                                    mojom::CoinType::ETH);
     AddSuggestToken(usdt_from_request.Clone(), token.Clone(), true);
     token = service_->GetUserAsset(usdt_from_user_assets->contract_address,
                                    usdt_from_user_assets->token_id,
-                                   usdt_from_user_assets->is_erc721, chain_id,
+                                   usdt_from_user_assets->is_nft, chain_id,
                                    mojom::CoinType::ETH);
     EXPECT_EQ(token, usdt_from_user_assets);
 
@@ -2321,7 +2321,7 @@ TEST_F(BraveWalletServiceUnitTest, AddSuggestToken) {
     AddSuggestToken(brb_from_request.Clone(), brb_from_request.Clone(), false);
     token = service_->GetUserAsset(
         brb_from_request->contract_address, brb_from_request->token_id,
-        brb_from_request->is_erc721, chain_id, mojom::CoinType::ETH);
+        brb_from_request->is_nft, chain_id, mojom::CoinType::ETH);
     EXPECT_FALSE(token);
   }
 }
@@ -2333,14 +2333,14 @@ TEST_F(BraveWalletServiceUnitTest, GetUserAsset) {
       mojom::CoinType::ETH);
   ASSERT_TRUE(service_->AddUserAsset(usdc.Clone()));
   EXPECT_EQ(usdc, service_->GetUserAsset(usdc->contract_address, usdc->token_id,
-                                         usdc->is_erc721, mojom::kGoerliChainId,
+                                         usdc->is_nft, mojom::kGoerliChainId,
                                          mojom::CoinType::ETH));
   EXPECT_EQ(usdc,
             service_->GetUserAsset(
                 base::ToLowerASCII(usdc->contract_address), usdc->token_id,
-                usdc->is_erc721, mojom::kGoerliChainId, mojom::CoinType::ETH));
+                usdc->is_nft, mojom::kGoerliChainId, mojom::CoinType::ETH));
   EXPECT_FALSE(service_->GetUserAsset(usdc->contract_address, usdc->token_id,
-                                      usdc->is_erc721, mojom::kMainnetChainId,
+                                      usdc->is_nft, mojom::kMainnetChainId,
                                       mojom::CoinType::ETH));
 
   auto erc721_token_with_empty_token_id = GetErc721Token();
@@ -2348,13 +2348,13 @@ TEST_F(BraveWalletServiceUnitTest, GetUserAsset) {
   erc721_token_1->token_id = "0x1";
   erc721_token_1->chain_id = mojom::kGoerliChainId;
   ASSERT_TRUE(service_->AddUserAsset(erc721_token_1.Clone()));
-  EXPECT_EQ(erc721_token_1,
-            service_->GetUserAsset(
-                erc721_token_1->contract_address, erc721_token_1->token_id,
-                erc721_token_1->is_erc721, mojom::kGoerliChainId,
-                mojom::CoinType::ETH));
+  EXPECT_EQ(
+      erc721_token_1,
+      service_->GetUserAsset(erc721_token_1->contract_address,
+                             erc721_token_1->token_id, erc721_token_1->is_nft,
+                             mojom::kGoerliChainId, mojom::CoinType::ETH));
   EXPECT_FALSE(service_->GetUserAsset(
-      erc721_token_1->contract_address, "0x2", erc721_token_1->is_erc721,
+      erc721_token_1->contract_address, "0x2", erc721_token_1->is_nft,
       mojom::kGoerliChainId, mojom::CoinType::ETH));
 }
 

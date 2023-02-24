@@ -284,7 +284,7 @@ class BraveWalletService : public KeyedService,
   bool SetUserAssetVisible(mojom::BlockchainTokenPtr token, bool visible);
   mojom::BlockchainTokenPtr GetUserAsset(const std::string& contract_address,
                                          const std::string& token_id,
-                                         bool is_erc721,
+                                         bool is_nft,
                                          const std::string& chain_id,
                                          mojom::CoinType coin);
   void OnNetworkChanged();

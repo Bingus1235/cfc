@@ -106,7 +106,7 @@ decltype(std::declval<T>().begin()) FindAsset(
     T* user_assets_list,
     const std::string& address,
     const std::string& token_id,
-    bool is_nft,
+    bool check_token_id,
     const std::string& address_key = "address") {
   static_assert(std::is_same<std::decay_t<T>, base::Value::List>::value,
                 "Only call with base::Value::List");
@@ -120,7 +120,7 @@ decltype(std::declval<T>().begin()) FindAsset(
         const std::string* address_value = dict->FindString(address_key);
         bool found = address_value && *address_value == address;
 
-        if (found && is_nft) {
+        if (found && check_token_id) {
           const std::string* token_id_ptr = dict->FindString("token_id");
           found = token_id_ptr && *token_id_ptr == token_id;
         }
@@ -488,7 +488,7 @@ bool BraveWalletService::RemoveUserAsset(mojom::BlockchainTokenPtr token) {
     return false;
 
   auto it =
-      FindAsset(user_assets_list, *address, token->token_id, token->is_erc721);
+      FindAsset(user_assets_list, *address, token->token_id, token->is_nft);
   if (it != user_assets_list->end())
     user_assets_list->erase(it);
 
@@ -527,7 +527,7 @@ bool BraveWalletService::SetUserAssetVisible(mojom::BlockchainTokenPtr token,
     return false;
 
   auto it =
-      FindAsset(user_assets_list, *address, token->token_id, token->is_erc721);
+      FindAsset(user_assets_list, *address, token->token_id, token->is_nft);
   if (it == user_assets_list->end())
     return false;
 
@@ -538,7 +538,7 @@ bool BraveWalletService::SetUserAssetVisible(mojom::BlockchainTokenPtr token,
 mojom::BlockchainTokenPtr BraveWalletService::GetUserAsset(
     const std::string& raw_address,
     const std::string& token_id,
-    bool is_erc721,
+    bool is_nft,
     const std::string& chain_id,
     mojom::CoinType coin) {
   absl::optional<std::string> address =
@@ -557,7 +557,7 @@ mojom::BlockchainTokenPtr BraveWalletService::GetUserAsset(
   if (!user_assets_list)
     return nullptr;
 
-  auto it = FindAsset(user_assets_list, *address, token_id, is_erc721);
+  auto it = FindAsset(user_assets_list, *address, token_id, is_nft);
   if (it == user_assets_list->end())
     return nullptr;
 
@@ -1273,10 +1273,9 @@ void BraveWalletService::AddSuggestTokenRequest(
   //     1. User asset list
   //     2. BlockchainRegistry
   //     3. wallet_watchAsset request
-  mojom::BlockchainTokenPtr token =
-      GetUserAsset(request->token->contract_address, request->token->token_id,
-                   request->token->is_erc721, request->token->chain_id,
-                   request->token->coin);
+  mojom::BlockchainTokenPtr token = GetUserAsset(
+      request->token->contract_address, request->token->token_id,
+      request->token->is_nft, request->token->chain_id, request->token->coin);
 
   if (!token)
     token = BlockchainRegistry::GetInstance()->GetTokenByAddress(
