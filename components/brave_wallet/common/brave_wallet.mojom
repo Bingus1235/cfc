@@ -841,6 +841,8 @@ interface AssetRatioService {
 
   // Obtain token info via contract address through etherscan API.
   // This is only for Ethereum mainnet.
+  // Note: The is_nft value of the token is not reliable because
+  // it is determined only by whether the token is an ERC721 token.
   GetTokenInfo(string contract_address) => (BlockchainToken? token);
 
   // Obtain list of top currencies and their market data

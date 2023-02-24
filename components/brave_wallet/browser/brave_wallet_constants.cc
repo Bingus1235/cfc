@@ -614,7 +614,7 @@ bool HasJupiterFeesForTokenMint(const std::string& mint) {
   return base::Contains(mints, mint);
 }
 
-const std::vector<std::string>& GetSupportedNftInterfaces() {
+const std::vector<std::string>& GetEthSupportedNftInterfaces() {
   static base::NoDestructor<std::vector<std::string>> interfaces({
       kERC721InterfaceId,
       kERC1155InterfaceId,

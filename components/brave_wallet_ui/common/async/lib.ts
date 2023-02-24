@@ -608,7 +608,7 @@ export function refreshBalances () {
         return Promise.all(visibleTokens.map(async (token) => {
           let balanceInfo = emptyBalance
           if (networks.some(n => n.chainId === token.chainId)) {
-            if (token.isErc721) { // TODO
+            if (token.isErc721) {
               balanceInfo =
                 await jsonRpcService.getERC721TokenBalance(token.contractAddress, token.tokenId ?? '', account.address, token?.chainId ?? '')
             } else {

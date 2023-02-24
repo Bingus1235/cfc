@@ -223,6 +223,9 @@ void MigrateObsoleteProfilePrefs(PrefService* prefs) {
   // Added 10/22 to have is_nft set for existing ERC721 tokens.
   BraveWalletService::MigrateUserAssetsAddIsNFT(prefs);
 
+  // Added 02/23 to have is_erc1155 set for existing ERC1155 tokens.
+  BraveWalletService::MigrateUserAssetsAddIsERC1155(prefs);
+
   JsonRpcService::MigrateMultichainNetworks(prefs);
 
   if (prefs->HasPrefPath(kBraveWalletWeb3ProviderDeprecated)) {
