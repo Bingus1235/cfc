@@ -942,7 +942,7 @@ class JsonRpcServiceUnitTest : public testing::Test {
         }));
   }
 
-  void SetGetNftStandardInterceptor(
+  void SetGetEthNftStandardInterceptor(
       const GURL& expected_url,
       const std::map<std::string, std::string>& interface_id_to_response) {
     url_loader_factory_.SetInterceptor(base::BindLambdaForTesting(
@@ -1264,14 +1264,15 @@ class JsonRpcServiceUnitTest : public testing::Test {
     run_loop.Run();
   }
 
-  void TestGetNftStandard(const std::string& contract_address,
-                          const std::string& chain_id,
-                          std::vector<std::string> remaining_interfaces,
-                          const absl::optional<std::string>& expected_standard,
-                          mojom::ProviderError expected_error,
-                          const std::string& expected_error_message) {
+  void TestGetEthNftStandard(
+      const std::string& contract_address,
+      const std::string& chain_id,
+      std::vector<std::string> remaining_interfaces,
+      const absl::optional<std::string>& expected_standard,
+      mojom::ProviderError expected_error,
+      const std::string& expected_error_message) {
     base::RunLoop run_loop;
-    json_rpc_service_->GetNftStandard(
+    json_rpc_service_->GetEthNftStandard(
         contract_address, chain_id, remaining_interfaces,
         base::BindLambdaForTesting(
             [&](const absl::optional<std::string>& standard,
@@ -6348,37 +6349,38 @@ TEST_F(JsonRpcServiceUnitTest, GetEthTokenUri) {
                      mojom::ProviderError::kSuccess, "");
 }
 
-TEST_F(JsonRpcServiceUnitTest, GetNftStandard) {
+TEST_F(JsonRpcServiceUnitTest, GetEthNftStandard) {
   // Empty contract address yields invalid params error
-  TestGetNftStandard("", mojom::kMainnetChainId, {kERC721InterfaceId},
-                     absl::nullopt, mojom::ProviderError::kInvalidParams,
-                     l10n_util::GetStringUTF8(IDS_WALLET_INVALID_PARAMETERS));
+  TestGetEthNftStandard(
+      "", mojom::kMainnetChainId, {kERC721InterfaceId}, absl::nullopt,
+      mojom::ProviderError::kInvalidParams,
+      l10n_util::GetStringUTF8(IDS_WALLET_INVALID_PARAMETERS));
 
   // Empty chain ID yields invalid params error
-  TestGetNftStandard("0x06012c8cf97BEaD5deAe237070F9587f8E7A266d", "",
-                     {kERC721InterfaceId}, absl::nullopt,
-                     mojom::ProviderError::kInvalidParams,
-                     l10n_util::GetStringUTF8(IDS_WALLET_INVALID_PARAMETERS));
+  TestGetEthNftStandard(
+      "0x06012c8cf97BEaD5deAe237070F9587f8E7A266d", "", {kERC721InterfaceId},
+      absl::nullopt, mojom::ProviderError::kInvalidParams,
+      l10n_util::GetStringUTF8(IDS_WALLET_INVALID_PARAMETERS));
 
   // Empty interface IDs yields invalid params error
-  TestGetNftStandard("0x06012c8cf97BEaD5deAe237070F9587f8E7A266d",
-                     mojom::kMainnetChainId, {}, absl::nullopt,
-                     mojom::ProviderError::kInvalidParams,
-                     l10n_util::GetStringUTF8(IDS_WALLET_INVALID_PARAMETERS));
+  TestGetEthNftStandard(
+      "0x06012c8cf97BEaD5deAe237070F9587f8E7A266d", mojom::kMainnetChainId, {},
+      absl::nullopt, mojom::ProviderError::kInvalidParams,
+      l10n_util::GetStringUTF8(IDS_WALLET_INVALID_PARAMETERS));
 
   // Valid inputs but HTTP Timeout
   SetHTTPRequestTimeoutInterceptor();
-  TestGetNftStandard("0x06012c8cf97BEaD5deAe237070F9587f8E7A266d",
-                     mojom::kMainnetChainId, {kERC721InterfaceId},
-                     absl::nullopt, mojom::ProviderError::kInternalError,
-                     l10n_util::GetStringUTF8(IDS_WALLET_INTERNAL_ERROR));
+  TestGetEthNftStandard("0x06012c8cf97BEaD5deAe237070F9587f8E7A266d",
+                        mojom::kMainnetChainId, {kERC721InterfaceId},
+                        absl::nullopt, mojom::ProviderError::kInternalError,
+                        l10n_util::GetStringUTF8(IDS_WALLET_INTERNAL_ERROR));
 
   // Valid inputs, invalid provider JSON yields parsing error
   SetInvalidJsonInterceptor();
-  TestGetNftStandard("0x06012c8cf97BEaD5deAe237070F9587f8E7A266d",
-                     mojom::kMainnetChainId, {kERC721InterfaceId},
-                     absl::nullopt, mojom::ProviderError::kParsingError,
-                     l10n_util::GetStringUTF8(IDS_WALLET_PARSING_ERROR));
+  TestGetEthNftStandard("0x06012c8cf97BEaD5deAe237070F9587f8E7A266d",
+                        mojom::kMainnetChainId, {kERC721InterfaceId},
+                        absl::nullopt, mojom::ProviderError::kParsingError,
+                        l10n_util::GetStringUTF8(IDS_WALLET_PARSING_ERROR));
 
   // Valid inputs, supported response returned for the first interface ID
   auto network = GetNetwork(mojom::kMainnetChainId, mojom::CoinType::ETH);
@@ -6389,10 +6391,10 @@ TEST_F(JsonRpcServiceUnitTest, GetNftStandard) {
       "result":"0x0000000000000000000000000000000000000000000000000000000000000001"
   })";
   responses[kERC721InterfaceId] = interface_supported_response;
-  SetGetNftStandardInterceptor(network, responses);
-  TestGetNftStandard("0x06012c8cf97BEaD5deAe237070F9587f8E7A266d",
-                     mojom::kMainnetChainId, {kERC721InterfaceId},
-                     kERC721InterfaceId, mojom::ProviderError::kSuccess, "");
+  SetGetEthNftStandardInterceptor(network, responses);
+  TestGetEthNftStandard("0x06012c8cf97BEaD5deAe237070F9587f8E7A266d",
+                        mojom::kMainnetChainId, {kERC721InterfaceId},
+                        kERC721InterfaceId, mojom::ProviderError::kSuccess, "");
 
   // Valid inputs, supported response returned for the second interface ID
   // (ERC1155)
@@ -6403,20 +6405,20 @@ TEST_F(JsonRpcServiceUnitTest, GetNftStandard) {
   })";
   responses[kERC721InterfaceId] = interface_not_supported_response;
   responses[kERC1155InterfaceId] = interface_supported_response;
-  SetGetNftStandardInterceptor(network, responses);
-  TestGetNftStandard("0x06012c8cf97BEaD5deAe237070F9587f8E7A266d",
-                     mojom::kMainnetChainId,
-                     {kERC1155InterfaceId, kERC721InterfaceId},
-                     kERC1155InterfaceId, mojom::ProviderError::kSuccess, "");
+  SetGetEthNftStandardInterceptor(network, responses);
+  TestGetEthNftStandard(
+      "0x06012c8cf97BEaD5deAe237070F9587f8E7A266d", mojom::kMainnetChainId,
+      {kERC1155InterfaceId, kERC721InterfaceId}, kERC1155InterfaceId,
+      mojom::ProviderError::kSuccess, "");
 
   // Valid inputs, but no interfaces are supported yields success / nullopt
   responses[kERC721InterfaceId] = interface_not_supported_response;
   responses[kERC1155InterfaceId] = interface_not_supported_response;
-  SetGetNftStandardInterceptor(network, responses);
-  TestGetNftStandard("0x06012c8cf97BEaD5deAe237070F9587f8E7A266d",
-                     mojom::kMainnetChainId,
-                     {kERC721InterfaceId, kERC1155InterfaceId}, absl::nullopt,
-                     mojom::ProviderError::kSuccess, "");
+  SetGetEthNftStandardInterceptor(network, responses);
+  TestGetEthNftStandard("0x06012c8cf97BEaD5deAe237070F9587f8E7A266d",
+                        mojom::kMainnetChainId,
+                        {kERC721InterfaceId, kERC1155InterfaceId},
+                        absl::nullopt, mojom::ProviderError::kSuccess, "");
 }
 
 }  // namespace brave_wallet

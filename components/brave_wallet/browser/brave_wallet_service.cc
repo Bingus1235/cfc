@@ -432,9 +432,9 @@ void BraveWalletService::AddUserAsset(mojom::BlockchainTokenPtr token,
                                       AddUserAssetCallback callback) {
   std::vector<std::string> interfaces_to_check = GetEthSupportedNftInterfaces();
   if (token->is_nft && token->coin == mojom::CoinType::ETH) {
-    json_rpc_service_->GetNftStandard(
+    json_rpc_service_->GetEthNftStandard(
         token->contract_address, token->chain_id, interfaces_to_check,
-        base::BindOnce(&BraveWalletService::OnGetNftStandard,
+        base::BindOnce(&BraveWalletService::OnGetEthNftStandard,
                        weak_ptr_factory_.GetWeakPtr(), std::move(token),
                        std::move(callback)));
     return;
@@ -443,7 +443,7 @@ void BraveWalletService::AddUserAsset(mojom::BlockchainTokenPtr token,
   std::move(callback).Run(AddUserAsset(std::move(token)));
 }
 
-void BraveWalletService::OnGetNftStandard(
+void BraveWalletService::OnGetEthNftStandard(
     mojom::BlockchainTokenPtr token,
     AddUserAssetCallback callback,
     const absl::optional<std::string>& standard,

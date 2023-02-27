@@ -372,23 +372,23 @@ class JsonRpcService : public KeyedService, public mojom::JsonRpcService {
                             const std::string& chain_id,
                             GetSupportsInterfaceCallback callback);
 
-  using GetNftStandardCallback =
+  using GetEthNftStandardCallback =
       base::OnceCallback<void(const absl::optional<std::string>& standard,
                               mojom::ProviderError error,
                               const std::string& error_message)>;
-  void GetNftStandard(const std::string& contract_address,
-                      const std::string& chain_id,
-                      // Interfaces are checked in reverse order
-                      const std::vector<std::string>& remaining_interfaces,
-                      GetNftStandardCallback callback);
+  void GetEthNftStandard(const std::string& contract_address,
+                         const std::string& chain_id,
+                         // Interfaces are checked in reverse order
+                         const std::vector<std::string>& remaining_interfaces,
+                         GetEthNftStandardCallback callback);
 
-  void OnGetNftStandard(const std::string& contract_address,
-                        const std::string& chain_id,
-                        std::vector<std::string>& remaining_interfaces,
-                        GetNftStandardCallback callback,
-                        bool is_supported,
-                        mojom::ProviderError error,
-                        const std::string& error_message);
+  void OnGetEthNftStandard(const std::string& contract_address,
+                           const std::string& chain_id,
+                           std::vector<std::string>& remaining_interfaces,
+                           GetEthNftStandardCallback callback,
+                           bool is_supported,
+                           mojom::ProviderError error,
+                           const std::string& error_message);
 
   using SwitchEthereumChainRequestCallback =
       base::OnceCallback<void(mojom::ProviderError error,

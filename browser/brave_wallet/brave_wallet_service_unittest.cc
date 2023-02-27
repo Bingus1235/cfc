@@ -392,7 +392,7 @@ class BraveWalletServiceUnitTest : public testing::Test {
     return BlockchainRegistry::GetInstance();
   }
 
-  void SetGetNftStandardInterceptor(
+  void SetGetEthNftStandardInterceptor(
       const GURL& expected_url,
       const std::map<std::string, std::string>& interface_id_to_response) {
     url_loader_factory_.SetInterceptor(base::BindLambdaForTesting(
@@ -968,7 +968,7 @@ TEST_F(BraveWalletServiceUnitTest, AddUserAssetNfts) {
       mojom::CoinType::ETH);
   responses[kERC721InterfaceId] = interface_supported_response;
   responses[kERC1155InterfaceId] = interface_not_supported_response;
-  SetGetNftStandardInterceptor(network, responses);
+  SetGetEthNftStandardInterceptor(network, responses);
   AddUserAsset(erc721_token.Clone(), &success);
   EXPECT_TRUE(success);
   GetUserAssets(mojom::kMainnetChainId, mojom::CoinType::ETH, &tokens);
@@ -989,7 +989,7 @@ TEST_F(BraveWalletServiceUnitTest, AddUserAssetNfts) {
       mojom::kMainnetChainId, mojom::CoinType::ETH);
   responses[kERC721InterfaceId] = interface_not_supported_response;
   responses[kERC1155InterfaceId] = interface_supported_response;
-  SetGetNftStandardInterceptor(network, responses);
+  SetGetEthNftStandardInterceptor(network, responses);
   AddUserAsset(erc1155.Clone(), &success);
   EXPECT_TRUE(success);
   GetUserAssets(mojom::kMainnetChainId, mojom::CoinType::ETH, &tokens);
@@ -1006,7 +1006,7 @@ TEST_F(BraveWalletServiceUnitTest, AddUserAssetNfts) {
   // If neither erc721 nor erc1155 is supported, AddUserAsset returns false.
   responses[kERC721InterfaceId] = interface_not_supported_response;
   responses[kERC1155InterfaceId] = interface_not_supported_response;
-  SetGetNftStandardInterceptor(network, responses);
+  SetGetEthNftStandardInterceptor(network, responses);
   AddUserAsset(erc1155.Clone(), &success);
   EXPECT_FALSE(success);
 
@@ -1018,7 +1018,7 @@ TEST_F(BraveWalletServiceUnitTest, AddUserAssetNfts) {
       mojom::kMainnetChainId, mojom::CoinType::ETH);
   responses[kERC721InterfaceId] = interface_not_supported_response;
   responses[kERC1155InterfaceId] = interface_supported_response;
-  SetGetNftStandardInterceptor(network, responses);
+  SetGetEthNftStandardInterceptor(network, responses);
   AddUserAsset(erc1155_2.Clone(), &success);
   EXPECT_TRUE(success);
   GetUserAssets(mojom::kMainnetChainId, mojom::CoinType::ETH, &tokens);
@@ -1434,7 +1434,7 @@ TEST_F(BraveWalletServiceUnitTest, ERC721TokenAddRemoveSetUserAssetVisible) {
   std::map<std::string, std::string> responses;
   responses[kERC721InterfaceId] = interface_supported_response;
   responses[kERC1155InterfaceId] = interface_not_supported_response;
-  SetGetNftStandardInterceptor(network, responses);
+  SetGetEthNftStandardInterceptor(network, responses);
   AddUserAsset(std::move(erc721_token_with_empty_token_id), &success);
   EXPECT_FALSE(success);
 
@@ -1450,13 +1450,13 @@ TEST_F(BraveWalletServiceUnitTest, ERC721TokenAddRemoveSetUserAssetVisible) {
   auto erc721_token_1_0x1 = erc721_token_1.Clone();
   erc721_token_1_0x1->chain_id = "0x1";
   network = GetNetwork(mojom::kMainnetChainId, mojom::CoinType::ETH);
-  SetGetNftStandardInterceptor(network, responses);
+  SetGetEthNftStandardInterceptor(network, responses);
   AddUserAsset(erc721_token_1_0x1.Clone(), &success);
   EXPECT_TRUE(success);
 
   // Add ERC721 token with token_id = 2 should success.
   network = GetNetwork(mojom::kSepoliaChainId, mojom::CoinType::ETH);
-  SetGetNftStandardInterceptor(network, responses);
+  SetGetEthNftStandardInterceptor(network, responses);
   AddUserAsset(erc721_token_2.Clone(), &success);
   EXPECT_TRUE(success);
 
