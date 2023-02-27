@@ -1267,13 +1267,13 @@ class JsonRpcServiceUnitTest : public testing::Test {
   void TestGetEthNftStandard(
       const std::string& contract_address,
       const std::string& chain_id,
-      std::vector<std::string> remaining_interfaces,
+      std::vector<std::string> interfaces,
       const absl::optional<std::string>& expected_standard,
       mojom::ProviderError expected_error,
       const std::string& expected_error_message) {
     base::RunLoop run_loop;
     json_rpc_service_->GetEthNftStandard(
-        contract_address, chain_id, remaining_interfaces,
+        contract_address, chain_id, interfaces,
         base::BindLambdaForTesting(
             [&](const absl::optional<std::string>& standard,
                 mojom::ProviderError error, const std::string& error_message) {
