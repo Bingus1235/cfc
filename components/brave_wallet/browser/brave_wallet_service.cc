@@ -450,7 +450,7 @@ void BraveWalletService::OnGetEthNftStandard(
     mojom::ProviderError error,
     const std::string& error_message) {
   if (error != mojom::ProviderError::kSuccess || !standard) {
-    std::move(callback).Run(AddUserAsset(std::move(token)));
+    std::move(callback).Run(false);
     return;
   }
 

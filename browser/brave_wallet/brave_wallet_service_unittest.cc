@@ -1003,13 +1003,6 @@ TEST_F(BraveWalletServiceUnitTest, AddUserAssetNfts) {
   EXPECT_EQ(tokens[3]->is_erc1155, true);
   EXPECT_EQ(tokens[3]->is_erc20, false);
 
-  // If neither erc721 nor erc1155 is supported, AddUserAsset returns false.
-  responses[kERC721InterfaceId] = interface_not_supported_response;
-  responses[kERC1155InterfaceId] = interface_not_supported_response;
-  SetGetEthNftStandardInterceptor(network, responses);
-  AddUserAsset(erc1155.Clone(), &success);
-  EXPECT_FALSE(success);
-
   // A second ERC1155 token with same contract address, but different
   // token id is added.
   mojom::BlockchainTokenPtr erc1155_2 = mojom::BlockchainToken::New(
@@ -1031,6 +1024,28 @@ TEST_F(BraveWalletServiceUnitTest, AddUserAssetNfts) {
   EXPECT_EQ(tokens[4]->is_erc721, false);
   EXPECT_EQ(tokens[4]->is_erc1155, true);
   EXPECT_EQ(tokens[4]->is_erc20, false);
+
+  // If invalid response is returned, AddUserAsset returns false.
+  mojom::BlockchainTokenPtr erc1155_3 = mojom::BlockchainToken::New(
+      "0x3333333333333333333333333333333333333333", "333333", "333333.png",
+      false, false, false, true, "333333", 0, true, "0x1", "",
+      mojom::kMainnetChainId, mojom::CoinType::ETH);
+  responses[kERC721InterfaceId] = "invalid";
+  responses[kERC1155InterfaceId] = interface_not_supported_response;
+  SetGetEthNftStandardInterceptor(network, responses);
+  AddUserAsset(erc1155_3.Clone(), &success);
+  EXPECT_FALSE(success);
+
+  // If neither erc721 nor erc1155 is supported, AddUserAsset returns false.
+  mojom::BlockchainTokenPtr erc1155_4 = mojom::BlockchainToken::New(
+      "0x4444444444444444444444444444444444444444", "444444", "444444.png",
+      false, false, false, true, "444444", 0, true, "0x1", "",
+      mojom::kMainnetChainId, mojom::CoinType::ETH);
+  responses[kERC721InterfaceId] = interface_not_supported_response;
+  responses[kERC1155InterfaceId] = interface_not_supported_response;
+  SetGetEthNftStandardInterceptor(network, responses);
+  AddUserAsset(erc1155_4.Clone(), &success);
+  EXPECT_FALSE(success);
 }
 
 TEST_F(BraveWalletServiceUnitTest, RemoveUserAsset) {
