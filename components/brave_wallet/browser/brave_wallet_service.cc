@@ -357,8 +357,8 @@ bool BraveWalletService::AddUserAsset(mojom::BlockchainTokenPtr token,
   if (network_id.empty())
     return false;
 
-  // Verify input token ID for ERC721 and ERC1155 tokens
-  if (token->is_erc721 || token->is_erc1155) {
+  bool check_token_id = token->is_erc721 || token->is_erc1155;
+  if (check_token_id) {
     uint256_t token_id_uint = 0;
     if (!HexValueToUint256(token->token_id, &token_id_uint)) {
       return false;
@@ -379,7 +379,7 @@ bool BraveWalletService::AddUserAsset(mojom::BlockchainTokenPtr token,
   DCHECK(user_assets_list);
 
   auto it =
-      FindAsset(user_assets_list, *address, token->token_id, token->is_nft);
+      FindAsset(user_assets_list, *address, token->token_id, check_token_id);
   if (it != user_assets_list->end())
     return false;
 
