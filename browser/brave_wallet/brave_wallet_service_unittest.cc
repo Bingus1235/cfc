@@ -395,14 +395,18 @@ class BraveWalletServiceUnitTest : public testing::Test {
   void SetGetEthNftStandardInterceptor(
       const GURL& expected_url,
       const std::map<std::string, std::string>& interface_id_to_response) {
+    VLOG(0) << "SetGetEthNftStandardInterceptor 0";
     url_loader_factory_.SetInterceptor(base::BindLambdaForTesting(
         [&, expected_url,
          interface_id_to_response](const network::ResourceRequest& request) {
+          VLOG(0) << "SetGetEthNftStandardInterceptor 1";
           EXPECT_EQ(request.url, expected_url);
+          VLOG(0) << "SetGetEthNftStandardInterceptor 2";
           base::StringPiece request_string(request.request_body->elements()
                                                ->at(0)
                                                .As<network::DataElementBytes>()
                                                .AsStringPiece());
+          VLOG(0) << "SetGetEthNftStandardInterceptor 3";
           // Check if any of the interface ids are in the request
           // if so, return the response for that interface id
           // if not, do nothing
@@ -412,6 +416,7 @@ class BraveWalletServiceUnitTest : public testing::Test {
                 request_string.find(interface_id.substr(2)) !=
                 std::string::npos;
             if (request_is_checking_interface) {
+              VLOG(0) << "SetGetEthNftStandardInterceptor 4";
               url_loader_factory_.ClearResponses();
               url_loader_factory_.AddResponse(expected_url.spec(), response);
               return;
@@ -1432,6 +1437,7 @@ TEST_F(BraveWalletServiceUnitTest,
 }
 
 TEST_F(BraveWalletServiceUnitTest, ERC721TokenAddRemoveSetUserAssetVisible) {
+  VLOG(0) << "ERC721TokenAddRemoveSetUserAssetVisible 0";
   bool success = false;
   std::vector<mojom::BlockchainTokenPtr> tokens;
 
@@ -1445,17 +1451,25 @@ TEST_F(BraveWalletServiceUnitTest, ERC721TokenAddRemoveSetUserAssetVisible) {
   erc721_token_1->token_id = "0x1";
 
   // Add ERC721 token without tokenId will fail.
+  VLOG(0) << "ERC721TokenAddRemoveSetUserAssetVisible 1";
   auto network = GetNetwork(mojom::kSepoliaChainId, mojom::CoinType::ETH);
   std::map<std::string, std::string> responses;
   responses[kERC721InterfaceId] = interface_supported_response;
   responses[kERC1155InterfaceId] = interface_not_supported_response;
+  VLOG(0) << "ERC721TokenAddRemoveSetUserAssetVisible 2";
   SetGetEthNftStandardInterceptor(network, responses);
+  VLOG(0) << "ERC721TokenAddRemoveSetUserAssetVisible 3";
   AddUserAsset(std::move(erc721_token_with_empty_token_id), &success);
+  VLOG(0) << "ERC721TokenAddRemoveSetUserAssetVisible 4";
   EXPECT_FALSE(success);
+  VLOG(0) << "ERC721TokenAddRemoveSetUserAssetVisible 5";
 
   // Add ERC721 token with token_id = 1 should success.
+  VLOG(0) << "ERC721TokenAddRemoveSetUserAssetVisible 6";
   AddUserAsset(erc721_token_1.Clone(), &success);
+  VLOG(0) << "ERC721TokenAddRemoveSetUserAssetVisible 7";
   EXPECT_TRUE(success);
+  VLOG(0) << "ERC721TokenAddRemoveSetUserAssetVisible 8";
 
   // Add the same token_id should fail.
   AddUserAsset(erc721_token_1.Clone(), &success);
@@ -1465,26 +1479,37 @@ TEST_F(BraveWalletServiceUnitTest, ERC721TokenAddRemoveSetUserAssetVisible) {
   auto erc721_token_1_0x1 = erc721_token_1.Clone();
   erc721_token_1_0x1->chain_id = "0x1";
   network = GetNetwork(mojom::kMainnetChainId, mojom::CoinType::ETH);
+  VLOG(0) << "ERC721TokenAddRemoveSetUserAssetVisible 9";
   SetGetEthNftStandardInterceptor(network, responses);
+  VLOG(0) << "ERC721TokenAddRemoveSetUserAssetVisible 10";
   AddUserAsset(erc721_token_1_0x1.Clone(), &success);
+  VLOG(0) << "ERC721TokenAddRemoveSetUserAssetVisible 11";
   EXPECT_TRUE(success);
+  VLOG(0) << "ERC721TokenAddRemoveSetUserAssetVisible 12";
 
   // Add ERC721 token with token_id = 2 should success.
   network = GetNetwork(mojom::kSepoliaChainId, mojom::CoinType::ETH);
+  VLOG(0) << "ERC721TokenAddRemoveSetUserAssetVisible 13";
   SetGetEthNftStandardInterceptor(network, responses);
+  VLOG(0) << "ERC721TokenAddRemoveSetUserAssetVisible 14";
   AddUserAsset(erc721_token_2.Clone(), &success);
+  VLOG(0) << "ERC721TokenAddRemoveSetUserAssetVisible 15";
   EXPECT_TRUE(success);
 
   mojom::BlockchainTokenPtr eth_0xaa36a7_token = GetEthToken();
   eth_0xaa36a7_token->chain_id = "0xaa36a7";
 
+  VLOG(0) << "ERC721TokenAddRemoveSetUserAssetVisible 16";
   GetUserAssets("0xaa36a7", mojom::CoinType::ETH, &tokens);
+  VLOG(0) << "ERC721TokenAddRemoveSetUserAssetVisible 17";
   EXPECT_EQ(tokens.size(), 3u);
   EXPECT_EQ(eth_0xaa36a7_token, tokens[0]);
   EXPECT_EQ(erc721_token_1, tokens[1]);
   EXPECT_EQ(erc721_token_2, tokens[2]);
 
+  VLOG(0) << "ERC721TokenAddRemoveSetUserAssetVisible 18";
   SetUserAssetVisible(erc721_token_1.Clone(), false, &success);
+  VLOG(0) << "ERC721TokenAddRemoveSetUserAssetVisible 19";
   EXPECT_TRUE(success);
 
   RemoveUserAsset(erc721_token_2.Clone(), &success);
@@ -1496,6 +1521,7 @@ TEST_F(BraveWalletServiceUnitTest, ERC721TokenAddRemoveSetUserAssetVisible) {
   EXPECT_EQ(tokens.size(), 2u);
   EXPECT_EQ(eth_0xaa36a7_token, tokens[0]);
   EXPECT_EQ(erc721_token_1_visible_false, tokens[1]);
+  VLOG(0) << "ERC721TokenAddRemoveSetUserAssetVisible 20";
 }
 
 TEST_F(BraveWalletServiceUnitTest, SolanaTokenUserAssetsAPI) {
