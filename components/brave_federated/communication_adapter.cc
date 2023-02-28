@@ -14,7 +14,7 @@
 #include "base/strings/string_number_conversions.h"
 #include "brave/components/brave_federated/adapters/flower_helper.h"
 #include "brave/components/brave_federated/task/typing.h"
-#include "brave/components/brave_federated/util/features.h"
+#include "brave/components/brave_federated/features.h"
 #include "brave/components/brave_federated/util/linear_algebra_util.h"
 #include "net/http/http_request_headers.h"
 #include "net/http/http_status_code.h"
@@ -64,7 +64,7 @@ CommunicationAdapter::~CommunicationAdapter() = default;
 
 void CommunicationAdapter::GetTasks(GetTaskCallback callback) {
   auto request = std::make_unique<network::ResourceRequest>();
-  request->url = GURL(GetFederatedLearningTaskEndpoint());
+  request->url = GURL(features::GetFederatedLearningTaskEndpoint());
   request->headers.SetHeader("Content-Type", "application/protobuf");
   request->headers.SetHeader("Accept", "application/protobuf");
   request->headers.SetHeader("X-Brave-FL-Federated-Learning", "?1");
@@ -102,11 +102,11 @@ void CommunicationAdapter::OnGetTasks(
 
     if (task_list.empty()) {
       VLOG(1) << "No tasks received from FL service, retrying in 60s";
-      std::move(callback).Run({}, GetFederatedLearningUpdateCycleInMinutes() * 60);
+      std::move(callback).Run({}, features::GetFederatedLearningUpdateCycleInMinutes() * 60);
       return;
     }
 
-    std::move(callback).Run(task_list, GetFederatedLearningUpdateCycleInMinutes() * 60);
+    std::move(callback).Run(task_list, features::GetFederatedLearningUpdateCycleInMinutes() * 60);
     return;
   }
 
@@ -116,7 +116,7 @@ void CommunicationAdapter::OnGetTasks(
 void CommunicationAdapter::PostTaskResult(TaskResult result,
                                           PostResultCallback callback) {
   auto request = std::make_unique<network::ResourceRequest>();
-  request->url = GURL(GetFederatedLearningResultsEndpoint());
+  request->url = GURL(features::GetFederatedLearningResultsEndpoint());
   request->headers.SetHeader("Content-Type", "application/protobuf");
   request->headers.SetHeader("Accept", "application/protobuf");
   request->headers.SetHeader("X-Brave-FL-Federated-Learning", "?1");
