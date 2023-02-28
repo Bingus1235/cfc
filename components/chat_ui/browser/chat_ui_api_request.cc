@@ -81,7 +81,7 @@ void ChatUIAPIRequest::QueryPrompt(ResponseCallback callback,
   dict.Set("stream", false);
 
   base::flat_map<std::string, std::string> headers;
-  headers.emplace("x-api-key", BUILDFLAG_INTERNAL_BRAVE_AI_PARTNER_KEY());
+  headers.emplace("x-api-key", BUILDFLAG(BRAVE_AI_PARTNER_KEY));
 
   api_request_helper_.Request("POST", GetURLWithPath(kUrlBase, kCompletionPath),
                               CreateJSONRequestBody(dict), "application/json",
@@ -95,19 +95,17 @@ void ChatUIAPIRequest::OnGetResponse(
   // requests. |body| will be empty when the response from service is invalid
   // json.
   const bool success = result.response_code() == 200;
-  std::string answer = result.body();
-  const base::Value* completion = result.value_body().FindKey("completion");
+
+  const std::string* completion =
+      result.value_body().GetDict().FindString("completion");
 
   if (!success) {
     VLOG(1) << __func__ << " Response from API was not HTTP 200 (Received "
             << result.response_code() << ")";
   }
 
-  if (success && completion && completion->is_string()) {
-    answer = completion->GetString();
-  }
-
-  std::move(callback).Run(answer, success);
+  std::move(callback).Run(success && completion ? *completion : result.body(),
+                          success);
 }
 
 }  // namespace chat_ui

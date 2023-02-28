@@ -11,12 +11,15 @@
 #include <memory>
 #include <string>
 
+#include "brave/browser/chat/chat_tab_helper.h"
 #include "brave/components/chat_ui/browser/chat_ui_api_request.h"
 #include "brave/components/chat_ui/common/chat_ui.mojom.h"
 #include "mojo/public/cpp/bindings/pending_receiver.h"
 #include "mojo/public/cpp/bindings/pending_remote.h"
 #include "mojo/public/cpp/bindings/receiver.h"
 #include "mojo/public/cpp/bindings/remote.h"
+
+class TabStripModel;
 
 namespace content {
 class WebContents;
@@ -25,7 +28,7 @@ class WebContents;
 class ChatUIPageHandler : public chat_ui::mojom::PageHandler {
  public:
   ChatUIPageHandler(
-      content::WebContents* web_contents,
+      TabStripModel* tab_strip_model,
       mojo::PendingReceiver<chat_ui::mojom::PageHandler> receiver);
 
   ChatUIPageHandler(const ChatUIPageHandler&) = delete;
@@ -42,11 +45,11 @@ class ChatUIPageHandler : public chat_ui::mojom::PageHandler {
 
   void OnResponse(const std::string& assistant_input, bool success);
 
-  raw_ptr<content::WebContents> web_contents_ = nullptr;
   std::unique_ptr<chat_ui::ChatUIAPIRequest> api_helper_ = nullptr;
 
   mojo::Receiver<chat_ui::mojom::PageHandler> receiver_;
   mojo::Remote<chat_ui::mojom::ChatUIPage> page_;
+  raw_ptr<ChatTabHelper> active_chat_tab_helper_ = nullptr;
 };
 
 #endif  // BRAVE_BROWSER_UI_WEBUI_CHAT_UI_CHAT_UI_PAGE_HANDLER_H_

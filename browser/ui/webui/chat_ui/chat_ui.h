@@ -12,9 +12,11 @@
 #include "brave/components/chat_ui/common/chat_ui.mojom-forward.h"
 #include "content/public/browser/web_ui_controller.h"
 #include "content/public/browser/webui_config.h"
+#include "ui/webui/mojo_bubble_web_ui_controller.h"
 #include "ui/webui/mojo_web_ui_controller.h"
 #include "ui/webui/untrusted_web_ui_controller.h"
 
+class Browser;
 class ChatUI : public ui::UntrustedWebUIController {
  public:
   explicit ChatUI(content::WebUI* web_ui);
@@ -25,8 +27,18 @@ class ChatUI : public ui::UntrustedWebUIController {
   void BindInterface(
       mojo::PendingReceiver<chat_ui::mojom::PageHandler> receiver);
 
+  // Set by BubbleContentsWrapperT. MojoBubbleWebUIController provides default
+  // implementation for this but we don't use it.
+  void set_embedder(
+      base::WeakPtr<ui::MojoBubbleWebUIController::Embedder> embedder) {
+    embedder_ = embedder;
+  }
+
  private:
   std::unique_ptr<chat_ui::mojom::PageHandler> page_handler_;
+
+  base::WeakPtr<ui::MojoBubbleWebUIController::Embedder> embedder_;
+  raw_ptr<Browser> browser_ = nullptr;
 
   WEB_UI_CONTROLLER_TYPE_DECL();
 };

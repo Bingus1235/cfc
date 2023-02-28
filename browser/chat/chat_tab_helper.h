@@ -3,8 +3,8 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this file,
  * You can obtain one at https://mozilla.org/MPL/2.0/. */
 
-#ifndef BRAVE_BROWSER_CHAT_UI_CHAT_UI_TAB_HELPER_H_
-#define BRAVE_BROWSER_CHAT_UI_CHAT_UI_TAB_HELPER_H_
+#ifndef BRAVE_BROWSER_CHAT_CHAT_TAB_HELPER_H_
+#define BRAVE_BROWSER_CHAT_CHAT_TAB_HELPER_H_
 
 #include <memory>
 #include <string>
@@ -17,12 +17,12 @@
 using chat_ui::mojom::CharacterType;
 using chat_ui::mojom::ConversationTurn;
 
-class ChatUITabHelper : public content::WebContentsObserver,
-                        public content::WebContentsUserData<ChatUITabHelper> {
+class ChatTabHelper : public content::WebContentsObserver,
+                      public content::WebContentsUserData<ChatTabHelper> {
  public:
-  ChatUITabHelper(const ChatUITabHelper&) = delete;
-  ChatUITabHelper& operator=(const ChatUITabHelper&) = delete;
-  ~ChatUITabHelper() override;
+  ChatTabHelper(const ChatTabHelper&) = delete;
+  ChatTabHelper& operator=(const ChatTabHelper&) = delete;
+  ~ChatTabHelper() override;
 
   std::vector<ConversationTurn> GetConversationHistory() {
     return chat_history_;
@@ -30,9 +30,9 @@ class ChatUITabHelper : public content::WebContentsObserver,
   void AddToConversationHistory(const ConversationTurn& turn);
 
  private:
-  friend class content::WebContentsUserData<ChatUITabHelper>;
+  friend class content::WebContentsUserData<ChatTabHelper>;
 
-  explicit ChatUITabHelper(content::WebContents* web_contents);
+  explicit ChatTabHelper(content::WebContents* web_contents);
 
   // content::WebContentsObserver
   void DidStopLoading() override;
@@ -43,4 +43,4 @@ class ChatUITabHelper : public content::WebContentsObserver,
   WEB_CONTENTS_USER_DATA_KEY_DECL();
 };
 
-#endif  // BRAVE_BROWSER_CHAT_UI_CHAT_UI_TAB_HELPER_H_
+#endif  // BRAVE_BROWSER_CHAT_CHAT_TAB_HELPER_H_

@@ -419,7 +419,8 @@ absl::optional<SidebarItem> SidebarService::GetDefaultPanelItem() const {
   constexpr SidebarItem::BuiltInItemType kPreferredPanelOrder[] = {
       SidebarItem::BuiltInItemType::kReadingList,
       SidebarItem::BuiltInItemType::kBookmarks,
-      SidebarItem::BuiltInItemType::kPlaylist};
+      SidebarItem::BuiltInItemType::kPlaylist,
+      SidebarItem::BuiltInItemType::kChatUI};
 
   absl::optional<SidebarItem> default_item;
   for (const auto& type : kPreferredPanelOrder) {
@@ -639,6 +640,11 @@ SidebarItem SidebarService::GetBuiltInItemForType(
 
       return SidebarItem();
     }
+    case SidebarItem::BuiltInItemType::kChatUI:
+      return SidebarItem::Create(std::u16string(u"ChatUI"),
+                                 SidebarItem::Type::kTypeBuiltIn,
+                                 SidebarItem::BuiltInItemType::kChatUI,
+                                 /* open_in_panel = */ true);
     case SidebarItem::BuiltInItemType::kNone: {
       NOTREACHED();
       break;

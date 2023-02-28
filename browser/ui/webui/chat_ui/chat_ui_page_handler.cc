@@ -10,19 +10,28 @@
 #include <vector>
 
 #include "base/strings/strcat.h"
-#include "brave/browser/chat_ui/chat_ui_tab_helper.h"
 #include "brave/components/chat_ui/common/chat_ui_constants.h"
+#include "chrome/browser/ui/tabs/tab_strip_model.h"
 #include "content/public/browser/browser_context.h"
 #include "content/public/browser/storage_partition.h"
 
 ChatUIPageHandler::ChatUIPageHandler(
-    content::WebContents* web_contents,
+    TabStripModel* tab_strip_model,
     mojo::PendingReceiver<chat_ui::mojom::PageHandler> receiver)
-    : web_contents_(web_contents), receiver_(this, std::move(receiver)) {
-  auto url_loader_factory = web_contents->GetBrowserContext()
-                                ->GetDefaultStoragePartition()
-                                ->GetURLLoaderFactoryForBrowserProcess();
-  api_helper_ = std::make_unique<chat_ui::ChatUIAPIRequest>(url_loader_factory);
+    : receiver_(this, std::move(receiver)) {
+  DCHECK(tab_strip_model);
+
+  auto* web_contents = tab_strip_model->GetActiveWebContents();
+  if (!web_contents) {
+    return;
+  }
+
+  active_chat_tab_helper_ = ChatTabHelper::FromWebContents(web_contents);
+
+  api_helper_ = std::make_unique<chat_ui::ChatUIAPIRequest>(
+      web_contents->GetBrowserContext()
+          ->GetDefaultStoragePartition()
+          ->GetURLLoaderFactoryForBrowserProcess());
 }
 
 ChatUIPageHandler::~ChatUIPageHandler() = default;
@@ -33,8 +42,8 @@ void ChatUIPageHandler::SetClientPage(
 }
 
 void ChatUIPageHandler::QueryPrompt(const std::string& input) {
-  ChatUITabHelper::FromWebContents(web_contents_)
-      ->AddToConversationHistory({chat_ui::mojom::CharacterType::HUMAN, input});
+  active_chat_tab_helper_->AddToConversationHistory(
+      {chat_ui::mojom::CharacterType::HUMAN, input});
 
   DCHECK(api_helper_);
 
@@ -46,7 +55,7 @@ void ChatUIPageHandler::QueryPrompt(const std::string& input) {
 void ChatUIPageHandler::GetConversationHistory(
     GetConversationHistoryCallback callback) {
   std::vector<ConversationTurn> history =
-      ChatUITabHelper::FromWebContents(web_contents_)->GetConversationHistory();
+      active_chat_tab_helper_->GetConversationHistory();
 
   std::vector<chat_ui::mojom::ConversationTurnPtr> list;
   std::transform(history.begin(), history.end(), std::back_inserter(list),
@@ -63,6 +72,5 @@ void ChatUIPageHandler::OnResponse(const std::string& assistant_input,
 
   ConversationTurn turn = {CharacterType::ASSISTANT, assistant_input};
   page_.get()->OnResponse(turn.Clone());
-  ChatUITabHelper::FromWebContents(web_contents_)
-      ->AddToConversationHistory(turn);
+  active_chat_tab_helper_->AddToConversationHistory(turn);
 }

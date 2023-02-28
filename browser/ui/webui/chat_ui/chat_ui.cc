@@ -11,6 +11,9 @@
 #include "brave/browser/ui/webui/chat_ui/chat_ui_page_handler.h"
 #include "brave/components/chat_ui/resources/page/grit/chat_ui_generated_map.h"
 #include "brave/components/constants/webui_url_constants.h"
+#include "chrome/browser/profiles/profile.h"
+#include "chrome/browser/ui/browser.h"
+#include "chrome/browser/ui/browser_finder.h"
 #include "chrome/browser/ui/webui/webui_util.h"
 #include "components/grit/brave_components_resources.h"
 #include "content/public/browser/web_contents.h"
@@ -19,6 +22,9 @@
 #include "services/network/public/mojom/content_security_policy.mojom.h"
 
 ChatUI::ChatUI(content::WebUI* web_ui) : ui::UntrustedWebUIController(web_ui) {
+  auto* profile = Profile::FromWebUI(web_ui);
+  browser_ = chrome::FindLastActiveWithProfile(profile);
+
   // Create a URLDataSource and add resources.
   content::WebUIDataSource* untrusted_source =
       content::WebUIDataSource::CreateAndAdd(
@@ -30,14 +36,13 @@ ChatUI::ChatUI(content::WebUI* web_ui) : ui::UntrustedWebUIController(web_ui) {
 
   untrusted_source->OverrideContentSecurityPolicy(
       network::mojom::CSPDirectiveName::ScriptSrc,
-      std::string("script-src 'self' chrome-untrusted://resources;"));
+      "script-src 'self' chrome-untrusted://resources;");
   untrusted_source->OverrideContentSecurityPolicy(
       network::mojom::CSPDirectiveName::StyleSrc,
-      std::string(
-          "style-src 'self' 'unsafe-inline' chrome-untrusted://resources;"));
+      "style-src 'self' 'unsafe-inline' chrome-untrusted://resources;");
   untrusted_source->OverrideContentSecurityPolicy(
       network::mojom::CSPDirectiveName::FontSrc,
-      std::string("font-src 'self' data: chrome-untrusted://resources;"));
+      "font-src 'self' data: chrome-untrusted://resources;");
 }
 
 ChatUI::~ChatUI() = default;
@@ -45,7 +50,11 @@ ChatUI::~ChatUI() = default;
 void ChatUI::BindInterface(
     mojo::PendingReceiver<chat_ui::mojom::PageHandler> receiver) {
   page_handler_ = std::make_unique<ChatUIPageHandler>(
-      web_ui()->GetWebContents(), std::move(receiver));
+      browser_->tab_strip_model(), std::move(receiver));
+
+  if (embedder_) {
+    embedder_->ShowUI();
+  }
 }
 
 std::unique_ptr<content::WebUIController>

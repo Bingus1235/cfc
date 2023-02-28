@@ -1,7 +1,7 @@
-source_set("chat_ui_tab_helper") {
+source_set("chat_tab_helper") {
   sources = [
-    "chat_ui_tab_helper.cc",
-    "chat_ui_tab_helper.h",
+    "chat_tab_helper.cc",
+    "chat_tab_helper.h",
   ]
 
   deps = [
