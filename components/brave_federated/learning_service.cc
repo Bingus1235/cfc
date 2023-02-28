@@ -115,10 +115,10 @@ void LearningService::OnPostTaskResults(TaskResultResponse response) {
   int reconnect = 0;
 
   if (response.IsSuccessful()) {
-    reconnect = 5;  // 20 minutes
+    reconnect = GetFederatedLearningUpdateCycleInMinutes() * 60;
     VLOG(2) << "Task results posted successfully";
   } else {
-    reconnect = 5;  // 5 minute
+    reconnect = GetFederatedLearningUpdateCycleInMinutes()/2 * 60;
     VLOG(2) << "Task results posting failed";
   }
 
