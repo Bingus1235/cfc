@@ -592,7 +592,7 @@ GetEthBalanceScannerContractAddresses() {
   return *contract_addresses;
 }
 
-const base::flat_map<std::string, std::string>& SimpleHashChainIds() {
+const base::flat_map<std::string, std::string>& ToSimpleHashChainId() {
   static base::NoDestructor<base::flat_map<std::string, std::string>>
       chain_id_lookup({
           {mojom::kMainnetChainId, "ethereum"},
@@ -605,6 +605,23 @@ const base::flat_map<std::string, std::string>& SimpleHashChainIds() {
           {mojom::kGoerliChainId, "ethereum-goerli"},
           {mojom::kSolanaTestnet, "solana-testnet"},
           {mojom::kSolanaDevnet, "solana-devnet"},
+      });
+  return *chain_id_lookup;
+}
+
+const base::flat_map<std::string, std::string>& FromSimpleHashChainId() {
+  static base::NoDestructor<base::flat_map<std::string, std::string>>
+      chain_id_lookup({
+          {"ethereum", mojom::kMainnetChainId},
+          {"solana", mojom::kSolanaMainnet},
+          {"polygon", mojom::kPolygonMainnetChainId},
+          {"arbitrum", mojom::kArbitrumMainnetChainId},
+          {"optimism", mojom::kOptimismMainnetChainId},
+          {"avalanche", mojom::kAvalancheMainnetChainId},
+          {"bsc", mojom::kBinanceSmartChainMainnetChainId},
+          {"ethereum-goerli", mojom::kGoerliChainId},
+          {"solana-testnet", mojom::kSolanaTestnet},
+          {"solana-devnet", mojom::kSolanaDevnet},
       });
   return *chain_id_lookup;
 }

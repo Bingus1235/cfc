@@ -24,6 +24,7 @@
 #include "brave/components/brave_wallet/common/eth_address.h"
 #include "brave/components/brave_wallet/common/hex_utils.h"
 #include "brave/components/brave_wallet/common/solana_utils.h"
+#include "brave/components/brave_wallet/common/string_utils.h"
 #include "components/prefs/pref_service.h"
 #include "components/prefs/scoped_user_pref_update.h"
 #include "net/base/url_util.h"
@@ -58,15 +59,6 @@ net::NetworkTrafficAnnotationTag GetNetworkTrafficAnnotationTag() {
 }  // namespace
 
 namespace brave_wallet {
-
-SimpleHashNFT::SimpleHashNFT() = default;
-SimpleHashNFT::SimpleHashNFT(const SimpleHashNFT&) = default;
-SimpleHashNFT::~SimpleHashNFT() = default;
-
-FetchNFTsFromSimpleHashResult::FetchNFTsFromSimpleHashResult() = default;
-FetchNFTsFromSimpleHashResult::FetchNFTsFromSimpleHashResult(
-    const FetchNFTsFromSimpleHashResult&) = default;
-FetchNFTsFromSimpleHashResult::~FetchNFTsFromSimpleHashResult() = default;
 
 AssetDiscoveryManager::AssetDiscoveryManager(
     scoped_refptr<network::SharedURLLoaderFactory> url_loader_factory,
@@ -384,18 +376,18 @@ void AssetDiscoveryManager::FetchNFTsFromSimpleHash(
     std::move(callback).Run({});
     return;
   }
-  std::vector<SimpleHashNFT> nfts_so_far;
+  std::vector<mojom::BlockchainTokenPtr> nfts_so_far = {};
   auto internal_callback =
       base::BindOnce(&AssetDiscoveryManager::OnFetchNFTsFromSimpleHash,
-                     weak_ptr_factory_.GetWeakPtr(),
-                     base::OwnedRef(nfts_so_far), std::move(callback));
+                     weak_ptr_factory_.GetWeakPtr(), std::move(nfts_so_far),
+                     std::move(callback));
 
   api_request_helper_->Request("GET", url, "", "", true,
                                std::move(internal_callback));
 }
 
 void AssetDiscoveryManager::OnFetchNFTsFromSimpleHash(
-    std::vector<SimpleHashNFT>& nfts_so_far,
+    std::vector<mojom::BlockchainTokenPtr> nfts_so_far,
     FetchNFTsFromSimpleHashCallback callback,
     APIRequestResult api_request_result) {
   if (!api_request_result.Is2XXResponseCode()) {
@@ -409,24 +401,26 @@ void AssetDiscoveryManager::OnFetchNFTsFromSimpleHash(
     return;
   }
 
-  absl::optional<FetchNFTsFromSimpleHashResult> result =
-      ParseNFTsFromSimpleHash(api_request_result.value_body());
+  // optional of a pair of GURL and vector of blockchaintokenptrs
+  absl::optional<std::pair<GURL, std::vector<mojom::BlockchainTokenPtr>>>
+      result = ParseNFTsFromSimpleHash(api_request_result.value_body());
   if (!result) {
     std::move(callback).Run(std::move(nfts_so_far));
     return;
   }
 
   // Add discovered NFTs to nfts_so_far
-  nfts_so_far.insert(nfts_so_far.end(), result->nfts.begin(),
-                     result->nfts.end());
+  for (auto& token : result.value().second) {
+    nfts_so_far.push_back(std::move(token));
+  }
 
   // If there is a next page, fetch it
-  if (result.value().next.is_valid()) {
+  if (result.value().first.is_valid()) {
     auto internal_callback =
         base::BindOnce(&AssetDiscoveryManager::OnFetchNFTsFromSimpleHash,
-                       weak_ptr_factory_.GetWeakPtr(),
-                       base::OwnedRef(nfts_so_far), std::move(callback));
-    api_request_helper_->Request("GET", result.value().next, "", "", true,
+                       weak_ptr_factory_.GetWeakPtr(), std::move(nfts_so_far),
+                       std::move(callback));
+    api_request_helper_->Request("GET", result.value().first, "", "", true,
                                  std::move(internal_callback));
     return;
   }
@@ -435,7 +429,7 @@ void AssetDiscoveryManager::OnFetchNFTsFromSimpleHash(
   std::move(callback).Run(std::move(nfts_so_far));
 }
 
-absl::optional<FetchNFTsFromSimpleHashResult>
+absl::optional<std::pair<GURL, std::vector<mojom::BlockchainTokenPtr>>>
 AssetDiscoveryManager::ParseNFTsFromSimpleHash(const base::Value& json_value) {
   // {
   //   "next":
@@ -577,41 +571,50 @@ AssetDiscoveryManager::ParseNFTsFromSimpleHash(const base::Value& json_value) {
     return absl::nullopt;
   }
 
-  FetchNFTsFromSimpleHashResult result;
+  // FetchNFTsFromSimpleHashResult result;
+  GURL nextURL;
   auto* next = json_value.FindStringKey("next");
   if (next) {
-    result.next = GURL(*next);
+    nextURL = GURL(*next);
   }
 
   const base::Value* nfts = json_value.FindKey("nfts");
   if (!nfts || !nfts->is_list()) {
     return absl::nullopt;
   }
-  for (const auto& nft : nfts->GetList()) {
-    SimpleHashNFT simple_hash_nft;
-    auto* chain = nft.FindStringKey("chain");
 
-    // chain
-    if (!chain) {
+  const base::flat_map<std::string, std::string>& chain_ids =
+      FromSimpleHashChainId();
+  std::vector<mojom::BlockchainTokenPtr> nft_tokens;
+  for (const auto& nft : nfts->GetList()) {
+    auto token = mojom::BlockchainToken::New();
+
+    // chain_id
+    auto* chain = nft.FindStringKey("chain");
+    if (!chain || !chain_ids.contains(*chain)) {
       continue;
     }
-    simple_hash_nft.chain = *chain;
+    token->chain_id = chain_ids.at(*chain);
 
     // contract_address
     auto* contract_address = nft.FindStringKey("contract_address");
     if (!contract_address) {
       continue;
     }
-    simple_hash_nft.contract_address = *contract_address;
+    token->contract_address = *contract_address;
 
     // token_id
     auto* token_id = nft.FindStringKey("token_id");
     if (!token_id) {
       continue;
     }
-    simple_hash_nft.token_id = *token_id;
+    uint256_t token_id_uint256;
+    if (!Base10ValueToUint256(*token_id, &token_id_uint256)) {
+      continue;
+    }
+    token->token_id = Uint256ValueToHex(token_id_uint256);
 
-    // contract.type
+    // is_erc721, is_erc20, is_nft
     auto* contract = nft.FindDictKey("contract");
     if (!contract) {
       continue;
@@ -620,12 +623,17 @@ AssetDiscoveryManager::ParseNFTsFromSimpleHash(const base::Value& json_value) {
     if (!type) {
       continue;
     }
-    simple_hash_nft.type = *type;
+    bool is_erc721 = base::EqualsCaseInsensitiveASCII(*type, "ERC721");
+    if (!is_erc721) {
+      continue;
+    }
+    token->is_erc721 = true;
+    token->is_nft = true;
 
-    result.nfts.push_back(simple_hash_nft);
+    nft_tokens.push_back(std::move(token));
   }
 
-  return result;
+  return std::make_pair(nextURL, std::move(nft_tokens));
 }
 
 // Called when asset discovery has completed for
@@ -732,7 +740,7 @@ GURL AssetDiscoveryManager::GetSimpleHashNftsByWalletUrl(
   std::string urlStr =
       base::StringPrintf("%s/api/v0/nfts/owners", kSimpleHashUrl);
   const base::flat_map<std::string, std::string>& simple_hash_chain_ids =
-      SimpleHashChainIds();
+      ToSimpleHashChainId();
   std::string chain_ids_param;
   for (const auto& chain_id : chain_ids) {
     auto it = simple_hash_chain_ids.find(chain_id);

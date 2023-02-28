@@ -367,21 +367,16 @@ class AssetDiscoveryManagerUnitTest : public testing::Test {
   void TestFetchNFTsFromSimpleHash(
       const std::string& account_address,
       const std::vector<std::string>& chain_ids,
-      const std::vector<SimpleHashNFT>& expected_nfts) {
+      const std::vector<mojom::BlockchainTokenPtr>& expected_nfts) {
     base::RunLoop run_loop;
     asset_discovery_manager_->FetchNFTsFromSimpleHash(
         account_address, chain_ids,
-        base::BindLambdaForTesting([&](const std::vector<SimpleHashNFT>& nfts) {
-          ASSERT_EQ(nfts.size(), expected_nfts.size());
-          for (size_t i = 0; i < nfts.size(); i++) {
-            EXPECT_EQ(nfts[i].chain, expected_nfts[i].chain);
-            EXPECT_EQ(nfts[i].contract_address,
-                      expected_nfts[i].contract_address);
-            EXPECT_EQ(nfts[i].token_id, expected_nfts[i].token_id);
-            EXPECT_EQ(nfts[i].type, expected_nfts[i].type);
-          }
-          run_loop.Quit();
-        }));
+        base::BindLambdaForTesting(
+            [&](const std::vector<mojom::BlockchainTokenPtr>& nfts) {
+              ASSERT_EQ(nfts.size(), expected_nfts.size());
+              EXPECT_EQ(nfts, expected_nfts);
+              run_loop.Quit();
+            }));
     run_loop.Run();
   }
 
@@ -1422,7 +1417,7 @@ TEST_F(AssetDiscoveryManagerUnitTest, ParseNFTsFromSimpleHash) {
         "contract_address": "0xBfb1E576dE8ca6d99A74712208C1fA86b382c64c",
         "token_id": "428458408537",
         "contract": {
-          "type": "ERC1155"
+          "type": "ERC721"
         }
       }
     ]
@@ -1431,12 +1426,15 @@ TEST_F(AssetDiscoveryManagerUnitTest, ParseNFTsFromSimpleHash) {
   ASSERT_TRUE(json_value);
   result = asset_discovery_manager_->ParseNFTsFromSimpleHash(*json_value);
   ASSERT_TRUE(result);
-  EXPECT_EQ(result.value().nfts.size(), 1u);
-  EXPECT_EQ(result.value().nfts[0].chain, "polygon");
-  EXPECT_EQ(result.value().nfts[0].contract_address,
+  EXPECT_FALSE(result->first.is_valid());
+  EXPECT_EQ(result->second.size(), 1u);
+  EXPECT_EQ(result->second[0]->chain_id, mojom::kPolygonMainnetChainId);
+  EXPECT_EQ(result->second[0]->contract_address,
             "0xBfb1E576dE8ca6d99A74712208C1fA86b382c64c");
-  EXPECT_EQ(result.value().nfts[0].token_id, "428458408537");
-  EXPECT_EQ(result.value().nfts[0].type, "ERC1155");
+  EXPECT_EQ(result->second[0]->token_id, "0x63c21c7a59");
+  EXPECT_EQ(result->second[0]->is_erc721, true);
+  EXPECT_EQ(result->second[0]->is_erc20, false);
+  EXPECT_EQ(result->second[0]->is_nft, true);
 
   // Valid, 2 NFTs
   json = R"({
@@ -1449,7 +1447,7 @@ TEST_F(AssetDiscoveryManagerUnitTest, ParseNFTsFromSimpleHash) {
         "contract_address": "0xBfb1E576dE8ca6d99A74712208C1fA86b382c64c",
         "token_id": "428458408537",
         "contract": {
-          "type": "ERC1155"
+          "type": "ERC721"
         }
       },
       {
@@ -1467,15 +1465,24 @@ TEST_F(AssetDiscoveryManagerUnitTest, ParseNFTsFromSimpleHash) {
   ASSERT_TRUE(json_value);
   result = asset_discovery_manager_->ParseNFTsFromSimpleHash(*json_value);
   ASSERT_TRUE(result);
-  EXPECT_EQ(result.value().next.spec(),
+  EXPECT_EQ(result->first.spec(),
             "https://api.simplehash.com/api/v0/nfts/next");
-  EXPECT_EQ(result.value().nfts.size(), 2u);
-  EXPECT_EQ(result.value().nfts[0].chain, "polygon");
-  EXPECT_EQ(result.value().nfts[0].token_id, "428458408537");
-  EXPECT_EQ(result.value().nfts[0].type, "ERC1155");
-  EXPECT_EQ(result.value().nfts[1].chain, "ethereum");
-  EXPECT_EQ(result.value().nfts[1].token_id, "2");
-  EXPECT_EQ(result.value().nfts[1].type, "ERC721");
+  EXPECT_EQ(result->second.size(), 2u);
+  EXPECT_EQ(result->second[0]->chain_id, mojom::kPolygonMainnetChainId);
+  EXPECT_EQ(result->second[0]->contract_address,
+            "0xBfb1E576dE8ca6d99A74712208C1fA86b382c64c");
+  EXPECT_EQ(result->second[0]->token_id, "0x63c21c7a59");
+  EXPECT_EQ(result->second[0]->is_erc721, true);
+  EXPECT_EQ(result->second[0]->is_erc20, false);
+  EXPECT_EQ(result->second[0]->is_nft, true);
+
+  EXPECT_EQ(result->second[1]->chain_id, mojom::kMainnetChainId);
+  EXPECT_EQ(result->second[1]->contract_address,
+            "0x2222222222222222222222222222222222222222");
+  EXPECT_EQ(result->second[1]->token_id, "0x2");
+  EXPECT_EQ(result->second[1]->is_erc721, true);
+  EXPECT_EQ(result->second[1]->is_erc20, false);
+  EXPECT_EQ(result->second[1]->is_nft, true);
 
   // Valid, 5 results, but only 1 has all necessary keys yields 1 NFT
   json = R"({
@@ -1488,7 +1495,7 @@ TEST_F(AssetDiscoveryManagerUnitTest, ParseNFTsFromSimpleHash) {
         "contract_address": "0xBfb1E576dE8ca6d99A74712208C1fA86b382c64c",
         "token_id": "428458408537",
         "contract": {
-          "type": "ERC1155"
+          "type": "ERC721"
         }
       },
       {
@@ -1527,11 +1534,11 @@ TEST_F(AssetDiscoveryManagerUnitTest, ParseNFTsFromSimpleHash) {
   ASSERT_TRUE(json_value);
   result = asset_discovery_manager_->ParseNFTsFromSimpleHash(*json_value);
   ASSERT_TRUE(result);
-  EXPECT_EQ(result.value().nfts.size(), 1u);
+  EXPECT_EQ(result->second.size(), 1u);
 }
 
 TEST_F(AssetDiscoveryManagerUnitTest, FetchNFTsFromSimpleHash) {
-  std::vector<SimpleHashNFT> expected_nfts;
+  std::vector<mojom::BlockchainTokenPtr> expected_nfts;
   std::string json;
   std::string json2;
   std::map<GURL, std::string> responses;
@@ -1560,16 +1567,19 @@ TEST_F(AssetDiscoveryManagerUnitTest, FetchNFTsFromSimpleHash) {
         "contract_address": "0xBfb1E576dE8ca6d99A74712208C1fA86b382c64c",
         "token_id": "428458408537",
         "contract": {
-          "type": "ERC1155"
+          "type": "ERC721"
         }
       }
     ]
   })";
-  SimpleHashNFT nft1;
-  nft1.chain = "polygon";
-  nft1.contract_address = "0xBfb1E576dE8ca6d99A74712208C1fA86b382c64c";
-  nft1.token_id = "428458408537";
-  nft1.type = "ERC1155";
+  auto nft1 = mojom::BlockchainToken::New();
+  nft1->chain_id = mojom::kPolygonMainnetChainId;
+  nft1->contract_address = "0xBfb1E576dE8ca6d99A74712208C1fA86b382c64c";
+  nft1->token_id = "0x63c21c7a59";
+  nft1->is_erc721 = true;
+  nft1->is_erc20 = false;
+  nft1->is_nft = true;
+  expected_nfts.push_back(std::move(nft1));
   url = GURL(
       "https://api.simplehash.com/api/v0/nfts/"
       "owners?chains=ethereum%2Coptimism&wallet_addresses="
@@ -1578,7 +1588,7 @@ TEST_F(AssetDiscoveryManagerUnitTest, FetchNFTsFromSimpleHash) {
   SetInterceptors(responses);
   TestFetchNFTsFromSimpleHash(
       "0x0000000000000000000000000000000000000000",
-      {mojom::kMainnetChainId, mojom::kOptimismMainnetChainId}, {nft1});
+      {mojom::kMainnetChainId, mojom::kOptimismMainnetChainId}, expected_nfts);
 
   // If 'next' page url is present, it should make another request
   responses.clear();
@@ -1592,7 +1602,7 @@ TEST_F(AssetDiscoveryManagerUnitTest, FetchNFTsFromSimpleHash) {
         "contract_address": "0xBfb1E576dE8ca6d99A74712208C1fA86b382c64c",
         "token_id": "428458408537",
         "contract": {
-          "type": "ERC1155"
+          "type": "ERC721"
         }
       }
     ]
@@ -1616,14 +1626,17 @@ TEST_F(AssetDiscoveryManagerUnitTest, FetchNFTsFromSimpleHash) {
   })";
   responses[next_url] = json2;
   SetInterceptors(responses);
-  SimpleHashNFT nft2;
-  nft2.chain = "ethereum";
-  nft2.contract_address = "0x5555555555555555555555555555555555555555";
-  nft2.token_id = "555555555555";
-  nft2.type = "ERC721";
+  auto nft2 = mojom::BlockchainToken::New();
+  nft2->chain_id = mojom::kMainnetChainId;
+  nft2->contract_address = "0x5555555555555555555555555555555555555555";
+  nft2->token_id = "0x8159b108e3";  // "555555555555"
+  nft2->is_erc20 = false;
+  nft2->is_erc721 = true;
+  nft2->is_nft = true;
+  expected_nfts.push_back(std::move(nft2));
   TestFetchNFTsFromSimpleHash(
       "0x0000000000000000000000000000000000000000",
-      {mojom::kMainnetChainId, mojom::kOptimismMainnetChainId}, {nft1, nft2});
+      {mojom::kMainnetChainId, mojom::kOptimismMainnetChainId}, expected_nfts);
 }
 
 }  // namespace brave_wallet

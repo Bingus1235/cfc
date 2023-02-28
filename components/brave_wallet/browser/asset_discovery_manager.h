@@ -27,24 +27,6 @@ class PrefService;
 
 namespace brave_wallet {
 
-struct SimpleHashNFT {
-  SimpleHashNFT();
-  SimpleHashNFT(const SimpleHashNFT& other);
-  ~SimpleHashNFT();
-  std::string chain;
-  std::string contract_address;
-  std::string token_id;
-  std::string type;
-};
-
-struct FetchNFTsFromSimpleHashResult {
-  FetchNFTsFromSimpleHashResult();
-  FetchNFTsFromSimpleHashResult(const FetchNFTsFromSimpleHashResult& other);
-  ~FetchNFTsFromSimpleHashResult();
-  GURL next;
-  std::vector<SimpleHashNFT> nfts;
-};
-
 class BraveWalletService;
 class JsonRpcService;
 class KeyringService;
@@ -149,18 +131,19 @@ class AssetDiscoveryManager : public mojom::KeyringServiceObserver {
       const std::vector<std::map<std::string, std::vector<std::string>>>&
           discovered_assets);
 
-  using FetchNFTsFromSimpleHashCallback =
-      base::OnceCallback<void(const std::vector<SimpleHashNFT>& nfts)>;
+  using FetchNFTsFromSimpleHashCallback = base::OnceCallback<void(
+      const std::vector<mojom::BlockchainTokenPtr>& nfts)>;
   void FetchNFTsFromSimpleHash(const std::string& account_address,
                                const std::vector<std::string>& chain_ids,
                                FetchNFTsFromSimpleHashCallback callback);
 
-  void OnFetchNFTsFromSimpleHash(std::vector<SimpleHashNFT>& nfts_so_far,
-                                 FetchNFTsFromSimpleHashCallback callback,
-                                 APIRequestResult api_request_result);
+  void OnFetchNFTsFromSimpleHash(
+      std::vector<mojom::BlockchainTokenPtr> nfts_so_far,
+      FetchNFTsFromSimpleHashCallback callback,
+      APIRequestResult api_request_result);
 
-  absl::optional<FetchNFTsFromSimpleHashResult> ParseNFTsFromSimpleHash(
-      const base::Value& json_value);
+  absl::optional<std::pair<GURL, std::vector<mojom::BlockchainTokenPtr>>>
+  ParseNFTsFromSimpleHash(const base::Value& json_value);
 
   // CompleteDiscoverAssets signals that the discover assets request has
   // completed for a given chain_id
