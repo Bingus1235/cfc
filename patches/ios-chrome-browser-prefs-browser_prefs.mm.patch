@@ -1,16 +1,16 @@
 diff --git a/ios/chrome/browser/prefs/browser_prefs.mm b/ios/chrome/browser/prefs/browser_prefs.mm
-index f10103c31ab77f251a0fe166a53339341c6527b7..334177aa482a03cdc987f2c3e56744b0c043b24e 100644
+index 1d04e48594cc8fd33906478f2995eda2ac9ab4c5..adf1473907ae1e4697958d121e3761608ea275ef 100644
 --- a/ios/chrome/browser/prefs/browser_prefs.mm
 +++ b/ios/chrome/browser/prefs/browser_prefs.mm
-@@ -272,6 +272,7 @@ void RegisterLocalStatePrefs(PrefRegistrySimple* registry) {
- 
-   registry->RegisterBooleanPref(
-       prefs::kIosCredentialProviderPromoHasRegisteredWithPromoManager, false);
+@@ -275,6 +275,7 @@ void RegisterLocalStatePrefs(PrefRegistrySimple* registry) {
+   // Preferences related to tab grid.
+   // Default to 0 which is the unassigned value.
+   registry->RegisterIntegerPref(prefs::kInactiveTabsTimeThreshold, 0);
 +  BRAVE_REGISTER_LOCAL_STATE_PREFS
  }
  
  void RegisterBrowserStatePrefs(user_prefs::PrefRegistrySyncable* registry) {
-@@ -412,6 +413,7 @@ void RegisterBrowserStatePrefs(user_prefs::PrefRegistrySyncable* registry) {
+@@ -415,6 +416,7 @@ void RegisterBrowserStatePrefs(user_prefs::PrefRegistrySyncable* registry) {
  
    // Register pref used to determine if the Price Tracking UI has been shown.
    registry->RegisterBooleanPref(prefs::kPriceNotificationsHasBeenShown, false);
@@ -18,7 +18,7 @@ index f10103c31ab77f251a0fe166a53339341c6527b7..334177aa482a03cdc987f2c3e56744b0
  }
  
  // This method should be periodically pruned of year+ old migrations.
-@@ -557,4 +559,5 @@ void MigrateObsoleteBrowserStatePrefs(PrefService* prefs) {
+@@ -560,4 +562,5 @@ void MigrateObsoleteBrowserStatePrefs(PrefService* prefs) {
    if (prefs->FindPreference(kUserClassifierLastTimeToUseSuggestions)) {
      prefs->ClearPref(kUserClassifierLastTimeToUseSuggestions);
    }
