@@ -440,9 +440,11 @@ class BraveWalletServiceUnitTest : public testing::Test {
   }
 
   void AddUserAsset(mojom::BlockchainTokenPtr token, bool* out_success) {
+    VLOG(0) << __func__ << ":" << __LINE__;
     base::RunLoop run_loop;
     service_->AddUserAsset(std::move(token),
                            base::BindLambdaForTesting([&](bool success) {
+                             VLOG(0) << __func__ << ":" << __LINE__;
                              *out_success = success;
                              run_loop.Quit();
                            }));

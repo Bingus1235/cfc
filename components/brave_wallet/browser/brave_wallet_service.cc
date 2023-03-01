@@ -347,15 +347,18 @@ std::vector<mojom::BlockchainTokenPtr> BraveWalletService::GetUserAssets(
 // static
 bool BraveWalletService::AddUserAsset(mojom::BlockchainTokenPtr token,
                                       PrefService* profile_prefs) {
+  VLOG(0) << __func__ << ":" << __LINE__;
   absl::optional<std::string> address = GetUserAssetAddress(
       token->contract_address, token->coin, token->chain_id);
   if (!address)
     return false;
+  VLOG(0) << __func__ << ":" << __LINE__;
 
   const std::string network_id =
       GetNetworkId(profile_prefs, token->coin, token->chain_id);
   if (network_id.empty())
     return false;
+  VLOG(0) << __func__ << ":" << __LINE__;
 
   bool check_token_id = token->is_erc721 || token->is_erc1155;
   if (check_token_id) {
@@ -364,6 +367,7 @@ bool BraveWalletService::AddUserAsset(mojom::BlockchainTokenPtr token,
       return false;
     }
   }
+  VLOG(0) << __func__ << ":" << __LINE__;
 
   ScopedDictPrefUpdate update(profile_prefs, kBraveWalletUserAssets);
   base::Value::Dict& user_assets_pref = update.Get();
@@ -376,12 +380,15 @@ bool BraveWalletService::AddUserAsset(mojom::BlockchainTokenPtr token,
         user_assets_pref.SetByDottedPath(path, base::Value::List())
             ->GetIfList();
   }
+  VLOG(0) << __func__ << ":" << __LINE__;
   DCHECK(user_assets_list);
+  VLOG(0) << __func__ << ":" << __LINE__;
 
   auto it =
       FindAsset(user_assets_list, *address, token->token_id, check_token_id);
   if (it != user_assets_list->end())
     return false;
+  VLOG(0) << __func__ << ":" << __LINE__;
 
   base::Value::Dict value;
   value.Set("address", *address);
@@ -396,9 +403,11 @@ bool BraveWalletService::AddUserAsset(mojom::BlockchainTokenPtr token,
   value.Set("visible", true);
   value.Set("token_id", token->token_id);
   value.Set("coingecko_id", token->coingecko_id);
+  VLOG(0) << __func__ << ":" << __LINE__;
 
   user_assets_list->Append(std::move(value));
 
+  VLOG(0) << __func__ << ":" << __LINE__;
   return true;
 }
 
@@ -416,6 +425,7 @@ void BraveWalletService::GetAllUserAssets(GetUserAssetsCallback callback) {
 }
 
 bool BraveWalletService::AddUserAsset(mojom::BlockchainTokenPtr token) {
+  VLOG(0) << __func__ << ":" << __LINE__;
   mojom::BlockchainTokenPtr clone = token.Clone();
   bool result =
       BraveWalletService::AddUserAsset(std::move(token), profile_prefs_);
@@ -430,16 +440,19 @@ bool BraveWalletService::AddUserAsset(mojom::BlockchainTokenPtr token) {
 
 void BraveWalletService::AddUserAsset(mojom::BlockchainTokenPtr token,
                                       AddUserAssetCallback callback) {
+  VLOG(0) << __func__ << ":" << __LINE__;
   std::vector<std::string> interfaces_to_check = GetEthSupportedNftInterfaces();
+  VLOG(0) << __func__ << ":" << __LINE__;
   if (token->is_nft && token->coin == mojom::CoinType::ETH) {
     json_rpc_service_->GetEthNftStandard(
         token->contract_address, token->chain_id, interfaces_to_check,
         base::BindOnce(&BraveWalletService::OnGetEthNftStandard,
                        weak_ptr_factory_.GetWeakPtr(), std::move(token),
                        std::move(callback)));
+    VLOG(0) << __func__ << ":" << __LINE__;
     return;
   }
-
+  VLOG(0) << __func__ << ":" << __LINE__;
   std::move(callback).Run(AddUserAsset(std::move(token)));
 }
 
@@ -449,11 +462,13 @@ void BraveWalletService::OnGetEthNftStandard(
     const absl::optional<std::string>& standard,
     mojom::ProviderError error,
     const std::string& error_message) {
+  VLOG(0) << __func__ << ":" << __LINE__;
   if (error != mojom::ProviderError::kSuccess || !standard) {
     std::move(callback).Run(false);
     return;
   }
 
+  VLOG(0) << __func__ << ":" << __LINE__;
   if (standard.value() == kERC721InterfaceId) {
     token->is_erc721 = true;
     token->is_erc1155 = false;
@@ -465,6 +480,7 @@ void BraveWalletService::OnGetEthNftStandard(
     std::move(callback).Run(false);
     return;
   }
+  VLOG(0) << __func__ << ":" << __LINE__;
 
   std::move(callback).Run(AddUserAsset(std::move(token)));
 }
