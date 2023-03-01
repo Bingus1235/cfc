@@ -253,19 +253,17 @@ class TestBraveWalletServiceObserver
 class BraveWalletServiceUnitTest : public testing::Test {
  public:
   BraveWalletServiceUnitTest()
-      : shared_url_loader_factory_(
-            base::MakeRefCounted<network::WeakWrapperSharedURLLoaderFactory>(
-                &url_loader_factory_)),
-        task_environment_(base::test::TaskEnvironment::TimeSource::MOCK_TIME) {}
+      : task_environment_(base::test::TaskEnvironment::TimeSource::MOCK_TIME) {}
 
   ~BraveWalletServiceUnitTest() override = default;
-  network::TestURLLoaderFactory url_loader_factory_;
-  scoped_refptr<network::SharedURLLoaderFactory> shared_url_loader_factory_;
 
  protected:
   void SetUp() override {
     scoped_feature_list_.InitAndEnableFeature(
         features::kNativeBraveWalletFeature);
+    shared_url_loader_factory_ =
+        base::MakeRefCounted<network::WeakWrapperSharedURLLoaderFactory>(
+            &url_loader_factory_);
 
 #if BUILDFLAG(IS_ANDROID)
     task_environment_.AdvanceClock(base::Days(2));
@@ -754,6 +752,8 @@ class BraveWalletServiceUnitTest : public testing::Test {
   mojom::BlockchainTokenPtr sol_usdc_;
   mojom::BlockchainTokenPtr sol_tsla_;
   mojom::BlockchainTokenPtr fil_token_;
+  network::TestURLLoaderFactory url_loader_factory_;
+  scoped_refptr<network::SharedURLLoaderFactory> shared_url_loader_factory_;
   data_decoder::test::InProcessDataDecoder in_process_data_decoder_;
 };
 
