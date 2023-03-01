@@ -381,12 +381,12 @@ void AssetDiscoveryManager::DiscoverNFTsOnAllSupportedChains(
   for (const auto& account_address : eth_account_addresses) {
     FetchNFTsFromSimpleHash(account_address,
                             GetAssetDiscoverySupportedEthChains(),
-                            std::move(barrier_callback));
+                            mojom::CoinType::ETH, std::move(barrier_callback));
   }
 
   for (const auto& account_address : sol_account_addresses) {
     FetchNFTsFromSimpleHash(account_address, {mojom::kSolanaMainnet},
-                            std::move(barrier_callback));
+                            mojom::CoinType::SOL, std::move(barrier_callback));
   }
 }
 
@@ -402,7 +402,11 @@ void AssetDiscoveryManager::MergeDiscoveredNFTs(
         continue;
       }
       seen_nft.insert(nft.Clone());
-      discovered_nfts.push_back(nft.Clone());
+
+      // Add the NFT to the user's assets
+      if (BraveWalletService::AddUserAsset(nft.Clone(), prefs_)) {
+        discovered_nfts.push_back(nft.Clone());  // TODO(nvonpentz) don't clone
+      }
     }
   }
 
@@ -415,6 +419,7 @@ void AssetDiscoveryManager::MergeDiscoveredNFTs(
 void AssetDiscoveryManager::FetchNFTsFromSimpleHash(
     const std::string& account_address,
     const std::vector<std::string>& chain_ids,
+    mojom::CoinType coin,
     FetchNFTsFromSimpleHashCallback callback) {
   GURL url = GetSimpleHashNftsByWalletUrl(account_address, chain_ids);
   if (!url.is_valid()) {
@@ -425,7 +430,7 @@ void AssetDiscoveryManager::FetchNFTsFromSimpleHash(
   auto internal_callback =
       base::BindOnce(&AssetDiscoveryManager::OnFetchNFTsFromSimpleHash,
                      weak_ptr_factory_.GetWeakPtr(), std::move(nfts_so_far),
-                     std::move(callback));
+                     coin, std::move(callback));
 
   api_request_helper_->Request("GET", url, "", "", true,
                                std::move(internal_callback));
@@ -433,6 +438,7 @@ void AssetDiscoveryManager::FetchNFTsFromSimpleHash(
 
 void AssetDiscoveryManager::OnFetchNFTsFromSimpleHash(
     std::vector<mojom::BlockchainTokenPtr> nfts_so_far,
+    mojom::CoinType coin,
     FetchNFTsFromSimpleHashCallback callback,
     APIRequestResult api_request_result) {
   if (!api_request_result.Is2XXResponseCode()) {
@@ -448,7 +454,7 @@ void AssetDiscoveryManager::OnFetchNFTsFromSimpleHash(
 
   // optional of a pair of GURL and vector of blockchaintokenptrs
   absl::optional<std::pair<GURL, std::vector<mojom::BlockchainTokenPtr>>>
-      result = ParseNFTsFromSimpleHash(api_request_result.value_body());
+      result = ParseNFTsFromSimpleHash(api_request_result.value_body(), coin);
   if (!result) {
     std::move(callback).Run(std::move(nfts_so_far));
     return;
@@ -464,7 +470,7 @@ void AssetDiscoveryManager::OnFetchNFTsFromSimpleHash(
     auto internal_callback =
         base::BindOnce(&AssetDiscoveryManager::OnFetchNFTsFromSimpleHash,
                        weak_ptr_factory_.GetWeakPtr(), std::move(nfts_so_far),
-                       std::move(callback));
+                       coin, std::move(callback));
     api_request_helper_->Request("GET", result.value().first, "", "", true,
                                  std::move(internal_callback));
     return;
@@ -475,7 +481,8 @@ void AssetDiscoveryManager::OnFetchNFTsFromSimpleHash(
 }
 
 absl::optional<std::pair<GURL, std::vector<mojom::BlockchainTokenPtr>>>
-AssetDiscoveryManager::ParseNFTsFromSimpleHash(const base::Value& json_value) {
+AssetDiscoveryManager::ParseNFTsFromSimpleHash(const base::Value& json_value,
+                                               mojom::CoinType coin) {
   // {
   //   "next":
   //   "https://api.simplehash.com/api/v0/nfts/owners?chains=polygon%2Cethereum&cursor=ZXZtLXBnLjB4YmZiMWU1NzZkZThjYTZkOTlhNzQ3MTIyMDhjMWZhODZiMzgyYzY0Yy4wMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDA0Mjg0NTg0MDg1MzdfMjAyMy0wMi0xMyAxMzozNjowMCswMDowMF9fbmV4dA&limit=1&wallet_addresses=0xB4B2802129071b2B9eBb8cBB01EA1E4D14B34961",
@@ -674,6 +681,7 @@ AssetDiscoveryManager::ParseNFTsFromSimpleHash(const base::Value& json_value) {
     }
     token->is_erc721 = true;
     token->is_nft = true;
+    token->coin = coin;
 
     nft_tokens.push_back(std::move(token));
   }

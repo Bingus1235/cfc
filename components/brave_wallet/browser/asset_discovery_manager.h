@@ -143,15 +143,17 @@ class AssetDiscoveryManager : public mojom::KeyringServiceObserver {
       base::OnceCallback<void(std::vector<mojom::BlockchainTokenPtr> nfts)>;
   void FetchNFTsFromSimpleHash(const std::string& account_address,
                                const std::vector<std::string>& chain_ids,
+                               mojom::CoinType coin,
                                FetchNFTsFromSimpleHashCallback callback);
 
   void OnFetchNFTsFromSimpleHash(
       std::vector<mojom::BlockchainTokenPtr> nfts_so_far,
+      mojom::CoinType coin,
       FetchNFTsFromSimpleHashCallback callback,
       APIRequestResult api_request_result);
 
   absl::optional<std::pair<GURL, std::vector<mojom::BlockchainTokenPtr>>>
-  ParseNFTsFromSimpleHash(const base::Value& json_value);
+  ParseNFTsFromSimpleHash(const base::Value& json_value, mojom::CoinType coin);
 
   // CompleteDiscoverAssets signals that the discover assets request has
   // completed for a given chain_id
