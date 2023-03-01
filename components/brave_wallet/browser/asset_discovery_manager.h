@@ -131,8 +131,16 @@ class AssetDiscoveryManager : public mojom::KeyringServiceObserver {
       const std::vector<std::map<std::string, std::vector<std::string>>>&
           discovered_assets);
 
-  using FetchNFTsFromSimpleHashCallback = base::OnceCallback<void(
-      const std::vector<mojom::BlockchainTokenPtr>& nfts)>;
+  void DiscoverNFTsOnAllSupportedChains(
+      std::map<mojom::CoinType, std::vector<std::string>>& account_addresses,
+      bool triggered_by_accounts_added);
+
+  void MergeDiscoveredNFTs(
+      bool triggered_by_accounts_added,
+      const std::vector<std::vector<mojom::BlockchainTokenPtr>>& nfts);
+
+  using FetchNFTsFromSimpleHashCallback =
+      base::OnceCallback<void(std::vector<mojom::BlockchainTokenPtr> nfts)>;
   void FetchNFTsFromSimpleHash(const std::string& account_address,
                                const std::vector<std::string>& chain_ids,
                                FetchNFTsFromSimpleHashCallback callback);

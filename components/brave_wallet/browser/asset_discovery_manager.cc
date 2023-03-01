@@ -365,6 +365,51 @@ void AssetDiscoveryManager::MergeDiscoveredEthAssets(
                          triggered_by_accounts_added);
 }
 
+void AssetDiscoveryManager::DiscoverNFTsOnAllSupportedChains(
+    std::map<mojom::CoinType, std::vector<std::string>>& account_addresses,
+    bool triggered_by_accounts_added) {
+  // Use a barrier callback to wait for all FetchNFTsFromSimpleHash calls to
+  // complete (one for each account address).
+  const auto& eth_account_addresses = account_addresses[mojom::CoinType::ETH];
+  const auto& sol_account_addresses = account_addresses[mojom::CoinType::SOL];
+  const auto barrier_callback =
+      base::BarrierCallback<std::vector<mojom::BlockchainTokenPtr>>(
+          eth_account_addresses.size() + sol_account_addresses.size(),
+          base::BindOnce(&AssetDiscoveryManager::MergeDiscoveredNFTs,
+                         weak_ptr_factory_.GetWeakPtr(),
+                         triggered_by_accounts_added));
+  for (const auto& account_address : eth_account_addresses) {
+    FetchNFTsFromSimpleHash(account_address,
+                            GetAssetDiscoverySupportedEthChains(),
+                            std::move(barrier_callback));
+  }
+
+  for (const auto& account_address : sol_account_addresses) {
+    FetchNFTsFromSimpleHash(account_address, {mojom::kSolanaMainnet},
+                            std::move(barrier_callback));
+  }
+}
+
+void AssetDiscoveryManager::MergeDiscoveredNFTs(
+    bool triggered_by_accounts_added,
+    const std::vector<std::vector<mojom::BlockchainTokenPtr>>& nfts) {
+  // De-dupe the NFTs
+  base::flat_set<mojom::BlockchainTokenPtr> seen_nft;
+  std::vector<mojom::BlockchainTokenPtr> discovered_nfts;
+  for (const auto& nft_list : nfts) {
+    for (const auto& nft : nft_list) {
+      if (seen_nft.contains(nft)) {
+        continue;
+      }
+      seen_nft.insert(nft.Clone());
+      discovered_nfts.push_back(nft.Clone());
+    }
+  }
+
+  CompleteDiscoverAssets(std::move(discovered_nfts),
+                         triggered_by_accounts_added);
+}
+
 // Calls
 // https://api.simplehash.com/api/v0/nfts/owners?chains={chains}&wallet_addresses={wallet_addresses}
 void AssetDiscoveryManager::FetchNFTsFromSimpleHash(

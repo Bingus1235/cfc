@@ -188,10 +188,13 @@ class AssetDiscoveryManagerUnitTest : public testing::Test {
           // If the request url is in responses, add that response
           auto it = responses.find(request.url);
           if (it != responses.end()) {
+            VLOG(0) << "found response for " << request.url.spec();
             // Get the response string
             std::string response = it->second;
             url_loader_factory_.ClearResponses();
             url_loader_factory_.AddResponse(request.url.spec(), response);
+          } else {
+            VLOG(0) << "no response for " << request.url.spec();
           }
         }));
   }
@@ -372,12 +375,25 @@ class AssetDiscoveryManagerUnitTest : public testing::Test {
     asset_discovery_manager_->FetchNFTsFromSimpleHash(
         account_address, chain_ids,
         base::BindLambdaForTesting(
-            [&](const std::vector<mojom::BlockchainTokenPtr>& nfts) {
+            [&](std::vector<mojom::BlockchainTokenPtr> nfts) {
               ASSERT_EQ(nfts.size(), expected_nfts.size());
               EXPECT_EQ(nfts, expected_nfts);
               run_loop.Quit();
             }));
     run_loop.Run();
+  }
+
+  void TestDiscoverNFTsOnAllSupportedChains(
+      std::map<mojom::CoinType, std::vector<std::string>>& addresses,
+      const std::vector<std::string>& expected_token_contract_addresses) {
+    asset_discovery_manager_->remaining_buckets_ = 1;
+    asset_discovery_manager_->DiscoverNFTsOnAllSupportedChains(addresses,
+                                                               false);
+
+    // Wait for the the wallet service event to be emitted (meaning asset
+    // discovery has totally completed)
+    wallet_service_observer_->WaitForOnDiscoverAssetsCompleted(
+        expected_token_contract_addresses);
   }
 
   PrefService* GetPrefs() { return profile_->GetPrefs(); }
@@ -1637,6 +1653,154 @@ TEST_F(AssetDiscoveryManagerUnitTest, FetchNFTsFromSimpleHash) {
   TestFetchNFTsFromSimpleHash(
       "0x0000000000000000000000000000000000000000",
       {mojom::kMainnetChainId, mojom::kOptimismMainnetChainId}, expected_nfts);
+}
+
+TEST_F(AssetDiscoveryManagerUnitTest, DiscoverNFTsOnAllSupportedChains) {
+  std::map<mojom::CoinType, std::vector<std::string>> addresses;
+  std::vector<std::string> expected_contract_addresses;
+  std::map<GURL, std::string> responses;
+  std::string json;
+  std::string json2;
+  GURL url;
+
+  // Empty addresses yields empty expected_contract_addresses
+  TestDiscoverNFTsOnAllSupportedChains(addresses, expected_contract_addresses);
+
+  // 1 ETH address yields one discovered NFT
+  asset_discovery_manager_->SetSupportedChainsForTesting(
+      {mojom::kMainnetChainId, mojom::kPolygonMainnetChainId});
+  addresses[mojom::CoinType::ETH] = {
+      "0x0000000000000000000000000000000000000000"};
+  url = GURL(
+      "https://api.simplehash.com/api/v0/nfts/"
+      "owners?chains=ethereum%2Cpolygon&wallet_addresses="
+      "0x0000000000000000000000000000000000000000");
+  json = R"({
+    "next": null,
+    "previous": null,
+    "nfts": [
+      {
+        "nft_id": "polygon.0xbfb1e576de8ca6d99a74712208c1fa86b382c64c.428458408537",
+        "chain": "polygon",
+        "contract_address": "0xBfb1E576dE8ca6d99A74712208C1fA86b382c64c",
+        "token_id": "428458408537",
+        "contract": {
+          "type": "ERC721"
+        }
+      }
+    ]
+  })";
+  responses[url] = json;
+  SetInterceptors(responses);
+  expected_contract_addresses.push_back(
+      "0xBfb1E576dE8ca6d99A74712208C1fA86b382c64c");
+  TestDiscoverNFTsOnAllSupportedChains(addresses, expected_contract_addresses);
+
+  // 2 ETH addresses, yields 4 discovered NFTs (1 from one and 3 from the other)
+  expected_contract_addresses.clear();
+  addresses.clear();
+  asset_discovery_manager_->SetSupportedChainsForTesting({mojom::kMainnetChainId});
+  addresses[mojom::CoinType::ETH].push_back("0xB4B2802129071b2B9eBb8cBB01EA1E4D14B34961");
+  url = GURL("https://api.simplehash.com/api/v0/nfts/owners?chains=ethereum&wallet_addresses=0xB4B2802129071b2B9eBb8cBB01EA1E4D14B34961");
+  json = R"({
+    "next": null,
+    "nfts": [
+      {
+        "chain": "ethereum",
+        "contract_address": "0x57f1887a8BF19b14fC0dF6Fd9B2acc9Af147eA85",
+        "token_id": "53762001732575849527995595036249427730510390651723189221519398504820492711584",
+        "name": "stochasticparrot.eth",
+        "description": "stochasticparrot.eth, an ENS name.",
+        "image_url": "https://cdn.simplehash.com/assets/6e174a2e0091ffd5c0c63904366a62da8890508b01e7e85b13d5475b038e6544.svg",
+        "last_sale": null,
+        "contract": {
+          "type": "ERC721",
+          "name": null,
+          "symbol": null
+        },
+        "collection": {
+          "name": "ENS: Ethereum Name Service",
+          "description": "Ethereum Name Service (ENS) domains are secure domain names for the decentralized world. ENS domains provide a way for users to map human readable names to blockchain and non-blockchain resources, like Ethereum addresses, IPFS hashes, or website URLs. ENS domains can be bought and sold on secondary markets.",
+          "image_url": "https://lh3.googleusercontent.com/yXNjPUCCTHyvYNarrb81ln31I6hUIaoPzlGU8kki-OohiWuqxfrIkMaOdLzcO4iGuXcvE5mgCZ-ds9tZotEJi3hdkNusheEK_w2V",
+          "spam_score": 0
+        }
+      },
+      {
+        "chain": "ethereum",
+        "contract_address": "0x9251dEC8DF720C2ADF3B6f46d968107cbBADf4d4",
+        "token_id": "3176",
+        "name": "1337 skulls #3176",
+        "description": "1337 skulls is a collection of 7,331 pixel art skulls, deployed fully on-chain with a public domain license.  600+ traits created from new, original art and referencing 30+ existing cc0 NFT projects.  Free mint.  0% royalties.  No roadmap.  Just 1337.",
+        "image_url": "https://cdn.simplehash.com/assets/67cd1f24395a09ccfc0693d231671738ab8d1976a4a46f5ba6f091076ee942c9.svg",
+        "contract": {
+          "type": "ERC721",
+          "name": "1337 skulls",
+          "symbol": "1337skulls"
+        },
+        "collection": {
+          "name": "1337 skulls",
+          "description": "1337 skulls is a collection of 7,331 pixel art skulls, deployed fully on-chain with a public domain license.  600+ traits created from new, original art and referencing 30+ existing cc0 NFT projects.  Free mint.  0% royalties.  No roadmap.  Just 1337.",
+          "image_url": "https://lh3.googleusercontent.com/8vMgdfdfIkn_c9iVSAmWJ0S3cQDSWSgYUU2hYC4sUBHow5wJIgoRjGPREnQwjE5kdyu0e6UNQ5NXING82kIubdU4p5j8XpT47rQ",
+          "spam_score": 0
+        }
+      },
+      {
+        "chain": "ethereum",
+        "contract_address": "0x4b10701Bfd7BFEdc47d50562b76b436fbB5BdB3B",
+        "token_id": "5929",
+        "name": "Lil Noun 5929",
+        "description": "Lil Noun 5929 is a member of the Lil Nouns DAO",
+        "image_url": "https://cdn.simplehash.com/assets/8c3a6098e6387c9f129a45adf79ceaa32a4c52a5aaf4cc21d29289fd98000b07.svg",
+        "contract": {
+          "type": "ERC721",
+          "name": "LilNoun",
+          "symbol": null
+        },
+        "collection": {
+          "name": "Lil Nouns",
+          "description": "One Lil Noun, every 15 minutes, forever.\r\n\r\nlilnouns.wtf",
+          "image_url": "https://lh3.googleusercontent.com/Bd9JbbJl9cmaFCtws9ZgWdsoVYWt_N8XrJ_9s82LTD-chFitIDck8hHt2dpofekr6PvlKwFT-Zh-lOvcJbcFpI2N3YCkKZoQUCk",
+          "spam_score": 0
+        }
+      }
+    ]
+  })";
+  responses[url] = json;
+  expected_contract_addresses.push_back("0x57f1887a8BF19b14fC0dF6Fd9B2acc9Af147eA85");
+  expected_contract_addresses.push_back("0x9251dEC8DF720C2ADF3B6f46d968107cbBADf4d4");
+  expected_contract_addresses.push_back("0x4b10701Bfd7BFEdc47d50562b76b436fbB5BdB3B");
+
+  addresses[mojom::CoinType::ETH].push_back("0x16e4476c8fDDc552e3b1C4b8b56261d85977fE52");
+  url = GURL("https://api.simplehash.com/api/v0/nfts/owners?chains=ethereum&wallet_addresses=0x16e4476c8fDDc552e3b1C4b8b56261d85977fE52");
+  json2 = R"({
+    "next": null,
+    "nfts": [
+      {
+        "chain": "ethereum",
+        "contract_address": "0x4E1f41613c9084FdB9E34E11fAE9412427480e56",
+        "token_id": "8635",
+        "name": "Level 14 at {24, 19}",
+        "description": "Terraforms by Mathcastles. Onchain land art from a dynamically generated, onchain 3D world.",
+        "image_url": "https://cdn.simplehash.com/assets/69a8608ff3000e44037b58773e6cc62e494bbd7999ae25b60218d92461f54765.svg",
+        "contract": {
+          "type": "ERC721",
+          "name": "Terraforms",
+          "symbol": "TERRAFORMS"
+        },
+        "collection": {
+          "name": "Terraforms by Mathcastles",
+          "description": "Onchain land art from a dynamically generated onchain 3D world.",
+          "image_url": "https://lh3.googleusercontent.com/JYpFUw47L8R8iGOj0uVzPEUlB11A0YNuS3FWwD349ngn6da-PbsrzV6zSqmkNtsfynm0Dpc-rUIr5z9CwsSQq5C0aVenH71OeA",
+          "spam_score": 0
+        }
+      }
+    ]
+  })";
+  responses[url] = json2;
+  expected_contract_addresses.push_back("0x4E1f41613c9084FdB9E34E11fAE9412427480e56");
+
+  SetInterceptors(responses);
+  TestDiscoverNFTsOnAllSupportedChains(addresses, expected_contract_addresses);
 }
 
 }  // namespace brave_wallet
