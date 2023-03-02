@@ -1868,8 +1868,8 @@ TEST_F(AssetDiscoveryManagerUnitTest, DiscoverNFTsOnAllSupportedChains) {
       "0x1111111111111111111111111111111111111111");
   TestDiscoverNFTsOnAllSupportedChains(addresses, expected_contract_addresses);
 
-  // 2 ETH addresses, yields 3 discovered NFTs (1 from one address, and 3 from
-  // the other (one of which is already a user asset so it is not added))
+  // 2 ETH addresses (2 requests), yields 4 discovered NFTs (1 from one address,
+  // and 3 from the other
   expected_contract_addresses.clear();
   addresses.clear();
   asset_discovery_manager_->SetSupportedChainsForTesting(
@@ -1948,7 +1948,6 @@ TEST_F(AssetDiscoveryManagerUnitTest, DiscoverNFTsOnAllSupportedChains) {
       "0x57f1887a8BF19b14fC0dF6Fd9B2acc9Af147eA85");
   expected_contract_addresses.push_back(
       "0x9251dEC8DF720C2ADF3B6f46d968107cbBADf4d4");
-  // TODO(nvonpentz) add this as a user asset and do not remove
   expected_contract_addresses.push_back(
       "0x4b10701Bfd7BFEdc47d50562b76b436fbB5BdB3B");
 
@@ -1988,6 +1987,10 @@ TEST_F(AssetDiscoveryManagerUnitTest, DiscoverNFTsOnAllSupportedChains) {
 
   SetInterceptors(responses);
   TestDiscoverNFTsOnAllSupportedChains(addresses, expected_contract_addresses);
+
+  // Making the same request again should not yield any new discovered NFTs
+  // since they are have already been discovered and added
+  TestDiscoverNFTsOnAllSupportedChains(addresses, {});
 }
 
 }  // namespace brave_wallet

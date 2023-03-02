@@ -559,7 +559,7 @@ AssetDiscoveryManager::ParseNFTsFromSimpleHash(const base::Value& json_value,
         continue;
       }
       token->is_erc721 = true;
-    } else { // mojom::CoinType::SOL
+    } else {  // mojom::CoinType::SOL
       // Solana NFTs must be NonFungible
       if (!base::EqualsCaseInsensitiveASCII(*type, "NonFungible")) {
         continue;
