@@ -615,11 +615,12 @@ bool HasJupiterFeesForTokenMint(const std::string& mint) {
 }
 
 const std::vector<std::string>& GetEthSupportedNftInterfaces() {
+  VLOG(0) << __func__ << ":" << __LINE__;
   static base::NoDestructor<std::vector<std::string>> interfaces({
       kERC721InterfaceId,
       kERC1155InterfaceId,
   });
-
+  VLOG(0) << __func__ << ":" << __LINE__;
   return *interfaces;
 }
 

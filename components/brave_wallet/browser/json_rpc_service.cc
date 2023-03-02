@@ -2501,6 +2501,7 @@ void JsonRpcService::GetEthNftStandard(
     const std::vector<std::string>& interfaces,
     GetEthNftStandardCallback callback,
     size_t index) {
+  VLOG(0) << __func__ << ":" << __LINE__;
   auto network_url = GetNetworkURL(prefs_, chain_id, mojom::CoinType::ETH);
   if (!EthAddress::IsValidAddress(contract_address) ||
       !network_url.is_valid()) {
@@ -2509,6 +2510,7 @@ void JsonRpcService::GetEthNftStandard(
         l10n_util::GetStringUTF8(IDS_WALLET_INVALID_PARAMETERS));
     return;
   }
+  VLOG(0) << __func__ << ":" << __LINE__;
 
   if (index >= interfaces.size()) {
     std::move(callback).Run(
@@ -2516,12 +2518,15 @@ void JsonRpcService::GetEthNftStandard(
         l10n_util::GetStringUTF8(IDS_WALLET_INVALID_PARAMETERS));
     return;
   }
+  VLOG(0) << __func__ << ":" << __LINE__;
 
   // Check the next interface
   const std::string& interface_id = interfaces[index];
+  VLOG(0) << __func__ << ":" << __LINE__;
   auto internal_callback = base::BindOnce(
       &JsonRpcService::OnGetEthNftStandard, weak_ptr_factory_.GetWeakPtr(),
       contract_address, chain_id, interfaces, index, std::move(callback));
+  VLOG(0) << __func__ << ":" << __LINE__;
 
   GetSupportsInterface(contract_address, interface_id, chain_id,
                        std::move(internal_callback));
@@ -2536,24 +2541,30 @@ void JsonRpcService::OnGetEthNftStandard(
     bool is_supported,
     mojom::ProviderError error,
     const std::string& error_message) {
+  VLOG(0) << __func__ << ":" << __LINE__;
   if (error != mojom::ProviderError::kSuccess) {
     std::move(callback).Run(absl::nullopt, error, error_message);
     return;
   }
 
+  VLOG(0) << __func__ << ":" << __LINE__;
   auto interface_id_checked = interfaces[index];
+  VLOG(0) << __func__ << ":" << __LINE__;
   if (is_supported) {
     std::move(callback).Run(interface_id_checked,
                             mojom::ProviderError::kSuccess, "");
     return;
   }
+  VLOG(0) << __func__ << ":" << __LINE__;
 
   // If the contract does not implement the interface, try the next one
   index++;
+  VLOG(0) << __func__ << ":" << __LINE__;
   if (index >= interfaces.size()) {
     std::move(callback).Run(absl::nullopt, mojom::ProviderError::kSuccess, "");
     return;
   }
+  VLOG(0) << __func__ << ":" << __LINE__;
   GetEthNftStandard(contract_address, chain_id, interfaces, std::move(callback),
                     index);
 }
