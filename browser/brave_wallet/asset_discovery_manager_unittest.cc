@@ -188,13 +188,11 @@ class AssetDiscoveryManagerUnitTest : public testing::Test {
           // If the request url is in responses, add that response
           auto it = responses.find(request.url);
           if (it != responses.end()) {
-            VLOG(0) << "found response for " << request.url.spec();
             // Get the response string
             std::string response = it->second;
             url_loader_factory_.ClearResponses();
             url_loader_factory_.AddResponse(request.url.spec(), response);
           } else {
-            VLOG(0) << "no response for " << request.url.spec();
           }
         }));
   }
@@ -245,19 +243,33 @@ class AssetDiscoveryManagerUnitTest : public testing::Test {
         [&, requests](const network::ResourceRequest& request) {
           for (auto const& [url, address_response_map] : requests) {
             if (request.url.spec() == url.spec()) {
-              base::StringPiece request_string(
-                  request.request_body->elements()
-                      ->at(0)
-                      .As<network::DataElementBytes>()
-                      .AsStringPiece());
+              base::StringPiece request_string;
+              if (request.request_body) {
+                request_string = request.request_body->elements()
+                                     ->at(0)
+                                     .As<network::DataElementBytes>()
+                                     .AsStringPiece();
+              }
               std::string response;
               for (auto const& [address, potential_response] :
                    address_response_map) {
                 // Trim leading "0x" from address before searching for it in the
                 // it in the request string since it's not included in the
                 // calldata
-                if (request_string.find(address.substr(2)) !=
-                    std::string::npos) {
+                if ((request_string.find(address.substr(2)) !=
+                     std::string::npos) &&  // and request is not a GET
+                    !request_string.empty()) {
+                  response = potential_response;
+                  break;
+                }
+                // If the request string is empty and there's only one entry
+                // in the address_response_map, return that response.
+                // This allows us to match GET requests to SimpleHash (which do
+                // not have a request body) to the correct response in addition
+                // to POST requests to JSON RPC API (which do have a request
+                // body and the address is in it).
+                if (request_string.empty() &&
+                    address_response_map.size() == 1) {
                   response = potential_response;
                   break;
                 }
@@ -624,7 +636,8 @@ TEST_F(AssetDiscoveryManagerUnitTest,
   std::map<GURL, std::map<std::string, std::string>> requests;
 
   // Verify that in a single call, we can discover assets on multiple Ethereum
-  // chains as well as Solana. Rate limit pref is updated.
+  // chains as well as Solana, and one NFT from SimpleHash. Rate limit pref is
+  // updated.
   asset_discovery_manager_->SetSupportedChainsForTesting(
       {mojom::kMainnetChainId, mojom::kPolygonMainnetChainId});
   // Parse the ETH token list
@@ -714,6 +727,59 @@ TEST_F(AssetDiscoveryManagerUnitTest,
        {
            {"4fzcQKyGFuk55uJaBZtvTHh42RBxbrZMuXzsGQvBJbwF", sol_response},
        }},
+      {GURL("https://api.simplehash.com/api/v0/nfts/"
+            "owners?chains=ethereum%2Cpolygon&wallet_addresses="
+            "0xBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB"),
+       {
+           {"0xBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB", R"({
+                  "next": null,
+                  "nfts": [
+                    {
+                      "chain": "ethereum",
+                      "contract_address": "0x4E1f41613c9084FdB9E34E11fAE9412427480e56",
+                      "token_id": "8635",
+                      "name": "Level 14 at {24, 19}",
+                      "description": "Terraforms by Mathcastles. Onchain land art from a dynamically generated, onchain 3D world.",
+                      "image_url": "https://cdn.simplehash.com/assets/69a8608ff3000e44037b58773e6cc62e494bbd7999ae25b60218d92461f54765.svg",
+                      "contract": {
+                        "type": "ERC721",
+                        "name": "Terraforms",
+                        "symbol": "TERRAFORMS"
+                      },
+                      "collection": {
+                        "name": "Terraforms by Mathcastles",
+                        "description": "Onchain land art from a dynamically generated onchain 3D world.",
+                        "image_url": "https://lh3.googleusercontent.com/JYpFUw47L8R8iGOj0uVzPEUlB11A0YNuS3FWwD349ngn6da-PbsrzV6zSqmkNtsfynm0Dpc-rUIr5z9CwsSQq5C0aVenH71OeA",
+                        "spam_score": 0
+                      }
+                    }
+                  ]
+              })"},
+       }},
+      {
+          GURL("https://api.simplehash.com/api/v0/nfts/"
+               "owners?chains=ethereum%2Cpolygon&wallet_addresses="
+               "0xCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC"),
+          {
+              {"0xCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC", R"({
+                  "next": null,
+                  "previous": null,
+                  "nfts": []
+              })"},
+          },
+      },
+      {
+          GURL("https://api.simplehash.com/api/v0/nfts/"
+               "owners?chains=solana&wallet_addresses="
+               "4fzcQKyGFuk55uJaBZtvTHh42RBxbrZMuXzsGQvBJbwF"),
+          {
+              {"4fzcQKyGFuk55uJaBZtvTHh42RBxbrZMuXzsGQvBJbwF", R"({
+                  "next": null,
+                  "previous": null,
+                  "nfts": []
+              })"},
+          },
+      },
   };
   SetInterceptorForDiscoverEthAssets(requests);
   addresses = {
@@ -729,7 +795,8 @@ TEST_F(AssetDiscoveryManagerUnitTest,
       }),
       {"EybFzCH4nBYEr7FD4wLWBvNZbEGgjy4kh584bGQntr1b",
        "0x3333333333333333333333333333333333333333",
-       "0x4444444444444444444444444444444444444444"});
+       "0x4444444444444444444444444444444444444444",
+       "0x4E1f41613c9084FdB9E34E11fAE9412427480e56"});
 
   // Verify that subsequent calls are rate limited.
   // Need to adds some new assets to the token list first though
@@ -810,7 +877,45 @@ TEST_F(AssetDiscoveryManagerUnitTest,
        {
            {"4fzcQKyGFuk55uJaBZtvTHh42RBxbrZMuXzsGQvBJbwF", sol_response},
        }},
-  };
+      {
+          GURL("https://api.simplehash.com/api/v0/nfts/"
+               "owners?chains=ethereum%2Cpolygon&wallet_addresses="
+               "0xBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB"),
+          {
+              {"0xBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB",
+               R"({
+            "next": null,
+            "previous": null,
+            "nfts": [ ]
+          })"},
+          },
+      },
+      {
+          GURL("https://api.simplehash.com/api/v0/nfts/"
+               "owners?chains=ethereum%2Cpolygon&wallet_addresses="
+               "0xCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC"),
+          {
+              {"0xCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC",
+               R"({
+            "next": null,
+            "previous": null,
+            "nfts": [ ]
+          })"},
+          },
+      },
+      {
+          GURL("https://api.simplehash.com/api/v0/nfts/"
+               "owners?chains=solana&wallet_addresses="
+               "4fzcQKyGFuk55uJaBZtvTHh42RBxbrZMuXzsGQvBJbwF"),
+          {
+              {"4fzcQKyGFuk55uJaBZtvTHh42RBxbrZMuXzsGQvBJbwF",
+               R"({
+            "next": null,
+            "previous": null,
+            "nfts": [ ]
+          })"},
+          },
+      }};
   SetInterceptorForDiscoverEthAssets(requests);
   TestDiscoverAssetsOnAllSupportedChainsRefresh(
       addresses,
@@ -1364,7 +1469,6 @@ TEST_F(AssetDiscoveryManagerUnitTest, GetAssetDiscoverySupportedEthChains) {
 }
 
 TEST_F(AssetDiscoveryManagerUnitTest, GetSimpleHashNftsByWalletUrl) {
-  // https://api.simplehash.com/api/v0/nfts/owners?chains={chains}&wallet_addresses={wallet_addresses}
   // Empty address yields empty URL
   EXPECT_EQ(asset_discovery_manager_->GetSimpleHashNftsByWalletUrl(
                 "", {mojom::kMainnetChainId}),

@@ -647,11 +647,15 @@ void AssetDiscoveryManager::CompleteDiscoverAssets(
 void AssetDiscoveryManager::DiscoverAssetsOnAllSupportedChainsAccountsAdded(
     mojom::CoinType coin,
     const std::vector<std::string>& account_addresses) {
+  std::map<mojom::CoinType, std::vector<std::string>> account_addresses_by_coin;
   if (coin == mojom::CoinType::ETH) {
+    account_addresses_by_coin[mojom::CoinType::ETH] = account_addresses;
     DiscoverEthAssets(account_addresses, true);
   } else if (coin == mojom::CoinType::SOL) {
+    account_addresses_by_coin[mojom::CoinType::SOL] = account_addresses;
     DiscoverSolAssets(account_addresses, true);
   }
+  DiscoverNFTsOnAllSupportedChains(account_addresses_by_coin, true);
 }
 
 void AssetDiscoveryManager::DiscoverAssetsOnAllSupportedChainsRefresh(
@@ -673,9 +677,10 @@ void AssetDiscoveryManager::DiscoverAssetsOnAllSupportedChainsRefresh(
     return;
   }
 
-  remaining_buckets_ = 2;  // 1 for ETH + 1 for SOL
+  remaining_buckets_ = 3;  // 1 for ETH + 1 for SOL
   DiscoverSolAssets(account_addresses[mojom::CoinType::SOL], false);
   DiscoverEthAssets(account_addresses[mojom::CoinType::ETH], false);
+  DiscoverNFTsOnAllSupportedChains(account_addresses, false);
 }
 
 void AssetDiscoveryManager::AccountsAdded(
