@@ -308,7 +308,7 @@ class AssetDiscoveryManagerUnitTest : public testing::Test {
     wallet_service_observer_->Reset();
   }
 
-  void TestDiscoverAssetsOnAllSupportedChainsAccountsAddedV2(
+  void TestDiscoverAssetsOnAllSupportedChainsAccountsAdded(
       mojom::CoinType coin,
       const std::vector<std::string>& account_addresses,
       const std::vector<std::string>& expected_token_contract_addresses) {
@@ -420,7 +420,7 @@ class AssetDiscoveryManagerUnitTest : public testing::Test {
 };
 
 TEST_F(AssetDiscoveryManagerUnitTest,
-       DiscoverAssetsOnAllSupportedChainsAccountsAddedV2) {
+       DiscoverAssetsOnAllSupportedChainsAccountsAdded) {
   auto* blockchain_registry = BlockchainRegistry::GetInstance();
   TokenListMap token_list_map;
 
@@ -465,7 +465,7 @@ TEST_F(AssetDiscoveryManagerUnitTest,
        }},
   };
   SetInterceptorForDiscoverEthAssets(requests);
-  TestDiscoverAssetsOnAllSupportedChainsAccountsAddedV2(
+  TestDiscoverAssetsOnAllSupportedChainsAccountsAdded(
       mojom::CoinType::ETH,
       {
           "0xBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB",
@@ -605,7 +605,7 @@ TEST_F(AssetDiscoveryManagerUnitTest,
   ASSERT_TRUE(
       ParseTokenList(token_list_json, &token_list_map, mojom::CoinType::SOL));
   blockchain_registry->UpdateTokenList(std::move(token_list_map));
-  TestDiscoverAssetsOnAllSupportedChainsAccountsAddedV2(
+  TestDiscoverAssetsOnAllSupportedChainsAccountsAdded(
       mojom::CoinType::SOL,
       {"4fzcQKyGFuk55uJaBZtvTHh42RBxbrZMuXzsGQvBJbwF",
        "8RFACUfst117ARQLezvK4cKVR8ZHvW2xUfdUoqWnTuEB"},
