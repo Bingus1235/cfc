@@ -15,6 +15,7 @@
 #include "brave/browser/resources/settings/grit/brave_settings_resources.h"
 #include "brave/browser/resources/settings/grit/brave_settings_resources_map.h"
 #include "brave/browser/shell_integrations/buildflags/buildflags.h"
+#include "brave/browser/ui/commands/accelerator_service_factory.h"
 #include "brave/browser/ui/webui/navigation_bar_data_provider.h"
 #include "brave/browser/ui/webui/settings/brave_adblock_handler.h"
 #include "brave/browser/ui/webui/settings/brave_appearance_handler.h"
@@ -25,6 +26,9 @@
 #include "brave/browser/ui/webui/settings/default_brave_shields_handler.h"
 #include "brave/components/brave_vpn/common/buildflags/buildflags.h"
 #include "brave/components/brave_wallet/common/features.h"
+#include "brave/components/commands/browser/resources/grit/commands_generated_map.h"
+#include "brave/components/commands/common/commands.mojom.h"
+#include "brave/components/commands/common/features.h"
 #include "brave/components/ntp_background_images/browser/view_counter_service.h"
 #include "brave/components/speedreader/common/buildflags/buildflags.h"
 #include "brave/components/tor/buildflags/buildflags.h"
@@ -33,6 +37,7 @@
 #include "chrome/browser/profiles/profile.h"
 #include "chrome/browser/ui/webui/settings/metrics_reporting_handler.h"
 #include "components/sync/base/command_line_switches.h"
+#include "content/public/browser/web_contents.h"
 #include "content/public/browser/web_ui_data_source.h"
 #include "content/public/common/content_features.h"
 #include "extensions/buildflags/buildflags.h"
@@ -98,13 +103,19 @@ void BraveSettingsUI::AddResources(content::WebUIDataSource* html_source,
                                  kBraveSettingsResources[i].id);
   }
 
+  for (size_t i = 0; i < kCommandsGeneratedSize; ++i) {
+    html_source->AddResourcePath(kCommandsGenerated[i].path,
+                                 kCommandsGenerated[i].id);
+  }
+
   html_source->AddBoolean("isSyncDisabled", !syncer::IsSyncAllowedByFlag());
   html_source->AddString(
       "braveProductVersion",
       version_info::GetBraveVersionWithoutChromiumMajorVersion());
   NavigationBarDataProvider::Initialize(html_source, profile);
-  if (auto* service = ViewCounterServiceFactory::GetForProfile(profile))
+  if (auto* service = ViewCounterServiceFactory::GetForProfile(profile)) {
     service->InitializeWebUIDataSource(html_source);
+  }
   html_source->AddBoolean(
       "isIdleDetectionFeatureEnabled",
       base::FeatureList::IsEnabled(features::kIdleDetection));
@@ -125,6 +136,9 @@ void BraveSettingsUI::AddResources(content::WebUIDataSource* html_source,
                           brave_wallet::IsAllowedForContext(profile));
   html_source->AddBoolean("isBraveRewardsSupported",
                           brave_rewards::IsSupportedForProfile(profile));
+  html_source->AddBoolean(
+      "areShortcutsSupported",
+      base::FeatureList::IsEnabled(commands::features::kBraveCommands));
 
   if (ShouldDisableCSPForTesting()) {
     html_source->DisableContentSecurityPolicy();
@@ -149,4 +163,11 @@ bool& BraveSettingsUI::ShouldDisableCSPForTesting() {
 bool& BraveSettingsUI::ShouldExposeElementsForTesting() {
   static bool expose_elements = false;
   return expose_elements;
+}
+
+void BraveSettingsUI::BindInterface(
+    mojo::PendingReceiver<commands::mojom::CommandsService> pending_receiver) {
+  commands::AcceleratorServiceFactory::GetForContext(
+      web_ui()->GetWebContents()->GetBrowserContext())
+      ->BindInterface(std::move(pending_receiver));
 }

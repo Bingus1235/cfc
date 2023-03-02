@@ -33,6 +33,7 @@
 #include "brave/browser/profiles/brave_renderer_updater_factory.h"
 #include "brave/browser/profiles/profile_util.h"
 #include "brave/browser/skus/skus_service_factory.h"
+#include "brave/browser/ui/webui/brave_settings_ui.h"
 #include "brave/components/brave_ads/common/features.h"
 #include "brave/components/brave_federated/features.h"
 #include "brave/components/brave_rewards/browser/rewards_protocol_handler.h"
@@ -631,6 +632,11 @@ void BraveContentBrowserClient::RegisterBrowserInterfaceBindersForFrame(
   }
   content::RegisterWebUIControllerInterfaceBinder<
       brave_rewards::mojom::PanelHandlerFactory, RewardsPanelUI>(map);
+
+  if (base::FeatureList::IsEnabled(commands::features::kBraveCommands)) {
+    content::RegisterWebUIControllerInterfaceBinder<
+        commands::mojom::CommandsService, BraveSettingsUI>(map);
+  }
 #endif
 
 // Brave News

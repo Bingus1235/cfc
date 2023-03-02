@@ -9,6 +9,7 @@
 #include <memory>
 #include <string>
 
+#include "brave/components/commands/common/commands.mojom.h"
 #include "chrome/browser/ui/webui/settings/settings_ui.h"
 
 namespace content {
@@ -30,6 +31,9 @@ class BraveSettingsUI : public settings::SettingsUI {
   static bool& ShouldDisableCSPForTesting();
 
   static bool& ShouldExposeElementsForTesting();
+
+   void BindInterface(
+      mojo::PendingReceiver<commands::mojom::CommandsService> pending_receiver);
 };
 
 #endif  // BRAVE_BROWSER_UI_WEBUI_BRAVE_SETTINGS_UI_H_

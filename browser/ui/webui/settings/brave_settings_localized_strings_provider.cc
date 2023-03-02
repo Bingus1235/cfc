@@ -629,6 +629,8 @@ void BraveAddCommonStrings(content::WebUIDataSource* html_source,
     {"adblockSubscribeUrlUpdateFailed",
      IDS_BRAVE_ADBLOCK_SUBSCRIBE_URL_UPDATE_FAILED},
     {"adblockCustomListsLabel", IDS_BRAVE_ADBLOCK_CUSTOM_LISTS_LABEL},
+
+    {"braveShortcutsPage", IDS_SETTINGS_BRAVE_SHORTCUTS_TITLE},
   };
 
   html_source->AddLocalizedStrings(localized_strings);

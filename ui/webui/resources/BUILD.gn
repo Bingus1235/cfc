@@ -117,6 +117,7 @@ leo_icons_base_path = "../../../node_modules/@brave/leo/icons"
 # are a **LOT** of icons in Leo. You can check if there's an icon  which suits
 # your needs here: https://leo.bravesoftware.com/?path=/story/icon--all-icons
 leo_icons = [
+  "edit-box.svg",
   "rocket.svg",
   "history.svg",
   "close.svg",
@@ -144,6 +145,8 @@ leo_icons = [
   "news-topnews.svg",
   "news-weather.svg",
   "news-worldnews.svg",
+  "search.svg",
+  "trash.svg",
 ]
 
 generate_grd("icons_grdp") {
