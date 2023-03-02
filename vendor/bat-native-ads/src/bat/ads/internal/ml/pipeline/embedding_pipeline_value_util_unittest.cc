@@ -58,9 +58,8 @@ TEST_F(BatAdsEmbeddingPipelineValueUtilTest, FromValue) {
 
     // Assert
     for (int i = 0; i < 3; i++) {
-      EXPECT_NEAR(expected_embedding.GetValuesForTesting().at(i),
-                  token_embedding_vector_data.GetValuesForTesting().at(i),
-                  0.001F);
+      EXPECT_NEAR(expected_embedding.GetAsFloatVector().at(i),
+                  token_embedding_vector_data.GetAsFloatVector().at(i), 0.001F);
     }
   }
 }

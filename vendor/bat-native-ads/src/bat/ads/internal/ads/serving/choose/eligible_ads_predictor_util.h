@@ -188,7 +188,7 @@ std::vector<int> ComputeVoteRegistry(
 
     auto iter = base::ranges::max_element(
         similarity_scores.cbegin(), similarity_scores.cend(),
-        [](const auto& a, const auto& b) { return a > b; });
+        [](const auto& a, const auto& b) { return a < b; });
 
     while (iter != similarity_scores.end()) {
       size_t index = std::distance(similarity_scores.cbegin(), iter);
