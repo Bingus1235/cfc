@@ -641,19 +641,62 @@ AssetDiscoveryManager::ParseNFTsFromSimpleHash(const base::Value& json_value,
   for (const auto& nft : nfts->GetList()) {
     auto token = mojom::BlockchainToken::New();
 
-    // chain_id
-    auto* chain = nft.FindStringKey("chain");
-    if (!chain || !chain_ids.contains(*chain)) {
-      continue;
-    }
-    token->chain_id = chain_ids.at(*chain);
-
-    // contract_address
+    // contract_address (required)
     auto* contract_address = nft.FindStringKey("contract_address");
     if (!contract_address) {
       continue;
     }
     token->contract_address = *contract_address;
+
+    // name
+    auto* name = nft.FindStringKey("name");
+    if (name) {
+      token->name = *name;
+    }
+
+    // logo
+    auto* logo = nft.FindStringKey("image_url");
+    if (logo) {
+      token->logo = *logo;
+    }
+
+    // is_erc20
+    token->is_erc20 = false;
+
+    // The contract dict has the standard information
+    // so we skip if it's not there
+    auto* contract = nft.FindDictKey("contract");
+    if (!contract) {
+      continue;
+    }
+    auto* type = contract->FindStringKey("type");
+    if (!type) {
+      continue;
+    }
+
+    // is_erc721
+    bool is_erc721 = base::EqualsCaseInsensitiveASCII(*type, "ERC721");
+    // TODO(nvonpentz) For now only support ERC20, but will support ERC1155 and
+    // other types for solana
+    if (!is_erc721) {
+      continue;
+    }
+    token->is_erc721 = true;
+
+    // is_nft
+    token->is_nft = true;
+
+    // symbol
+    auto* symbol = contract->FindStringKey("symbol");
+    if (symbol) {
+      token->symbol = *symbol;
+    }
+
+    // decimals
+    token->decimals = 0;
+
+    // visible
+    token->visible = true;
 
     // token_id
     auto* token_id = nft.FindStringKey("token_id");
@@ -666,21 +709,14 @@ AssetDiscoveryManager::ParseNFTsFromSimpleHash(const base::Value& json_value,
     }
     token->token_id = Uint256ValueToHex(token_id_uint256);
 
-    // is_erc721, is_erc20, is_nft
-    auto* contract = nft.FindDictKey("contract");
-    if (!contract) {
+    // chain_id (required)
+    auto* chain = nft.FindStringKey("chain");
+    if (!chain || !chain_ids.contains(*chain)) {
       continue;
     }
-    auto* type = contract->FindStringKey("type");
-    if (!type) {
-      continue;
-    }
-    bool is_erc721 = base::EqualsCaseInsensitiveASCII(*type, "ERC721");
-    if (!is_erc721) {
-      continue;
-    }
-    token->is_erc721 = true;
-    token->is_nft = true;
+    token->chain_id = chain_ids.at(*chain);
+
+    // coin
     token->coin = coin;
 
     nft_tokens.push_back(std::move(token));

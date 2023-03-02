@@ -1426,16 +1426,17 @@ TEST_F(AssetDiscoveryManagerUnitTest, ParseNFTsFromSimpleHash) {
       *json_value, mojom::CoinType::ETH);
   ASSERT_FALSE(result);
 
-  // Valid, 1 NFT
+  // Valid, 1 ETH NFT
   json = R"({
     "next": null,
     "previous": null,
     "nfts": [
       {
-        "nft_id": "polygon.0xbfb1e576de8ca6d99a74712208c1fa86b382c64c.428458408537",
         "chain": "polygon",
-        "contract_address": "0xBfb1E576dE8ca6d99A74712208C1fA86b382c64c",
-        "token_id": "428458408537",
+        "contract_address": "0x1111111111111111111111111111111111111111",
+        "token_id": "1",
+        "name": "Token #1",
+        "image_url": "https://nftimages-cdn.simplehash.com/1.png",
         "contract": {
           "type": "ERC721"
         }
@@ -1449,34 +1450,42 @@ TEST_F(AssetDiscoveryManagerUnitTest, ParseNFTsFromSimpleHash) {
   ASSERT_TRUE(result);
   EXPECT_FALSE(result->first.is_valid());
   EXPECT_EQ(result->second.size(), 1u);
-  EXPECT_EQ(result->second[0]->chain_id, mojom::kPolygonMainnetChainId);
   EXPECT_EQ(result->second[0]->contract_address,
-            "0xBfb1E576dE8ca6d99A74712208C1fA86b382c64c");
-  EXPECT_EQ(result->second[0]->token_id, "0x63c21c7a59");
-  EXPECT_EQ(result->second[0]->is_erc721, true);
+            "0x1111111111111111111111111111111111111111");
+  EXPECT_EQ(result->second[0]->name, "Token #1");
+  EXPECT_EQ(result->second[0]->logo,
+            "https://nftimages-cdn.simplehash.com/1.png");
   EXPECT_EQ(result->second[0]->is_erc20, false);
+  EXPECT_EQ(result->second[0]->is_erc721, true);
   EXPECT_EQ(result->second[0]->is_nft, true);
+  EXPECT_EQ(result->second[0]->symbol, "");
+  EXPECT_EQ(result->second[0]->decimals, 0);
+  EXPECT_EQ(result->second[0]->visible, true);
+  EXPECT_EQ(result->second[0]->token_id, "0x1");
+  EXPECT_EQ(result->second[0]->chain_id, mojom::kPolygonMainnetChainId);
   EXPECT_EQ(result->second[0]->coin, mojom::CoinType::ETH);
 
-  // Valid, 2 NFTs
+  // Valid, 2 ETH NFTs
   json = R"({
     "next": "https://api.simplehash.com/api/v0/nfts/next",
     "previous": null,
     "nfts": [
       {
-        "nft_id": "polygon.0xbfb1e576de8ca6d99a74712208c1fa86b382c64c.428458408537",
         "chain": "polygon",
-        "contract_address": "0xBfb1E576dE8ca6d99A74712208C1fA86b382c64c",
-        "token_id": "428458408537",
+        "contract_address": "0x1111111111111111111111111111111111111111",
+        "token_id": "1",
+        "name": "Token #1",
+        "image_url": "https://nftimages-cdn.simplehash.com/1.png",
         "contract": {
           "type": "ERC721"
         }
       },
       {
-        "nft_id": "ethereum.0x2222222222222222222222222222222222222222.222222222222",
         "chain": "ethereum",
         "contract_address": "0x2222222222222222222222222222222222222222",
         "token_id": "2",
+        "name": "Token #2",
+        "image_url": "https://nftimages-cdn.simplehash.com/2.png",
         "contract": {
           "type": "ERC721"
         }
@@ -1491,40 +1500,56 @@ TEST_F(AssetDiscoveryManagerUnitTest, ParseNFTsFromSimpleHash) {
   EXPECT_EQ(result->first.spec(),
             "https://api.simplehash.com/api/v0/nfts/next");
   EXPECT_EQ(result->second.size(), 2u);
-  EXPECT_EQ(result->second[0]->chain_id, mojom::kPolygonMainnetChainId);
   EXPECT_EQ(result->second[0]->contract_address,
-            "0xBfb1E576dE8ca6d99A74712208C1fA86b382c64c");
-  EXPECT_EQ(result->second[0]->token_id, "0x63c21c7a59");
-  EXPECT_EQ(result->second[0]->is_erc721, true);
+            "0x1111111111111111111111111111111111111111");
+  EXPECT_EQ(result->second[0]->name, "Token #1");
+  EXPECT_EQ(result->second[0]->logo,
+            "https://nftimages-cdn.simplehash.com/1.png");
   EXPECT_EQ(result->second[0]->is_erc20, false);
+  EXPECT_EQ(result->second[0]->is_erc721, true);
   EXPECT_EQ(result->second[0]->is_nft, true);
+  EXPECT_EQ(result->second[0]->symbol, "");
+  EXPECT_EQ(result->second[0]->decimals, 0);
+  EXPECT_EQ(result->second[0]->visible, true);
+  EXPECT_EQ(result->second[0]->token_id, "0x1");
+  EXPECT_EQ(result->second[0]->chain_id, mojom::kPolygonMainnetChainId);
   EXPECT_EQ(result->second[0]->coin, mojom::CoinType::ETH);
 
-  EXPECT_EQ(result->second[1]->chain_id, mojom::kMainnetChainId);
   EXPECT_EQ(result->second[1]->contract_address,
             "0x2222222222222222222222222222222222222222");
-  EXPECT_EQ(result->second[1]->token_id, "0x2");
-  EXPECT_EQ(result->second[1]->is_erc721, true);
+  EXPECT_EQ(result->second[1]->name, "Token #2");
+  EXPECT_EQ(result->second[1]->logo,
+            "https://nftimages-cdn.simplehash.com/2.png");
   EXPECT_EQ(result->second[1]->is_erc20, false);
+  EXPECT_EQ(result->second[1]->is_erc721, true);
   EXPECT_EQ(result->second[1]->is_nft, true);
+  EXPECT_EQ(result->second[1]->symbol, "");
+  EXPECT_EQ(result->second[1]->decimals, 0);
+  EXPECT_EQ(result->second[1]->visible, true);
+  EXPECT_EQ(result->second[1]->token_id, "0x2");
+  EXPECT_EQ(result->second[1]->chain_id, mojom::kMainnetChainId);
   EXPECT_EQ(result->second[1]->coin, mojom::CoinType::ETH);
 
-  // Valid, 5 results, but only 1 has all necessary keys yields 1 NFT
+  // 5 ETH nfts, but only 1 has all necessary keys yields 1 NFT
+  //
+  // 1. Missing nothing (valid)
+  // 2. Missing chain_id
+  // 3. Missing contract_address
+  // 4. Missing token_id
+  // 5. Missing standard
   json = R"({
     "next": "https://api.simplehash.com/api/v0/nfts/next",
     "previous": null,
     "nfts": [
       {
-        "nft_id": "polygon.0xbfb1e576de8ca6d99a74712208c1fa86b382c64c.428458408537",
         "chain": "polygon",
-        "contract_address": "0xBfb1E576dE8ca6d99A74712208C1fA86b382c64c",
-        "token_id": "428458408537",
+        "contract_address": "0x1111111111111111111111111111111111111111",
+        "token_id": "1",
         "contract": {
           "type": "ERC721"
         }
       },
       {
-        "nft_id": "ethereum.0x2222222222222222222222222222222222222222.222222222222",
         "contract_address": "0x2222222222222222222222222222222222222222",
         "token_id": "2",
         "contract": {
@@ -1532,7 +1557,6 @@ TEST_F(AssetDiscoveryManagerUnitTest, ParseNFTsFromSimpleHash) {
         }
       },
       {
-        "nft_id": "ethereum.0x3333333333333333333333333333333333333333.333333333333",
         "chain": "ethereum",
         "token_id": "2",
         "contract": {
@@ -1540,7 +1564,6 @@ TEST_F(AssetDiscoveryManagerUnitTest, ParseNFTsFromSimpleHash) {
         }
       },
       {
-        "nft_id": "ethereum.0x4444444444444444444444444444444444444444.444444444444",
         "chain": "ethereum",
         "contract_address": "0x4444444444444444444444444444444444444444",
         "contract": {
@@ -1548,7 +1571,6 @@ TEST_F(AssetDiscoveryManagerUnitTest, ParseNFTsFromSimpleHash) {
         }
       },
       {
-        "nft_id": "ethereum.0x5555555555555555555555555555555555555555.555555555555",
         "chain": "ethereum",
         "contract_address": "0x5555555555555555555555555555555555555555",
         "token_id": "2"
@@ -1590,10 +1612,9 @@ TEST_F(AssetDiscoveryManagerUnitTest, FetchNFTsFromSimpleHash) {
     "previous": null,
     "nfts": [
       {
-        "nft_id": "polygon.0xbfb1e576de8ca6d99a74712208c1fa86b382c64c.428458408537",
         "chain": "polygon",
-        "contract_address": "0xBfb1E576dE8ca6d99A74712208C1fA86b382c64c",
-        "token_id": "428458408537",
+        "contract_address": "0x1111111111111111111111111111111111111111",
+        "token_id": "1",
         "contract": {
           "type": "ERC721"
         }
@@ -1602,8 +1623,8 @@ TEST_F(AssetDiscoveryManagerUnitTest, FetchNFTsFromSimpleHash) {
   })";
   auto nft1 = mojom::BlockchainToken::New();
   nft1->chain_id = mojom::kPolygonMainnetChainId;
-  nft1->contract_address = "0xBfb1E576dE8ca6d99A74712208C1fA86b382c64c";
-  nft1->token_id = "0x63c21c7a59";
+  nft1->contract_address = "0x1111111111111111111111111111111111111111";
+  nft1->token_id = "0x1";
   nft1->is_erc721 = true;
   nft1->is_erc20 = false;
   nft1->is_nft = true;
@@ -1627,10 +1648,9 @@ TEST_F(AssetDiscoveryManagerUnitTest, FetchNFTsFromSimpleHash) {
     "previous": null,
     "nfts": [
       {
-        "nft_id": "polygon.0xbfb1e576de8ca6d99a74712208c1fa86b382c64c.428458408537",
         "chain": "polygon",
-        "contract_address": "0xBfb1E576dE8ca6d99A74712208C1fA86b382c64c",
-        "token_id": "428458408537",
+        "contract_address": "0x1111111111111111111111111111111111111111",
+        "token_id": "1",
         "contract": {
           "type": "ERC721"
         }
@@ -1696,10 +1716,9 @@ TEST_F(AssetDiscoveryManagerUnitTest, DiscoverNFTsOnAllSupportedChains) {
     "previous": null,
     "nfts": [
       {
-        "nft_id": "polygon.0xbfb1e576de8ca6d99a74712208c1fa86b382c64c.428458408537",
         "chain": "polygon",
-        "contract_address": "0xBfb1E576dE8ca6d99A74712208C1fA86b382c64c",
-        "token_id": "428458408537",
+        "contract_address": "0x1111111111111111111111111111111111111111",
+        "token_id": "1",
         "contract": {
           "type": "ERC721"
         }
@@ -1709,7 +1728,7 @@ TEST_F(AssetDiscoveryManagerUnitTest, DiscoverNFTsOnAllSupportedChains) {
   responses[url] = json;
   SetInterceptors(responses);
   expected_contract_addresses.push_back(
-      "0xBfb1E576dE8ca6d99A74712208C1fA86b382c64c");
+      "0x1111111111111111111111111111111111111111");
   TestDiscoverNFTsOnAllSupportedChains(addresses, expected_contract_addresses);
 
   // 2 ETH addresses, yields 3 discovered NFTs (1 from one address, and 3 from
