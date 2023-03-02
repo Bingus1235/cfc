@@ -1439,6 +1439,9 @@ TEST_F(AssetDiscoveryManagerUnitTest, ParseNFTsFromSimpleHash) {
         "image_url": "https://nftimages-cdn.simplehash.com/1.png",
         "contract": {
           "type": "ERC721"
+        },
+        "collection": {
+          "spam_score": 0
         }
       }
     ]
@@ -1482,6 +1485,9 @@ TEST_F(AssetDiscoveryManagerUnitTest, ParseNFTsFromSimpleHash) {
         "image_url": "https://nftimages-cdn.simplehash.com/1.png",
         "contract": {
           "type": "ERC721"
+        },
+        "collection": {
+          "spam_score": 0
         }
       },
       {
@@ -1492,6 +1498,9 @@ TEST_F(AssetDiscoveryManagerUnitTest, ParseNFTsFromSimpleHash) {
         "image_url": "https://nftimages-cdn.simplehash.com/2.png",
         "contract": {
           "type": "ERC721"
+        },
+        "collection": {
+          "spam_score": 0
         }
       }
     ]
@@ -1534,13 +1543,14 @@ TEST_F(AssetDiscoveryManagerUnitTest, ParseNFTsFromSimpleHash) {
   EXPECT_EQ(result->second[1]->chain_id, mojom::kMainnetChainId);
   EXPECT_EQ(result->second[1]->coin, mojom::CoinType::ETH);
 
-  // 5 ETH nfts, but only 1 has all necessary keys yields 1 NFT
+  // 6 ETH nfts, but only 1 has all necessary keys yields 1 NFT
   //
   // 1. Missing nothing (valid)
   // 2. Missing chain_id
   // 3. Missing contract_address
   // 4. Missing token_id
   // 5. Missing standard
+  // 6. Missing spam_score
   json = R"({
     "next": "https://api.simplehash.com/api/v0/nfts/next",
     "previous": null,
@@ -1551,6 +1561,9 @@ TEST_F(AssetDiscoveryManagerUnitTest, ParseNFTsFromSimpleHash) {
         "token_id": "1",
         "contract": {
           "type": "ERC721"
+        },
+        "collection": {
+          "spam_score": 0
         }
       },
       {
@@ -1558,6 +1571,9 @@ TEST_F(AssetDiscoveryManagerUnitTest, ParseNFTsFromSimpleHash) {
         "token_id": "2",
         "contract": {
           "type": "ERC721"
+        },
+        "collection": {
+          "spam_score": 0
         }
       },
       {
@@ -1565,6 +1581,9 @@ TEST_F(AssetDiscoveryManagerUnitTest, ParseNFTsFromSimpleHash) {
         "token_id": "2",
         "contract": {
           "type": "ERC721"
+        },
+        "collection": {
+          "spam_score": 0
         }
       },
       {
@@ -1572,12 +1591,28 @@ TEST_F(AssetDiscoveryManagerUnitTest, ParseNFTsFromSimpleHash) {
         "contract_address": "0x4444444444444444444444444444444444444444",
         "contract": {
           "type": "ERC721"
+        },
+        "collection": {
+          "spam_score": 0
         }
       },
       {
         "chain": "ethereum",
         "contract_address": "0x5555555555555555555555555555555555555555",
-        "token_id": "2"
+        "token_id": "2",
+        "collection": {
+          "spam_score": 0
+        }
+      },
+      {
+        "chain": "polygon",
+        "contract_address": "0x1111111111111111111111111111111111111111",
+        "token_id": "1",
+        "contract": {
+          "type": "ERC721"
+        },
+        "collection": {
+        }
       }
     ]
   })";
@@ -1639,6 +1674,40 @@ TEST_F(AssetDiscoveryManagerUnitTest, ParseNFTsFromSimpleHash) {
   EXPECT_EQ(result->second[0]->coingecko_id, "");
   EXPECT_EQ(result->second[0]->chain_id, mojom::kSolanaMainnet);
   EXPECT_EQ(result->second[0]->coin, mojom::CoinType::SOL);
+
+  // An NFT with a spam_score > 0 will be skipped
+  json = R"({
+    "next": null,
+    "previous": null,
+    "nfts": [
+      {
+        "chain": "solana",
+        "contract_address": "AvdAUsR4qgsT5HgyKCVeGjimmyu8xrG3RudFqm5txDDE",
+        "token_id": null,
+        "name": "y00t #2623",
+        "description": "y00ts is a generative art project of 15,000 NFTs. y00topia is a curated community of builders and creators. Each y00t was designed by De Labs in Los Angeles, CA.",
+        "image_url": "https://cdn.simplehash.com/assets/dc78fa011ba46fa12748f1a20ad5e98e1e0b6746dcbfcf409c091dd48d09aee1.png",
+        "status": "minted",
+        "contract": {
+          "type": "NonFungible",
+          "name": "y00t #2623",
+          "symbol": "Y00T"
+        },
+        "collection": {
+          "spam_score": 100
+        },
+        "extra_metadata": {
+          "is_mutable": true
+        }
+      }
+    ]
+  })";
+  json_value = base::JSONReader::Read(json);
+  ASSERT_TRUE(json_value);
+  result = asset_discovery_manager_->ParseNFTsFromSimpleHash(
+      *json_value, mojom::CoinType::SOL);
+  ASSERT_TRUE(result);
+  EXPECT_EQ(result->second.size(), 0u);
 }
 
 TEST_F(AssetDiscoveryManagerUnitTest, FetchNFTsFromSimpleHash) {
@@ -1673,6 +1742,9 @@ TEST_F(AssetDiscoveryManagerUnitTest, FetchNFTsFromSimpleHash) {
         "token_id": "1",
         "contract": {
           "type": "ERC721"
+        },
+        "collection": {
+          "spam_score": 0
         }
       }
     ]
@@ -1709,6 +1781,9 @@ TEST_F(AssetDiscoveryManagerUnitTest, FetchNFTsFromSimpleHash) {
         "token_id": "1",
         "contract": {
           "type": "ERC721"
+        },
+        "collection": {
+          "spam_score": 0
         }
       }
     ]
@@ -1726,6 +1801,9 @@ TEST_F(AssetDiscoveryManagerUnitTest, FetchNFTsFromSimpleHash) {
         "token_id": "555555555555",
         "contract": {
           "type": "ERC721"
+        },
+        "collection": {
+          "spam_score": 0
         }
       }
     ]
@@ -1777,6 +1855,9 @@ TEST_F(AssetDiscoveryManagerUnitTest, DiscoverNFTsOnAllSupportedChains) {
         "token_id": "1",
         "contract": {
           "type": "ERC721"
+        },
+        "collection": {
+          "spam_score": 0
         }
       }
     ]

@@ -509,6 +509,16 @@ AssetDiscoveryManager::ParseNFTsFromSimpleHash(const base::Value& json_value,
   for (const auto& nft : nfts->GetList()) {
     auto token = mojom::BlockchainToken::New();
 
+    // skip all tokens with a collection.spam_score > 0
+    auto* collection = nft.FindDictKey("collection");
+    if (!collection) {
+      continue;
+    }
+    absl::optional<int> spam_score = collection->FindIntKey("spam_score");
+    if (!spam_score || *spam_score > 0) {
+      continue;
+    }
+
     // contract_address (required)
     auto* contract_address = nft.FindStringKey("contract_address");
     if (!contract_address) {
@@ -549,8 +559,7 @@ AssetDiscoveryManager::ParseNFTsFromSimpleHash(const base::Value& json_value,
         continue;
       }
       token->is_erc721 = true;
-    } else {
-      // SOL
+    } else { // mojom::CoinType::SOL
       // Solana NFTs must be NonFungible
       if (!base::EqualsCaseInsensitiveASCII(*type, "NonFungible")) {
         continue;
