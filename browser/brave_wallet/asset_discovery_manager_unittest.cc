@@ -1426,7 +1426,7 @@ TEST_F(AssetDiscoveryManagerUnitTest, ParseNFTsFromSimpleHash) {
       *json_value, mojom::CoinType::ETH);
   ASSERT_FALSE(result);
 
-  // Valid, 1 ETH NFT
+  // Unsupported CoinType yields nullopt (valid otherwise)
   json = R"({
     "next": null,
     "previous": null,
@@ -1445,6 +1445,10 @@ TEST_F(AssetDiscoveryManagerUnitTest, ParseNFTsFromSimpleHash) {
   })";
   json_value = base::JSONReader::Read(json);
   ASSERT_TRUE(json_value);
+  result = asset_discovery_manager_->ParseNFTsFromSimpleHash(
+      *json_value, mojom::CoinType::FIL);
+
+  // Valid, 1 ETH NFT
   result = asset_discovery_manager_->ParseNFTsFromSimpleHash(
       *json_value, mojom::CoinType::ETH);
   ASSERT_TRUE(result);
@@ -1583,6 +1587,58 @@ TEST_F(AssetDiscoveryManagerUnitTest, ParseNFTsFromSimpleHash) {
       *json_value, mojom::CoinType::ETH);
   ASSERT_TRUE(result);
   EXPECT_EQ(result->second.size(), 1u);
+
+  // 1 SOL NFT
+  json = R"({
+    "next": null,
+    "previous": null,
+    "nfts": [
+      {
+        "chain": "solana",
+        "contract_address": "AvdAUsR4qgsT5HgyKCVeGjimmyu8xrG3RudFqm5txDDE",
+        "token_id": null,
+        "name": "y00t #2623",
+        "description": "y00ts is a generative art project of 15,000 NFTs. y00topia is a curated community of builders and creators. Each y00t was designed by De Labs in Los Angeles, CA.",
+        "image_url": "https://cdn.simplehash.com/assets/dc78fa011ba46fa12748f1a20ad5e98e1e0b6746dcbfcf409c091dd48d09aee1.png",
+        "status": "minted",
+        "contract": {
+          "type": "NonFungible",
+          "name": "y00t #2623",
+          "symbol": "Y00T"
+        },
+        "collection": {
+          "spam_score": 0
+        },
+        "extra_metadata": {
+          "is_mutable": true
+        }
+      }
+    ]
+  })";
+
+  json_value = base::JSONReader::Read(json);
+  ASSERT_TRUE(json_value);
+  result = asset_discovery_manager_->ParseNFTsFromSimpleHash(
+      *json_value, mojom::CoinType::SOL);
+  ASSERT_TRUE(result);
+  EXPECT_EQ(result->second.size(), 1u);
+  EXPECT_EQ(result->second[0]->contract_address,
+            "AvdAUsR4qgsT5HgyKCVeGjimmyu8xrG3RudFqm5txDDE");
+  EXPECT_EQ(result->second[0]->name, "y00t #2623");
+  EXPECT_EQ(
+      result->second[0]->logo,
+      "https://cdn.simplehash.com/assets/"
+      "dc78fa011ba46fa12748f1a20ad5e98e1e0b6746dcbfcf409c091dd48d09aee1.png");
+  EXPECT_EQ(result->second[0]->is_erc20, false);
+  EXPECT_EQ(result->second[0]->is_erc721, false);
+  EXPECT_EQ(result->second[0]->is_nft, true);
+  EXPECT_EQ(result->second[0]->symbol, "Y00T");
+  EXPECT_EQ(result->second[0]->decimals, 0);
+  EXPECT_EQ(result->second[0]->visible, true);
+  EXPECT_EQ(result->second[0]->token_id, "");
+  EXPECT_EQ(result->second[0]->coingecko_id, "");
+  EXPECT_EQ(result->second[0]->chain_id, mojom::kSolanaMainnet);
+  EXPECT_EQ(result->second[0]->coin, mojom::CoinType::SOL);
 }
 
 TEST_F(AssetDiscoveryManagerUnitTest, FetchNFTsFromSimpleHash) {
