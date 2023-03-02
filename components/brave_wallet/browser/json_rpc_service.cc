@@ -2502,9 +2502,12 @@ void JsonRpcService::GetEthNftStandard(
     GetEthNftStandardCallback callback,
     size_t index) {
   VLOG(0) << __func__ << ":" << __LINE__;
+  VLOG(0) << "chain_id: " << chain_id;
   auto network_url = GetNetworkURL(prefs_, chain_id, mojom::CoinType::ETH);
+  VLOG(0) << __func__ << ":" << __LINE__;
   if (!EthAddress::IsValidAddress(contract_address) ||
       !network_url.is_valid()) {
+    VLOG(0) << __func__ << ":" << __LINE__;
     std::move(callback).Run(
         absl::nullopt, mojom::ProviderError::kInvalidParams,
         l10n_util::GetStringUTF8(IDS_WALLET_INVALID_PARAMETERS));

@@ -495,13 +495,16 @@ GURL AddInfuraProjectId(const GURL& url) {
 }
 
 GURL MaybeAddInfuraProjectId(const GURL& url) {
+  VLOG(0) << __func__ << ":" << __LINE__;
   if (!url.is_valid())
     return GURL();
+  VLOG(0) << __func__ << ":" << __LINE__;
   for (const auto& infura_chain_id : kInfuraChains) {
     if (GetInfuraURLForKnownChainId(infura_chain_id) == url) {
       return AddInfuraProjectId(url);
     }
   }
+  VLOG(0) << __func__ << ":" << __LINE__;
   return url;
 }
 
@@ -549,16 +552,21 @@ mojom::NetworkInfoPtr GetKnownChain(PrefService* prefs,
 mojom::NetworkInfoPtr GetCustomChain(PrefService* prefs,
                                      const std::string& chain_id,
                                      mojom::CoinType coin) {
+  VLOG(0) << __func__ << ":" << __LINE__;
   const base::Value::List* custom_list = GetCustomNetworksList(prefs, coin);
-  if (!custom_list)
+  if (!custom_list) {
     return nullptr;
+  }
+  VLOG(0) << __func__ << ":" << __LINE__;
   for (const auto& it : *custom_list) {
+    VLOG(0) << __func__ << ":" << __LINE__;
     if (auto opt_chain_id =
             brave_wallet::ExtractChainIdFromValue(it.GetIfDict())) {
       if (base::CompareCaseInsensitiveASCII(chain_id, *opt_chain_id) == 0)
         return brave_wallet::ValueToNetworkInfo(it);
     }
   }
+  VLOG(0) << __func__ << ":" << __LINE__;
   return nullptr;
 }
 
@@ -1039,11 +1047,15 @@ std::vector<mojom::NetworkInfoPtr> GetAllKnownChains(PrefService* prefs,
 GURL GetNetworkURL(PrefService* prefs,
                    const std::string& chain_id,
                    mojom::CoinType coin) {
+  VLOG(0) << __func__ << ":" << __LINE__;
   if (auto custom_chain = GetCustomChain(prefs, chain_id, coin)) {
+    VLOG(0) << __func__ << ":" << __LINE__;
     return MaybeAddInfuraProjectId(GetActiveEndpointUrl(*custom_chain));
   } else if (auto known_chain = GetKnownChain(prefs, chain_id, coin)) {
+    VLOG(0) << __func__ << ":" << __LINE__;
     return MaybeAddInfuraProjectId(GetActiveEndpointUrl(*known_chain));
   }
+  VLOG(0) << __func__ << ":" << __LINE__;
   return GURL();
 }
 
@@ -1490,11 +1502,14 @@ mojom::CoinType GetCoinForKeyring(const std::string& keyring_id) {
 }
 
 GURL GetActiveEndpointUrl(const mojom::NetworkInfo& chain) {
+  VLOG(0) << __func__ << ":" << __LINE__;
   if (chain.active_rpc_endpoint_index >= 0 &&
       static_cast<size_t>(chain.active_rpc_endpoint_index) <
           chain.rpc_endpoints.size()) {
+    VLOG(0) << __func__ << ":" << __LINE__;
     return chain.rpc_endpoints[chain.active_rpc_endpoint_index];
   }
+  VLOG(0) << __func__ << ":" << __LINE__;
   return GURL();
 }
 
