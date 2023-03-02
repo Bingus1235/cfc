@@ -441,7 +441,7 @@ bool BraveWalletService::AddUserAsset(mojom::BlockchainTokenPtr token) {
 void BraveWalletService::AddUserAsset(mojom::BlockchainTokenPtr token,
                                       AddUserAssetCallback callback) {
   VLOG(0) << __func__ << ":" << __LINE__;
-  std::vector<std::string> interfaces_to_check = GetEthSupportedNftInterfaces();
+  const auto& interfaces_to_check = GetEthSupportedNftInterfaces();
   VLOG(0) << __func__ << ":" << __LINE__;
   if (token->is_nft && token->coin == mojom::CoinType::ETH) {
     json_rpc_service_->GetEthNftStandard(
