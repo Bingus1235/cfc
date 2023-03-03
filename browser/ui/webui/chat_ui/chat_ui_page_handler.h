@@ -14,18 +14,19 @@
 #include "brave/browser/chat/chat_tab_helper.h"
 #include "brave/components/chat_ui/browser/chat_ui_api_request.h"
 #include "brave/components/chat_ui/common/chat_ui.mojom.h"
+#include "chrome/browser/ui/tabs/tab_strip_model_observer.h"
 #include "mojo/public/cpp/bindings/pending_receiver.h"
 #include "mojo/public/cpp/bindings/pending_remote.h"
 #include "mojo/public/cpp/bindings/receiver.h"
 #include "mojo/public/cpp/bindings/remote.h"
 
 class TabStripModel;
-
 namespace content {
 class WebContents;
 }  // namespace content
 
-class ChatUIPageHandler : public chat_ui::mojom::PageHandler {
+class ChatUIPageHandler : public chat_ui::mojom::PageHandler,
+                          public TabStripModelObserver {
  public:
   ChatUIPageHandler(
       TabStripModel* tab_strip_model,
@@ -37,13 +38,19 @@ class ChatUIPageHandler : public chat_ui::mojom::PageHandler {
   ~ChatUIPageHandler() override;
 
  private:
-  // chat_ui::mojom::PageHandler overrides:
+  // chat_ui::mojom::PageHandler:
   void SetClientPage(
       mojo::PendingRemote<chat_ui::mojom::ChatUIPage> page) override;
   void QueryPrompt(const std::string& input) override;
   void GetConversationHistory(GetConversationHistoryCallback callback) override;
 
   void OnResponse(const std::string& assistant_input, bool success);
+
+  // TabStripModelObserver
+  void OnTabStripModelChanged(
+      TabStripModel* tab_strip_model,
+      const TabStripModelChange& change,
+      const TabStripSelectionChange& selection) override;
 
   std::unique_ptr<chat_ui::ChatUIAPIRequest> api_helper_ = nullptr;
 

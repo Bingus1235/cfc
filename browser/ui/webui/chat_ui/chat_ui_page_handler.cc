@@ -20,6 +20,7 @@ ChatUIPageHandler::ChatUIPageHandler(
     mojo::PendingReceiver<chat_ui::mojom::PageHandler> receiver)
     : receiver_(this, std::move(receiver)) {
   DCHECK(tab_strip_model);
+  tab_strip_model->AddObserver(this);
 
   auto* web_contents = tab_strip_model->GetActiveWebContents();
   if (!web_contents) {
@@ -62,6 +63,23 @@ void ChatUIPageHandler::GetConversationHistory(
                  [](const ConversationTurn& turn) { return turn.Clone(); });
 
   std::move(callback).Run(std::move(list));
+}
+
+void ChatUIPageHandler::OnTabStripModelChanged(
+    TabStripModel* tab_strip_model,
+    const TabStripModelChange& change,
+    const TabStripSelectionChange& selection) {
+  if (selection.active_tab_changed()) {
+    if (active_chat_tab_helper_) {
+      active_chat_tab_helper_ = nullptr;
+    }
+
+    if (selection.new_contents) {
+      active_chat_tab_helper_ =
+          ChatTabHelper::FromWebContents(selection.new_contents);
+      page_.get()->OnContextChange();
+    }
+  }
 }
 
 void ChatUIPageHandler::OnResponse(const std::string& assistant_input,

@@ -26,19 +26,25 @@ function App () {
     setIsLoading(true)
     getPageHandlerInstance().pageHandler.queryPrompt(text)
     const turn = { text, characterType: CharacterType.HUMAN }
-    updateHistory(turn)
+    appendConversationHistory(turn)
     setText('')
   }
 
-  const updateHistory = (turn: ConversationTurn) => {
+  const appendConversationHistory = (turn: ConversationTurn) => {
     setConversationHistory((prevState) => [...prevState, turn])
   }
 
-  React.useEffect(() => {
+  const getConversationHistory = () => {
     getPageHandlerInstance().pageHandler.getConversationHistory().then(res => setConversationHistory(res.conversationHistory))
+  }
+
+  React.useEffect(() => {
+    getConversationHistory()
+
+    getPageHandlerInstance().callbackRouter.onContextChange.addListener(getConversationHistory)
 
     getPageHandlerInstance().callbackRouter.onResponse.addListener((turn: ConversationTurn) => {
-      updateHistory(turn)
+      appendConversationHistory(turn)
       setIsLoading(false)
     })
   }, [])
