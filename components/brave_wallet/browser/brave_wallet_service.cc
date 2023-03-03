@@ -445,6 +445,7 @@ void BraveWalletService::AddUserAsset(mojom::BlockchainTokenPtr token,
   VLOG(0) << __func__ << ":" << __LINE__;
   if (token->is_nft && token->coin == mojom::CoinType::ETH) {
     VLOG(0) << __func__ << ":" << __LINE__;
+    VLOG(0) << "BraveWalletService::AddUserAsset chain_id " << token->chain_id;
     json_rpc_service_->GetEthNftStandard(
         token->contract_address, token->chain_id, interfaces_to_check,
         base::BindOnce(&BraveWalletService::OnGetEthNftStandard,

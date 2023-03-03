@@ -2503,6 +2503,7 @@ void JsonRpcService::GetEthNftStandard(
     size_t index) {
   VLOG(0) << __func__ << ":" << __LINE__;
   VLOG(0) << "chain_id: " << chain_id;
+  VLOG(0) << __func__ << ":" << __LINE__;
   auto network_url = GetNetworkURL(prefs_, chain_id, mojom::CoinType::ETH);
   VLOG(0) << __func__ << ":" << __LINE__;
   if (!EthAddress::IsValidAddress(contract_address) ||

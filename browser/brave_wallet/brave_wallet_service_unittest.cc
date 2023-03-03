@@ -973,6 +973,7 @@ TEST_F(BraveWalletServiceUnitTest, AddUserAssetNfts) {
       "0xBC4CA0EdA7647A8aB7C2061c2E118A18a936f13D", "BAYC", "bayc.png", false,
       false, false, true, "BAYC", 0, true, "0x1", "", mojom::kMainnetChainId,
       mojom::CoinType::ETH);
+  VLOG(0) << "erc721_token->chain id" << erc721_token->chain_id;
   responses[kERC721InterfaceId] = interface_supported_response;
   responses[kERC1155InterfaceId] = interface_not_supported_response;
   SetGetEthNftStandardInterceptor(network, responses);
