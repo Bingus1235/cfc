@@ -2496,8 +2496,8 @@ void JsonRpcService::OnGetSupportsInterface(
 }
 
 void JsonRpcService::GetEthNftStandard(
-    const std::string& contract_address,
-    const std::string& chain_id,
+    const std::string contract_address,
+    const std::string chain_id,
     const std::vector<std::string>& interfaces,
     GetEthNftStandardCallback callback,
     size_t index) {

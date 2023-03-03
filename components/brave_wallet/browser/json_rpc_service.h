@@ -376,8 +376,8 @@ class JsonRpcService : public KeyedService, public mojom::JsonRpcService {
       base::OnceCallback<void(const absl::optional<std::string>& standard,
                               mojom::ProviderError error,
                               const std::string& error_message)>;
-  void GetEthNftStandard(const std::string& contract_address,
-                         const std::string& chain_id,
+  void GetEthNftStandard(const std::string contract_address,
+                         const std::string chain_id,
                          const std::vector<std::string>& interfaces,
                          GetEthNftStandardCallback callback,
                          size_t index = 0);
