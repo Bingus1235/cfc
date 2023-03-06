@@ -2,7 +2,24 @@
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this file,
 // you can obtain one at https://mozilla.org/MPL/2.0/.
-import { provideStrings } from '../../../../../.storybook/locale'
 
-provideStrings({
-})
+.main {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  height: 100%;
+  position: relative;
+  overflow: hidden;
+}
+
+.inputBox {
+  position: absolute;
+  bottom: 0;
+  width: 100%;
+}
+
+.scroller {
+  overflow: auto;
+  height: 100%;
+  padding-bottom: 120px;
+}

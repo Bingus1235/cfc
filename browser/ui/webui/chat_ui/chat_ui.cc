@@ -41,6 +41,9 @@ ChatUI::ChatUI(content::WebUI* web_ui) : ui::UntrustedWebUIController(web_ui) {
       network::mojom::CSPDirectiveName::StyleSrc,
       "style-src 'self' 'unsafe-inline' chrome-untrusted://resources;");
   untrusted_source->OverrideContentSecurityPolicy(
+      network::mojom::CSPDirectiveName::ImgSrc,
+      "img-src 'self' 'unsafe-inline' chrome-untrusted://resources;");
+  untrusted_source->OverrideContentSecurityPolicy(
       network::mojom::CSPDirectiveName::FontSrc,
       "font-src 'self' data: chrome-untrusted://resources;");
 }

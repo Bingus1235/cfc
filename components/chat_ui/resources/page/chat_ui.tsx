@@ -6,71 +6,57 @@
 import * as React from 'react'
 import { render } from 'react-dom'
 import { initLocale } from 'brave-ui'
+import { setIconBasePath } from '@brave/leo/react/icon'
+
+import '$web-components/app.global.scss'
+import '@brave/leo/tokens/css/variables.css'
 
 import { loadTimeData } from '../../../common/loadTimeData'
 import BraveCoreThemeProvider from '../../../common/BraveCoreThemeProvider'
-import getPageHandlerInstance, { ConversationTurn, CharacterType } from './api/page_handler'
+import Main from './components/main'
+import ConversationList from './components/conversation-list'
+import InputBox from './components/input-box'
+import { useConversationHistory, useInput } from './state/hooks'
+import getPageHandlerInstance, { CharacterType } from './api/page_handler'
+
+setIconBasePath('chrome-untrusted://resources/brave-icons')
 
 function App () {
-  const [text, setText] = React.useState('')
-  const [isLoading, setIsLoading] = React.useState(false)
-  const [conversationHistory, setConversationHistory] = React.useState<ConversationTurn[]>([])
+  const { conversationHistory, appendHistory } = useConversationHistory()
+  const { value, setValue } = useInput();
 
-  const handleTextChange = (e: any) => {
+  const handleInputChange = (e: any) => {
     const target = e.target as HTMLInputElement
-    setText(target.value)
+    setValue(target.value)
   }
 
   const handleSubmit = (e: any) => {
     e.preventDefault()
-    setIsLoading(true)
-    getPageHandlerInstance().pageHandler.queryPrompt(text)
-    const turn = { text, characterType: CharacterType.HUMAN }
-    appendConversationHistory(turn)
-    setText('')
+    getPageHandlerInstance().pageHandler.queryPrompt(value)
+    appendHistory({ text: value, characterType: CharacterType.HUMAN })
+    setValue('')
   }
 
-  const appendConversationHistory = (turn: ConversationTurn) => {
-    setConversationHistory((prevState) => [...prevState, turn])
-  }
+  const conversationList = (
+    <ConversationList
+      list={conversationHistory}
+    />
+  )
 
-  const getConversationHistory = () => {
-    getPageHandlerInstance().pageHandler.getConversationHistory().then(res => setConversationHistory(res.conversationHistory))
-  }
-
-  React.useEffect(() => {
-    getConversationHistory()
-
-    getPageHandlerInstance().callbackRouter.onContextChange.addListener(getConversationHistory)
-
-    getPageHandlerInstance().callbackRouter.onResponse.addListener((turn: ConversationTurn) => {
-      appendConversationHistory(turn)
-      setIsLoading(false)
-    })
-  }, [])
+  const inputBox = (
+    <InputBox
+      value={value}
+      onInputChange={handleInputChange}
+      onSubmit={handleSubmit}
+    />
+  )
 
   return (
     <BraveCoreThemeProvider>
-      <div>
-        <section>
-          {conversationHistory?.map((entry, idx) => (
-            <div
-              className="turn"
-              key={idx}
-              style={{
-                border: entry.characterType === CharacterType.HUMAN ? 0 : ''
-              }}
-            >
-              {entry.text}
-            </div>
-          ))}
-        </section>
-        <div className="loader">{isLoading && '🤔 Thinking…'}</div>
-        <form className="form-box">
-          <textarea wrap="soft" placeholder="Ask a question" onChange={handleTextChange} value={text} />
-          <input type="submit" value="Submit" onClick={handleSubmit} />
-        </form>
-      </div>
+      <Main
+        conversationList={conversationList}
+        inputBox={inputBox}
+      />
     </BraveCoreThemeProvider>
   )
 }

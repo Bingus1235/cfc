@@ -1,17 +1,30 @@
-// Copyright (c) 2022 The Brave Authors. All rights reserved.
+// Copyright (c) 2023 The Brave Authors. All rights reserved.
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this file,
 // you can obtain one at https://mozilla.org/MPL/2.0/.
+
 import * as React from 'react'
-import * as S from './style'
 import { withKnobs } from '@storybook/addon-knobs'
+import styles from './style.module.scss'
 
 import './locale'
-import MainPanel from '../components/main-panel'
+import '$web-components/app.global.scss'
+import '@brave/leo/tokens/css/variables.css'
+
 import ThemeProvider from '$web-common/BraveCoreThemeProvider'
+import Main from '../components/main'
+import ConversationList from '../components/conversation-list'
+import InputBox from '../components/input-box'
+import { useInput } from '../state/hooks'
+import { CharacterType } from '../api/page_handler'
+
+const DATA = [
+  {text: 'What is pointer compression?', characterType: CharacterType.HUMAN },
+  {text: 'Pointer compression is a memory optimization technique where pointers (memory addresses) are stored in a compressed format to save memory. The basic idea is that since most pointers will be clustered together and point to objects allocated around the same time, you can store a compressed representation of the pointer and decompress it when needed. Some common ways this is done: Store an offset from a base pointer instead of the full pointer value Store increments/decrements from the previous pointer instead of the full value Use pointer tagging to store extra information in the low bits of the pointer Encode groups of pointers together The tradeoff is some extra CPU cost to decompress the pointers, versus saving memory. This technique is most useful in memory constrained environments.', characterType: CharacterType.ASSISTANT },
+]
 
 export default {
-  title: 'Speedreader/Page',
+  title: 'Chat/Page',
   parameters: {
     layout: 'centered'
   },
@@ -31,9 +44,38 @@ export default {
 }
 
 export const _Main = () => {
+  const { value, setValue } = useInput();
+
+  const handleSubmit = () => {
+    console.log(value)
+    setValue('')
+  }
+
+  const handleInputChange = (e: any) => {
+    const target = e.target as HTMLInputElement
+    setValue(target.value)
+  }
+
+  const conversationList = (
+    <ConversationList
+      list={DATA}
+    />
+  )
+
+  const inputBox = (
+    <InputBox
+      value={value}
+      onInputChange={handleInputChange}
+      onSubmit={handleSubmit}
+    />
+  )
+
   return (
-    <S.PanelFrame>
-      <MainPanel />
-    </S.PanelFrame>
+    <div className={styles.container}>
+      <Main
+        conversationList={conversationList}
+        inputBox={inputBox}
+      />
+    </div>
   )
 }

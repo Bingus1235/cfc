@@ -144,6 +144,7 @@ leo_icons = [
   "news-topnews.svg",
   "news-weather.svg",
   "news-worldnews.svg",
+  "send.svg",
 ]
 
 generate_grd("icons_grdp") {

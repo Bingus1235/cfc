@@ -5,45 +5,21 @@
     <title>ChatUI</title>
     <link rel="stylesheet" href="chrome-untrusted://resources/brave/css/reset.css">
     <link rel="stylesheet" href="chrome-untrusted://resources/css/text_defaults.css">
-    <link rel="stylesheet" href="chrome-untrusted://resources/fonts/poppins.css">
+    <link rel="stylesheet" href="chrome-untrusted://resources/brave/fonts/poppins.css">
     <script src="chrome-untrusted://resources/js/load_time_data_deprecated.js"></script>
     <script src="/strings.js"></script>
     <style>
-      #mountPoint { height: 100%; }
       body {
-        background: white;
-        font-family: -apple-system, sans-serif;
-        padding: 40px;
-        font-size: 1.4rem;
-        line-height: 2rem;
-        padding: 100px;
-      }
-
-      textarea {
         width: 100%;
-        padding: 0.5rem;
+        height: 100vh;
+        font-family: Poppins, sans-serif;
+        font-size: 14px;
+        font-weight: 400;
+        line-height: 24px;
+        background-color: var(--leo-color-container-background);
+        color: var(--leo-color-text-primary);
       }
-
-      .turn {
-        padding: 1rem;
-        border: 1px solid rgb(222, 222, 222);
-        border-radius: 15px;
-        margin-bottom: 0.5rem;
-      }
-
-      .form-box {
-        position: fixed;
-        width: 100%;
-        left: 0;
-        bottom: 0;
-        display: flex;
-        background: linear-gradient(121.55deg,#3C0BA9 17.34%,#930FA8 113.19%);
-        padding: 1rem;
-      }
-
-      .loader {
-        padding: 1rem;
-      }
+      #mountPoint { height: 100%; }
     </style>
   </head>
   <body>
