@@ -365,55 +365,6 @@ void AssetDiscoveryManager::MergeDiscoveredEthAssets(
                          triggered_by_accounts_added);
 }
 
-void AssetDiscoveryManager::DiscoverNFTsOnAllSupportedChains(
-    std::map<mojom::CoinType, std::vector<std::string>>& account_addresses,
-    bool triggered_by_accounts_added) {
-  // Use a barrier callback to wait for all FetchNFTsFromSimpleHash calls to
-  // complete (one for each account address).
-  const auto& eth_account_addresses = account_addresses[mojom::CoinType::ETH];
-  const auto& sol_account_addresses = account_addresses[mojom::CoinType::SOL];
-  const auto barrier_callback =
-      base::BarrierCallback<std::vector<mojom::BlockchainTokenPtr>>(
-          eth_account_addresses.size() + sol_account_addresses.size(),
-          base::BindOnce(&AssetDiscoveryManager::MergeDiscoveredNFTs,
-                         weak_ptr_factory_.GetWeakPtr(),
-                         triggered_by_accounts_added));
-  for (const auto& account_address : eth_account_addresses) {
-    FetchNFTsFromSimpleHash(account_address,
-                            GetAssetDiscoverySupportedEthChains(),
-                            mojom::CoinType::ETH, std::move(barrier_callback));
-  }
-
-  for (const auto& account_address : sol_account_addresses) {
-    FetchNFTsFromSimpleHash(account_address, {mojom::kSolanaMainnet},
-                            mojom::CoinType::SOL, std::move(barrier_callback));
-  }
-}
-
-void AssetDiscoveryManager::MergeDiscoveredNFTs(
-    bool triggered_by_accounts_added,
-    const std::vector<std::vector<mojom::BlockchainTokenPtr>>& nfts) {
-  // De-dupe the NFTs
-  base::flat_set<mojom::BlockchainTokenPtr> seen_nft;
-  std::vector<mojom::BlockchainTokenPtr> discovered_nfts;
-  for (const auto& nft_list : nfts) {
-    for (const auto& nft : nft_list) {
-      if (seen_nft.contains(nft)) {
-        continue;
-      }
-      seen_nft.insert(nft.Clone());
-
-      // Add the NFT to the user's assets
-      if (BraveWalletService::AddUserAsset(nft.Clone(), prefs_)) {
-        discovered_nfts.push_back(nft.Clone());  // TODO(nvonpentz) don't clone
-      }
-    }
-  }
-
-  CompleteDiscoverAssets(std::move(discovered_nfts),
-                         triggered_by_accounts_added);
-}
-
 // Calls
 // https://api.simplehash.com/api/v0/nfts/owners?chains={chains}&wallet_addresses={wallet_addresses}
 void AssetDiscoveryManager::FetchNFTsFromSimpleHash(
@@ -452,7 +403,6 @@ void AssetDiscoveryManager::OnFetchNFTsFromSimpleHash(
     return;
   }
 
-  // optional of a pair of GURL and vector of blockchaintokenptrs
   absl::optional<std::pair<GURL, std::vector<mojom::BlockchainTokenPtr>>>
       result = ParseNFTsFromSimpleHash(api_request_result.value_body(), coin);
   if (!result) {
@@ -460,7 +410,6 @@ void AssetDiscoveryManager::OnFetchNFTsFromSimpleHash(
     return;
   }
 
-  // Add discovered NFTs to nfts_so_far
   for (auto& token : result.value().second) {
     nfts_so_far.push_back(std::move(token));
   }
@@ -483,7 +432,7 @@ void AssetDiscoveryManager::OnFetchNFTsFromSimpleHash(
 absl::optional<std::pair<GURL, std::vector<mojom::BlockchainTokenPtr>>>
 AssetDiscoveryManager::ParseNFTsFromSimpleHash(const base::Value& json_value,
                                                mojom::CoinType coin) {
-  // Only ETH and SOL NFTs are supported
+  // Only ETH and SOL NFTs are supported.
   if (!(coin == mojom::CoinType::ETH || coin == mojom::CoinType::SOL)) {
     return absl::nullopt;
   }
@@ -509,7 +458,7 @@ AssetDiscoveryManager::ParseNFTsFromSimpleHash(const base::Value& json_value,
   for (const auto& nft : nfts->GetList()) {
     auto token = mojom::BlockchainToken::New();
 
-    // skip all tokens with a collection.spam_score > 0
+    // Skip all tokens with a collection.spam_score > 0.
     auto* collection = nft.FindDictKey("collection");
     if (!collection) {
       continue;
@@ -542,7 +491,7 @@ AssetDiscoveryManager::ParseNFTsFromSimpleHash(const base::Value& json_value,
     token->is_erc20 = false;
 
     // The contract dict has the standard information
-    // so we skip if it's not there
+    // so we skip if it's not there.
     auto* contract = nft.FindDictKey("contract");
     if (!contract) {
       continue;
@@ -560,7 +509,7 @@ AssetDiscoveryManager::ParseNFTsFromSimpleHash(const base::Value& json_value,
       }
       token->is_erc721 = true;
     } else {  // mojom::CoinType::SOL
-      // Solana NFTs must be NonFungible
+      // Solana NFTs must be "NonFungible"
       if (!base::EqualsCaseInsensitiveASCII(*type, "NonFungible")) {
         continue;
       }
@@ -609,6 +558,53 @@ AssetDiscoveryManager::ParseNFTsFromSimpleHash(const base::Value& json_value,
   }
 
   return std::make_pair(nextURL, std::move(nft_tokens));
+}
+
+void AssetDiscoveryManager::DiscoverNFTsOnAllSupportedChains(
+    std::map<mojom::CoinType, std::vector<std::string>>& account_addresses,
+    bool triggered_by_accounts_added) {
+  const auto& eth_account_addresses = account_addresses[mojom::CoinType::ETH];
+  const auto& sol_account_addresses = account_addresses[mojom::CoinType::SOL];
+  const auto barrier_callback =
+      base::BarrierCallback<std::vector<mojom::BlockchainTokenPtr>>(
+          eth_account_addresses.size() + sol_account_addresses.size(),
+          base::BindOnce(&AssetDiscoveryManager::MergeDiscoveredNFTs,
+                         weak_ptr_factory_.GetWeakPtr(),
+                         triggered_by_accounts_added));
+  for (const auto& account_address : eth_account_addresses) {
+    FetchNFTsFromSimpleHash(account_address,
+                            GetAssetDiscoverySupportedEthChains(),
+                            mojom::CoinType::ETH, std::move(barrier_callback));
+  }
+
+  for (const auto& account_address : sol_account_addresses) {
+    FetchNFTsFromSimpleHash(account_address, {mojom::kSolanaMainnet},
+                            mojom::CoinType::SOL, std::move(barrier_callback));
+  }
+}
+
+void AssetDiscoveryManager::MergeDiscoveredNFTs(
+    bool triggered_by_accounts_added,
+    const std::vector<std::vector<mojom::BlockchainTokenPtr>>& nfts) {
+  // De-dupe the NFTs
+  base::flat_set<mojom::BlockchainTokenPtr> seen_nft;
+  std::vector<mojom::BlockchainTokenPtr> discovered_nfts;
+  for (const auto& nft_list : nfts) {
+    for (const auto& nft : nft_list) {
+      if (seen_nft.contains(nft)) {
+        continue;
+      }
+      seen_nft.insert(nft.Clone());
+
+      // Add the NFT to the user's assets
+      if (BraveWalletService::AddUserAsset(nft.Clone(), prefs_)) {
+        discovered_nfts.push_back(nft.Clone());
+      }
+    }
+  }
+
+  CompleteDiscoverAssets(std::move(discovered_nfts),
+                         triggered_by_accounts_added);
 }
 
 // Called when asset discovery has completed for
@@ -677,7 +673,7 @@ void AssetDiscoveryManager::DiscoverAssetsOnAllSupportedChainsRefresh(
     return;
   }
 
-  remaining_buckets_ = 3;  // 1 for ETH + 1 for SOL
+  remaining_buckets_ = 3;  // 1 for ETH + 1 for SOL + 1 for NFTs
   DiscoverSolAssets(account_addresses[mojom::CoinType::SOL], false);
   DiscoverEthAssets(account_addresses[mojom::CoinType::ETH], false);
   DiscoverNFTsOnAllSupportedChains(account_addresses, false);
@@ -737,13 +733,8 @@ GURL AssetDiscoveryManager::GetSimpleHashNftsByWalletUrl(
   }
 
   GURL url = GURL(urlStr);
-
-  // Add the chain IDs to the URL as a query parameter
   url = net::AppendQueryParameter(url, "chains", chain_ids_param);
-
-  // Add the wallet address as a query parameter to the URL
   url = net::AppendQueryParameter(url, "wallet_addresses", account_address);
-
   return GURL(url);
 }
 

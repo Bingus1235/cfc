@@ -9,7 +9,6 @@
 #include <map>
 #include <memory>
 #include <string>
-#include <tuple>
 #include <utility>
 #include <vector>
 
@@ -131,14 +130,6 @@ class AssetDiscoveryManager : public mojom::KeyringServiceObserver {
       const std::vector<std::map<std::string, std::vector<std::string>>>&
           discovered_assets);
 
-  void DiscoverNFTsOnAllSupportedChains(
-      std::map<mojom::CoinType, std::vector<std::string>>& account_addresses,
-      bool triggered_by_accounts_added);
-
-  void MergeDiscoveredNFTs(
-      bool triggered_by_accounts_added,
-      const std::vector<std::vector<mojom::BlockchainTokenPtr>>& nfts);
-
   using FetchNFTsFromSimpleHashCallback =
       base::OnceCallback<void(std::vector<mojom::BlockchainTokenPtr> nfts)>;
   void FetchNFTsFromSimpleHash(const std::string& account_address,
@@ -151,6 +142,14 @@ class AssetDiscoveryManager : public mojom::KeyringServiceObserver {
       mojom::CoinType coin,
       FetchNFTsFromSimpleHashCallback callback,
       APIRequestResult api_request_result);
+
+  void DiscoverNFTsOnAllSupportedChains(
+      std::map<mojom::CoinType, std::vector<std::string>>& account_addresses,
+      bool triggered_by_accounts_added);
+
+  void MergeDiscoveredNFTs(
+      bool triggered_by_accounts_added,
+      const std::vector<std::vector<mojom::BlockchainTokenPtr>>& nfts);
 
   absl::optional<std::pair<GURL, std::vector<mojom::BlockchainTokenPtr>>>
   ParseNFTsFromSimpleHash(const base::Value& json_value, mojom::CoinType coin);
