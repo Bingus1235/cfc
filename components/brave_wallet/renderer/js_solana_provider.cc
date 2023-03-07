@@ -46,6 +46,9 @@ constexpr char kTransactionFrom[] = "from";
 constexpr char kEmit[] = "emit";
 constexpr char kPublicKey[] = "publicKey";
 constexpr char kSerializeMessage[] = "serializeMessage";
+constexpr char kMessage[] = "message";
+constexpr char kSerialize[] = "serialize";
+constexpr char kStaticAccountKeys[] = "staticAccountKeys";
 constexpr char kSolana[] = "solana";
 constexpr char kSignature[] = "signature";
 constexpr char kSignatures[] = "signatures";
@@ -366,7 +369,6 @@ v8::Local<v8::Promise> JSSolanaProvider::SignAndSendTransaction(
     }
     send_options = std::move(send_options_value->GetDict());
   }
-
   auto global_context(
       v8::Global<v8::Context>(isolate, isolate->GetCurrentContext()));
   auto promise_resolver(
@@ -839,15 +841,28 @@ absl::optional<std::string> JSSolanaProvider::GetSerializedMessage(
     return absl::nullopt;
   }
   v8::Isolate* isolate = blink::MainThreadIsolate();
+  v8::Local<v8::Context> context = isolate->GetCurrentContext();
 
-  v8::MaybeLocal<v8::Value> serialized_msg = CallMethodOfObject(
-      render_frame()->GetWebFrame(), transaction, kSerializeMessage,
-      std::vector<v8::Local<v8::Value>>());
+  v8::MaybeLocal<v8::Value> serialized_msg;
+  v8::Local<v8::Value> versioned_message;
+  CHECK(
+      GetProperty(context, transaction, kMessage).ToLocal(&versioned_message));
+  if (versioned_message->IsObject()) {  // VersionedTransaction
+    serialized_msg =
+        CallMethodOfObject(render_frame()->GetWebFrame(), versioned_message,
+                           kSerialize, std::vector<v8::Local<v8::Value>>());
+  } else {  // Transaction
+    serialized_msg = CallMethodOfObject(render_frame()->GetWebFrame(),
+                                        transaction, kSerializeMessage,
+                                        std::vector<v8::Local<v8::Value>>());
+  }
+
   if (serialized_msg.IsEmpty()) {
     return absl::nullopt;
   }
+
   std::unique_ptr<base::Value> blob_value = v8_value_converter_->FromV8Value(
-      serialized_msg.ToLocalChecked(), isolate->GetCurrentContext());
+      serialized_msg.ToLocalChecked(), context);
   if (!blob_value->is_blob()) {
     return absl::nullopt;
   }
@@ -870,42 +885,91 @@ JSSolanaProvider::GetSignatures(v8::Local<v8::Value> transaction) {
   std::vector<mojom::SignaturePubkeyPairPtr> sig_pubkey_pairs;
   sig_pubkey_pairs.reserve(signatures_count);
 
-  for (uint32_t i = 0; i < signatures_count; ++i) {
-    // Get signature.
-    v8::Local<v8::Value> v8_signature;
-    v8::Local<v8::Value> v8_sig_pubkey_pair =
-        signatures_array->Get(context, i).ToLocalChecked();
-    CHECK(GetProperty(context, v8_sig_pubkey_pair, kSignature)
-              .ToLocal(&v8_signature));
+  v8::Local<v8::Value> versioned_message;
+  CHECK(
+      GetProperty(context, transaction, kMessage).ToLocal(&versioned_message));
 
-    absl::optional<std::vector<uint8_t>> signature = absl::nullopt;
-    if (!v8_signature->IsNullOrUndefined()) {
-      std::unique_ptr<base::Value> blob_value =
+  bool is_versioned_transaction = versioned_message->IsObject();
+
+  if (is_versioned_transaction) {
+    // Get staticAccountKeys property.
+    v8::Local<v8::Value> static_account_keys;
+    CHECK(GetProperty(context, versioned_message, kStaticAccountKeys)
+              .ToLocal(&static_account_keys));
+    v8::Local<v8::Array> static_account_keys_array =
+        static_account_keys.As<v8::Array>();
+    uint32_t static_account_keys_count = static_account_keys_array->Length();
+    if (static_account_keys_count < signatures_count) {
+      return absl::nullopt;
+    }
+
+    for (uint32_t i = 0; i < signatures_count; ++i) {
+      // Get signature.
+      v8::Local<v8::Value> v8_signature =
+          signatures_array->Get(context, i).ToLocalChecked();
+      std::unique_ptr<base::Value> sig_blob_value =
           v8_value_converter_->FromV8Value(v8_signature, context);
-      if (!blob_value || !blob_value->is_blob()) {
+      if (!sig_blob_value || !sig_blob_value->is_blob()) {
         return absl::nullopt;
       }
-      signature = blob_value->GetBlob();
-    }
 
-    v8::Local<v8::Value> v8_pubkey_object;
-    CHECK(GetProperty(context, v8_sig_pubkey_pair, kPublicKey)
-              .ToLocal(&v8_pubkey_object));
-    v8::MaybeLocal<v8::Value> v8_pubkey =
-        CallMethodOfObject(render_frame()->GetWebFrame(), v8_pubkey_object,
-                           kToString, std::vector<v8::Local<v8::Value>>());
-    if (v8_pubkey.IsEmpty()) {
-      return absl::nullopt;
-    }
+      // Get pubkey.
+      v8::Local<v8::Value> v8_pubkey_object =
+          static_account_keys_array->Get(context, i).ToLocalChecked();
+      v8::MaybeLocal<v8::Value> v8_pubkey =
+          CallMethodOfObject(render_frame()->GetWebFrame(), v8_pubkey_object,
+                             kToString, std::vector<v8::Local<v8::Value>>());
+      if (v8_pubkey.IsEmpty()) {
+        return absl::nullopt;
+      }
 
-    std::unique_ptr<base::Value> pubkey_value =
-        v8_value_converter_->FromV8Value(v8_pubkey.ToLocalChecked(), context);
-    if (!pubkey_value || !pubkey_value->is_string()) {
-      return absl::nullopt;
-    }
+      std::unique_ptr<base::Value> pubkey_value =
+          v8_value_converter_->FromV8Value(v8_pubkey.ToLocalChecked(), context);
+      if (!pubkey_value || !pubkey_value->is_string()) {
+        return absl::nullopt;
+      }
 
-    sig_pubkey_pairs.push_back(
-        mojom::SignaturePubkeyPair::New(signature, pubkey_value->GetString()));
+      sig_pubkey_pairs.push_back(mojom::SignaturePubkeyPair::New(
+          sig_blob_value->GetBlob(), pubkey_value->GetString()));
+    }
+  } else {  // Transaction
+    for (uint32_t i = 0; i < signatures_count; ++i) {
+      // Get signature.
+      v8::Local<v8::Value> v8_signature;
+      v8::Local<v8::Value> v8_sig_pubkey_pair =
+          signatures_array->Get(context, i).ToLocalChecked();
+      CHECK(GetProperty(context, v8_sig_pubkey_pair, kSignature)
+                .ToLocal(&v8_signature));
+
+      absl::optional<std::vector<uint8_t>> signature = absl::nullopt;
+      if (!v8_signature->IsNullOrUndefined()) {
+        std::unique_ptr<base::Value> blob_value =
+            v8_value_converter_->FromV8Value(v8_signature, context);
+        if (!blob_value || !blob_value->is_blob()) {
+          return absl::nullopt;
+        }
+        signature = blob_value->GetBlob();
+      }
+
+      v8::Local<v8::Value> v8_pubkey_object;
+      CHECK(GetProperty(context, v8_sig_pubkey_pair, kPublicKey)
+                .ToLocal(&v8_pubkey_object));
+      v8::MaybeLocal<v8::Value> v8_pubkey =
+          CallMethodOfObject(render_frame()->GetWebFrame(), v8_pubkey_object,
+                             kToString, std::vector<v8::Local<v8::Value>>());
+      if (v8_pubkey.IsEmpty()) {
+        return absl::nullopt;
+      }
+
+      std::unique_ptr<base::Value> pubkey_value =
+          v8_value_converter_->FromV8Value(v8_pubkey.ToLocalChecked(), context);
+      if (!pubkey_value || !pubkey_value->is_string()) {
+        return absl::nullopt;
+      }
+
+      sig_pubkey_pairs.push_back(mojom::SignaturePubkeyPair::New(
+          signature, pubkey_value->GetString()));
+    }
   }
 
   return sig_pubkey_pairs;
