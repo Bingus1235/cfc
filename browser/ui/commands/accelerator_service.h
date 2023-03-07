@@ -41,6 +41,7 @@ class AcceleratorService : public mojom::CommandsService, public KeyedService {
   ~AcceleratorService() override;
 
   void Initialize();
+  void UpdateDefaultAccelerators();
   void BindInterface(mojo::PendingReceiver<CommandsService> pending_receiver);
 
   void AssignAcceleratorToCommand(int command_id,
@@ -53,11 +54,15 @@ class AcceleratorService : public mojom::CommandsService, public KeyedService {
   void AddObserver(Observer* observer);
   void RemoveObserver(Observer* observer);
 
+  const Accelerators& GetAcceleratorsForTesting();
+
  private:
   // Returns all the command_ids whose accelerators were affected by the set and
   // does not notify observers.
   std::vector<int> AssignAccelerator(int command_id,
-                                     const std::string& accelerator);
+                                     const ui::Accelerator& accelerator);
+  // Unassigns an accelerator and does not notify observers.
+  void UnassignAccelerator(int command_id, const ui::Accelerator& accelerator);
   void NotifyCommandsChanged(const std::vector<int>& modified_ids);
 
   AcceleratorPrefManager pref_manager_;

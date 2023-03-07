@@ -5,6 +5,8 @@
 
 #include "brave/browser/ui/commands/accelerator_service.h"
 
+#include <algorithm>
+#include <iterator>
 #include <string>
 #include <utility>
 #include <vector>
@@ -59,31 +61,77 @@ AcceleratorService::AcceleratorService(PrefService* pref_service,
 AcceleratorService::~AcceleratorService() = default;
 
 void AcceleratorService::Initialize() {
-  auto accelerators = pref_manager_.GetAccelerators();
-  if (accelerators.size() == 0) {
-    for (const auto& [command_id, default_accelerators] :
-         default_accelerators_) {
-      for (const auto& default_accelerator : default_accelerators) {
-        pref_manager_.AddAccelerator(command_id,
-                                     ToCodesString(default_accelerator));
-      }
-    }
-    accelerators = pref_manager_.GetAccelerators();
-  }
+  accelerators_ = pref_manager_.GetAccelerators();
+  UpdateDefaultAccelerators();
 
+  accelerators_ = pref_manager_.GetAccelerators();
+
+  // Include commands in the table which don't have any accelerators.
   auto commands = GetCommands();
   for (const auto& command : commands) {
-    accelerators_.insert({command, {}});
+    if (!accelerators_.contains(command)) {
+      accelerators_[command] = {};
+    }
+  }
+}
 
-    auto it = accelerators.find(command);
-    if (it == accelerators.end()) {
+void AcceleratorService::UpdateDefaultAccelerators() {
+  auto old_defaults = pref_manager_.GetDefaultAccelerators();
+
+  Accelerators added;
+  Accelerators removed;
+
+  // Handle new accelerators, and removed accelerators.
+  for (const auto& command : default_accelerators_) {
+    const auto& new_accelerators = command.second;
+    const auto& old_accelerators = old_defaults[command.first];
+
+    // Note all the added accelerators.
+    std::copy_if(new_accelerators.begin(), new_accelerators.end(),
+                 std::back_inserter(added[command.first]),
+                 [&old_accelerators](const auto& accelerator) {
+                   return !base::Contains(old_accelerators, accelerator);
+                 });
+
+    // Note all the removed accelerators.
+    std::copy_if(old_accelerators.begin(), old_accelerators.end(),
+                 std::back_inserter(removed[command.first]),
+                 [&new_accelerators](const auto& accelerator) {
+                   return !base::Contains(new_accelerators, accelerator);
+                 });
+  }
+
+  // We also need to handle the case where a command was removed from the list
+  // of default accelerators:
+  for (const auto& [command_id, accelerators] : old_defaults) {
+    // This is handled above.
+    if (base::Contains(default_accelerators_, command_id)) {
       continue;
     }
 
-    // Initialize the default table.
-    for (const auto& accelerator : it->second) {
-      accelerators_[command].push_back(FromCodesString(accelerator));
+    // We used to have accelerators for this command, now we have none.
+    std::copy(accelerators.begin(), accelerators.end(),
+              std::back_inserter(removed[command_id]));
+  }
+
+  // Remove deleted accelerators
+  for (const auto& [command, accelerators] : removed) {
+    for (const auto& accelerator : accelerators) {
+      UnassignAccelerator(command, accelerator);
     }
+  }
+
+  // Add new accelerators
+  for (const auto& [command, accelerators] : added) {
+    for (const auto& accelerator : accelerators) {
+      AssignAccelerator(command, accelerator);
+    }
+  }
+
+  // If anything changed, update the set of default prefs.
+  if (!removed.empty() || !added.empty()) {
+    pref_manager_.SetDefaultAccelerators(default_accelerators_);
+    accelerators_ = pref_manager_.GetAccelerators();
   }
 }
 
@@ -95,14 +143,14 @@ void AcceleratorService::BindInterface(
 void AcceleratorService::AssignAcceleratorToCommand(
     int command_id,
     const std::string& accelerator) {
-  NotifyCommandsChanged(AssignAccelerator(command_id, accelerator));
+  NotifyCommandsChanged(
+      AssignAccelerator(command_id, FromCodesString(accelerator)));
 }
 
 void AcceleratorService::UnassignAcceleratorFromCommand(
     int command_id,
     const std::string& accelerator) {
-  base::Erase(accelerators_[command_id], FromCodesString(accelerator));
-  pref_manager_.RemoveAccelerator(command_id, accelerator);
+  UnassignAccelerator(command_id, FromCodesString(accelerator));
   NotifyCommandsChanged({command_id});
 }
 
@@ -117,7 +165,7 @@ void AcceleratorService::ResetAcceleratorsForCommand(int command_id) {
   const auto& default_accelerators = default_accelerators_[command_id];
   for (const auto& default_accelerator : default_accelerators) {
     auto additionally_modified =
-        AssignAccelerator(command_id, ToCodesString(default_accelerator));
+        AssignAccelerator(command_id, default_accelerator);
     modified_commands.insert(modified_commands.end(),
                              additionally_modified.begin(),
                              additionally_modified.end());
@@ -143,24 +191,34 @@ void AcceleratorService::RemoveObserver(Observer* observer) {
   observers_.RemoveObserver(observer);
 }
 
+const Accelerators& AcceleratorService::GetAcceleratorsForTesting() {
+  return accelerators_;
+}
+
 std::vector<int> AcceleratorService::AssignAccelerator(
     int command_id,
-    const std::string& accelerator_string) {
-  auto accelerator = FromCodesString(accelerator_string);
+    const ui::Accelerator& accelerator) {
   std::vector<int> modified_commands = {command_id};
 
   // Find any other commands with this accelerator and remove it from them.
   for (auto& [other_command_id, accelerators] : accelerators_) {
     if (base::Contains(accelerators, accelerator)) {
       base::Erase(accelerators, accelerator);
-      pref_manager_.RemoveAccelerator(other_command_id, accelerator_string);
+      pref_manager_.RemoveAccelerator(other_command_id, accelerator);
       modified_commands.push_back(other_command_id);
     }
   }
 
   accelerators_[command_id].push_back(accelerator);
-  pref_manager_.AddAccelerator(command_id, accelerator_string);
+  pref_manager_.AddAccelerator(command_id, accelerator);
   return modified_commands;
+}
+
+void AcceleratorService::UnassignAccelerator(
+    int command_id,
+    const ui::Accelerator& accelerator) {
+  base::Erase(accelerators_[command_id], accelerator);
+  pref_manager_.RemoveAccelerator(command_id, accelerator);
 }
 
 void AcceleratorService::NotifyCommandsChanged(
