@@ -490,7 +490,7 @@ gfx::ImageSkia SidebarItemsContentsView::GetImageForBuiltInItems(
                                    base_button_color);
     }
     case sidebar::SidebarItem::BuiltInItemType::kChatUI: {
-      return gfx::CreateVectorIcon(kMediaToolbarButtonIcon, kBuiltInIconSize,
+      return gfx::CreateVectorIcon(kSidebarChatIcon, kBuiltInIconSize,
                                    base_button_color);
     }
     case sidebar::SidebarItem::BuiltInItemType::kNone:
