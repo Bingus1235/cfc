@@ -17,7 +17,7 @@ const char kFeatureName[] = "BraveFederated";
 
 const char kFieldTrialParameterFederatedLearningUpdateCycleInSeconds[] =
     "federated_learning_update_cycle_in_seconds";
-const int kDefaultFederatedLearningUpdateCycleInSeconds = 20;
+const int kDefaultFederatedLearningUpdateCycleInSeconds = 300;
 
 const char kFieldTrialParameterFederatedLearningTaskEndpoint[] =
     "federated_learning_task_endpoint";
