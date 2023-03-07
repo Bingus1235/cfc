@@ -11,6 +11,7 @@
 #include <memory>
 #include <string>
 
+#include "base/scoped_observation.h"
 #include "brave/browser/chat/chat_tab_helper.h"
 #include "brave/components/chat_ui/browser/chat_ui_api_request.h"
 #include "brave/components/chat_ui/common/chat_ui.mojom.h"
@@ -26,7 +27,8 @@ class WebContents;
 }  // namespace content
 
 class ChatUIPageHandler : public chat_ui::mojom::PageHandler,
-                          public TabStripModelObserver {
+                          public TabStripModelObserver,
+                          public ChatTabHelper::Observer {
  public:
   ChatUIPageHandler(
       TabStripModel* tab_strip_model,
@@ -46,6 +48,9 @@ class ChatUIPageHandler : public chat_ui::mojom::PageHandler,
 
   void OnResponse(const std::string& assistant_input, bool success);
 
+  // ChatTabHelper::Observer
+  void OnPageChanged() override;
+
   // TabStripModelObserver
   void OnTabStripModelChanged(
       TabStripModel* tab_strip_model,
@@ -57,6 +62,8 @@ class ChatUIPageHandler : public chat_ui::mojom::PageHandler,
   mojo::Receiver<chat_ui::mojom::PageHandler> receiver_;
   mojo::Remote<chat_ui::mojom::ChatUIPage> page_;
   raw_ptr<ChatTabHelper> active_chat_tab_helper_ = nullptr;
+  base::ScopedObservation<ChatTabHelper, ChatTabHelper::Observer>
+      chat_tab_helper_observation_{this};
 };
 
 #endif  // BRAVE_BROWSER_UI_WEBUI_CHAT_UI_CHAT_UI_PAGE_HANDLER_H_

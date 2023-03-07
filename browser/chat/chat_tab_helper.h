@@ -20,6 +20,13 @@ using chat_ui::mojom::ConversationTurn;
 class ChatTabHelper : public content::WebContentsObserver,
                       public content::WebContentsUserData<ChatTabHelper> {
  public:
+  class Observer : public base::CheckedObserver {
+   public:
+    ~Observer() override = default;
+
+    virtual void OnPageChanged() {}
+  };
+
   ChatTabHelper(const ChatTabHelper&) = delete;
   ChatTabHelper& operator=(const ChatTabHelper&) = delete;
   ~ChatTabHelper() override;
@@ -28,6 +35,8 @@ class ChatTabHelper : public content::WebContentsObserver,
     return chat_history_;
   }
   void AddToConversationHistory(const ConversationTurn& turn);
+  void AddObserver(Observer* observer);
+  void RemoveObserver(Observer* observer);
 
  private:
   friend class content::WebContentsUserData<ChatTabHelper>;
@@ -35,9 +44,10 @@ class ChatTabHelper : public content::WebContentsObserver,
   explicit ChatTabHelper(content::WebContents* web_contents);
 
   // content::WebContentsObserver
-  void DidStopLoading() override;
+  void PrimaryPageChanged(content::Page& page) override;
   void WebContentsDestroyed() override;
 
+  base::ObserverList<Observer> observers_;
   std::vector<ConversationTurn> chat_history_;
 
   WEB_CONTENTS_USER_DATA_KEY_DECL();

@@ -17,8 +17,24 @@ void ChatTabHelper::AddToConversationHistory(const ConversationTurn& turn) {
   chat_history_.push_back(turn);
 }
 
-void ChatTabHelper::DidStopLoading() {}
+void ChatTabHelper::AddObserver(Observer* observer) {
+  observers_.AddObserver(observer);
+}
 
-void ChatTabHelper::WebContentsDestroyed() {}
+void ChatTabHelper::RemoveObserver(Observer* observer) {
+  observers_.RemoveObserver(observer);
+}
+
+void ChatTabHelper::PrimaryPageChanged(content::Page& page) {
+  chat_history_.clear();
+
+  for (auto& obs : observers_) {
+    obs.OnPageChanged();
+  }
+}
+
+void ChatTabHelper::WebContentsDestroyed() {
+  chat_history_.clear();
+}
 
 WEB_CONTENTS_USER_DATA_KEY_IMPL(ChatTabHelper);

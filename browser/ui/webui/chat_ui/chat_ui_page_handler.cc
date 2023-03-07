@@ -29,6 +29,8 @@ ChatUIPageHandler::ChatUIPageHandler(
 
   active_chat_tab_helper_ = ChatTabHelper::FromWebContents(web_contents);
 
+  chat_tab_helper_observation_.Observe(active_chat_tab_helper_);
+
   api_helper_ = std::make_unique<chat_ui::ChatUIAPIRequest>(
       web_contents->GetBrowserContext()
           ->GetDefaultStoragePartition()
@@ -65,18 +67,25 @@ void ChatUIPageHandler::GetConversationHistory(
   std::move(callback).Run(std::move(list));
 }
 
+void ChatUIPageHandler::OnPageChanged() {
+  page_.get()->OnContextChange();
+}
+
 void ChatUIPageHandler::OnTabStripModelChanged(
     TabStripModel* tab_strip_model,
     const TabStripModelChange& change,
     const TabStripSelectionChange& selection) {
   if (selection.active_tab_changed()) {
     if (active_chat_tab_helper_) {
+      chat_tab_helper_observation_.Reset();
       active_chat_tab_helper_ = nullptr;
     }
 
     if (selection.new_contents) {
       active_chat_tab_helper_ =
           ChatTabHelper::FromWebContents(selection.new_contents);
+      chat_tab_helper_observation_.Observe(active_chat_tab_helper_);
+
       page_.get()->OnContextChange();
     }
   }
