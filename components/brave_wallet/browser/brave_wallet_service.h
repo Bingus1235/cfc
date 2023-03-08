@@ -39,6 +39,7 @@ extern const char kBraveWalletLastUsageTimeHistogramName[];
 
 class KeyringService;
 class JsonRpcService;
+class SharedURLLoaderFactory;
 class TxService;
 
 class BraveWalletService : public KeyedService,
@@ -329,7 +330,6 @@ class BraveWalletService : public KeyedService,
   std::unique_ptr<AssetDiscoveryManager> asset_discovery_manager_;
   mojo::ReceiverSet<mojom::BraveWalletService> receivers_;
   PrefChangeRegistrar pref_change_registrar_;
-  scoped_refptr<network::SharedURLLoaderFactory> url_loader_factory_;
   base::WeakPtrFactory<BraveWalletService> weak_ptr_factory_;
 };
 
