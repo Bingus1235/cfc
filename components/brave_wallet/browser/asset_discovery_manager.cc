@@ -442,52 +442,54 @@ AssetDiscoveryManager::ParseNFTsFromSimpleHash(const base::Value& json_value,
     return absl::nullopt;
   }
 
-  if (!json_value.is_dict()) {
+  const base::Value::Dict* dict = json_value.GetIfDict();
+  if (!dict) {
     return absl::nullopt;
   }
 
   GURL nextURL;
-  auto* next = json_value.FindStringKey("next");
+  auto* next = dict->FindString("next");
   if (next) {
     nextURL = GURL(*next);
   }
 
-  const base::Value* nfts = json_value.FindKey("nfts");
-  if (!nfts || !nfts->is_list()) {
+  const base::Value::List* nfts = dict->FindList("nfts");
+  if (!nfts) {
     return absl::nullopt;
   }
 
   const base::flat_map<std::string, std::string>& chain_ids =
       FromSimpleHashChainId();
   std::vector<mojom::BlockchainTokenPtr> nft_tokens;
-  for (const auto& nft : nfts->GetList()) {
+  for (const auto& nft_value : *nfts) {
     auto token = mojom::BlockchainToken::New();
 
     // Skip all tokens with a collection.spam_score > 0.
-    auto* collection = nft.FindDictKey("collection");
+    const base::Value::Dict* nft = nft_value.GetIfDict();
+    auto* collection = nft->FindDict("collection");
     if (!collection) {
       continue;
     }
-    absl::optional<int> spam_score = collection->FindIntKey("spam_score");
+    absl::optional<int> spam_score = collection->FindInt("spam_score");
     if (!spam_score || *spam_score > 0) {
       continue;
     }
 
     // contract_address (required)
-    auto* contract_address = nft.FindStringKey("contract_address");
+    auto* contract_address = nft->FindString("contract_address");
     if (!contract_address) {
       continue;
     }
     token->contract_address = *contract_address;
 
     // name
-    auto* name = nft.FindStringKey("name");
+    auto* name = nft->FindString("name");
     if (name) {
       token->name = *name;
     }
 
     // logo
-    auto* logo = nft.FindStringKey("image_url");
+    auto* logo = nft->FindString("image_url");
     if (logo) {
       token->logo = *logo;
     }
@@ -497,11 +499,11 @@ AssetDiscoveryManager::ParseNFTsFromSimpleHash(const base::Value& json_value,
 
     // The contract dict has the standard information
     // so we skip if it's not there.
-    auto* contract = nft.FindDictKey("contract");
+    auto* contract = nft->FindDict("contract");
     if (!contract) {
       continue;
     }
-    auto* type = contract->FindStringKey("type");
+    auto* type = contract->FindString("type");
     if (!type) {
       continue;
     }
@@ -525,7 +527,7 @@ AssetDiscoveryManager::ParseNFTsFromSimpleHash(const base::Value& json_value,
     token->is_nft = true;
 
     // symbol
-    auto* symbol = contract->FindStringKey("symbol");
+    auto* symbol = contract->FindString("symbol");
     if (symbol) {
       token->symbol = *symbol;
     }
@@ -538,7 +540,7 @@ AssetDiscoveryManager::ParseNFTsFromSimpleHash(const base::Value& json_value,
 
     // token_id (required for ETH only)
     if (coin == mojom::CoinType::ETH) {
-      auto* token_id = nft.FindStringKey("token_id");
+      auto* token_id = nft->FindString("token_id");
       if (!token_id) {
         continue;
       }
@@ -550,7 +552,7 @@ AssetDiscoveryManager::ParseNFTsFromSimpleHash(const base::Value& json_value,
     }
 
     // chain_id (required)
-    auto* chain = nft.FindStringKey("chain");
+    auto* chain = nft->FindString("chain");
     if (!chain || !chain_ids.contains(*chain)) {
       continue;
     }
