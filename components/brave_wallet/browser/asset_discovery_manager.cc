@@ -372,6 +372,11 @@ void AssetDiscoveryManager::FetchNFTsFromSimpleHash(
     const std::vector<std::string>& chain_ids,
     mojom::CoinType coin,
     FetchNFTsFromSimpleHashCallback callback) {
+  if (!(coin == mojom::CoinType::ETH || coin == mojom::CoinType::SOL)) {
+    std::move(callback).Run({});
+    return;
+  }
+
   GURL url = GetSimpleHashNftsByWalletUrl(account_address, chain_ids);
   if (!url.is_valid()) {
     std::move(callback).Run({});

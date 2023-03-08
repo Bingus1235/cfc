@@ -1829,6 +1829,10 @@ TEST_F(AssetDiscoveryManagerUnitTest, FetchNFTsFromSimpleHash) {
   TestFetchNFTsFromSimpleHash("0x0000000000000000000000000000000000000000", {},
                               mojom::CoinType::ETH, expected_nfts);
 
+  // Unsupported chain ID yields empty expected_nfts
+  TestFetchNFTsFromSimpleHash("0x0000000000000000000000000000000000000000", {},
+                              mojom::CoinType::FIL, expected_nfts);
+
   // Non 2xx response yields empty expected_nfts
   SetHTTPRequestTimeoutInterceptor();
   TestFetchNFTsFromSimpleHash("0x0000000000000000000000000000000000000000",
