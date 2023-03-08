@@ -92,7 +92,7 @@ const char* GetJsonRotationTimestampPref(MetricLogType log_type) {
 
 RotationScheduler::RotationScheduler(
     PrefService* local_state,
-    P3AConfig* config,
+    const P3AConfig* config,
     JsonRotationCallback json_rotation_callback,
     StarRotationCallback star_rotation_callback)
     : json_rotation_callback_(json_rotation_callback),
@@ -127,9 +127,10 @@ void RotationScheduler::InitJsonTimer(MetricLogType log_type) {
     HandleJsonTimerTrigger(log_type);
     return;
   } else {
-    if (!config_->json_rotation_intervals[log_type].is_zero()) {
+    if (config_->json_rotation_intervals.contains(log_type) &&
+        !config_->json_rotation_intervals.at(log_type).is_zero()) {
       if (base::Time::Now() - last_rotation >
-          config_->json_rotation_intervals[log_type]) {
+          config_->json_rotation_intervals.at(log_type)) {
         HandleJsonTimerTrigger(log_type);
         return;
       }
@@ -150,9 +151,10 @@ void RotationScheduler::InitStarTimer(base::Time next_epoch_time) {
 void RotationScheduler::UpdateJsonTimer(MetricLogType log_type) {
   base::Time now = base::Time::Now();
   base::Time next_rotation =
-      config_->json_rotation_intervals[log_type].is_zero()
+      !config_->json_rotation_intervals.contains(log_type) ||
+              config_->json_rotation_intervals.at(log_type).is_zero()
           ? GetNextJsonRotationTime(log_type, now)
-          : now + config_->json_rotation_intervals[log_type];
+          : now + config_->json_rotation_intervals.at(log_type);
   if (now >= next_rotation) {
     // Should never happen, but let's stay on the safe side.
     NOTREACHED();
