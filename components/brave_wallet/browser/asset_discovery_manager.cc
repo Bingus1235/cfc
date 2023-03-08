@@ -735,7 +735,7 @@ GURL AssetDiscoveryManager::GetSimpleHashNftsByWalletUrl(
   GURL url = GURL(urlStr);
   url = net::AppendQueryParameter(url, "chains", chain_ids_param);
   url = net::AppendQueryParameter(url, "wallet_addresses", account_address);
-  return GURL(url);
+  return url;
 }
 
 // static
