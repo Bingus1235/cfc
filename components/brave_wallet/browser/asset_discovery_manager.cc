@@ -568,10 +568,17 @@ AssetDiscoveryManager::ParseNFTsFromSimpleHash(const base::Value& json_value,
 }
 
 void AssetDiscoveryManager::DiscoverNFTsOnAllSupportedChains(
-    std::map<mojom::CoinType, std::vector<std::string>>& account_addresses,
+    const std::map<mojom::CoinType, std::vector<std::string>>&
+        account_addresses,
     bool triggered_by_accounts_added) {
-  const auto& eth_account_addresses = account_addresses[mojom::CoinType::ETH];
-  const auto& sol_account_addresses = account_addresses[mojom::CoinType::SOL];
+  auto it_eth = account_addresses.find(mojom::CoinType::ETH);
+  const auto& eth_account_addresses = it_eth != account_addresses.end()
+                                          ? it_eth->second
+                                          : std::vector<std::string>();
+  auto it_sol = account_addresses.find(mojom::CoinType::SOL);
+  const auto& sol_account_addresses = it_sol != account_addresses.end()
+                                          ? it_sol->second
+                                          : std::vector<std::string>();
   const auto barrier_callback =
       base::BarrierCallback<std::vector<mojom::BlockchainTokenPtr>>(
           eth_account_addresses.size() + sol_account_addresses.size(),
@@ -662,7 +669,8 @@ void AssetDiscoveryManager::DiscoverAssetsOnAllSupportedChainsAccountsAdded(
 }
 
 void AssetDiscoveryManager::DiscoverAssetsOnAllSupportedChainsRefresh(
-    std::map<mojom::CoinType, std::vector<std::string>>& account_addresses) {
+    const std::map<mojom::CoinType, std::vector<std::string>>&
+        account_addresses) {
   // Simple client side rate limiting (only applies to refreshes)
   const base::Time assets_last_discovered_at =
       prefs_->GetTime(kBraveWalletLastDiscoveredAssetsAt);
@@ -681,8 +689,23 @@ void AssetDiscoveryManager::DiscoverAssetsOnAllSupportedChainsRefresh(
   }
 
   remaining_buckets_ = 3;  // 1 for ETH + 1 for SOL + 1 for NFTs
-  DiscoverSolAssets(account_addresses[mojom::CoinType::SOL], false);
-  DiscoverEthAssets(account_addresses[mojom::CoinType::ETH], false);
+
+  auto sol_it = account_addresses.find(mojom::CoinType::SOL);
+  const auto& sol_account_addresses = sol_it != account_addresses.end()
+                                          ? sol_it->second
+                                          : std::vector<std::string>();
+  if (sol_it != account_addresses.end()) {
+    DiscoverSolAssets(sol_account_addresses, false);
+  }
+
+  auto eth_it = account_addresses.find(mojom::CoinType::ETH);
+  const auto& eth_account_addresses = eth_it != account_addresses.end()
+                                          ? eth_it->second
+                                          : std::vector<std::string>();
+  if (eth_it != account_addresses.end()) {
+    DiscoverEthAssets(eth_account_addresses, false);
+  }
+
   DiscoverNFTsOnAllSupportedChains(account_addresses, false);
 }
 

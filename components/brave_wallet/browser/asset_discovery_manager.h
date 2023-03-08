@@ -67,7 +67,8 @@ class AssetDiscoveryManager : public mojom::KeyringServiceObserver {
   // Subject to client side rate limiting based on
   // kBraveWalletLastDiscoveredAssetsAt pref value.
   void DiscoverAssetsOnAllSupportedChainsRefresh(
-      std::map<mojom::CoinType, std::vector<std::string>>& account_addresses);
+      const std::map<mojom::CoinType, std::vector<std::string>>&
+          account_addresses);
 
   void SetSupportedChainsForTesting(
       const std::vector<std::string> supported_chains_for_testing) {
@@ -144,7 +145,8 @@ class AssetDiscoveryManager : public mojom::KeyringServiceObserver {
       APIRequestResult api_request_result);
 
   void DiscoverNFTsOnAllSupportedChains(
-      std::map<mojom::CoinType, std::vector<std::string>>& account_addresses,
+      const std::map<mojom::CoinType, std::vector<std::string>>&
+          account_addresses,
       bool triggered_by_accounts_added);
 
   void MergeDiscoveredNFTs(

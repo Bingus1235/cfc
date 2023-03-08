@@ -351,7 +351,7 @@ class AssetDiscoveryManagerUnitTest : public testing::Test {
   }
 
   void TestDiscoverAssetsOnAllSupportedChainsRefresh(
-      std::map<mojom::CoinType, std::vector<std::string>>& addresses,
+      const std::map<mojom::CoinType, std::vector<std::string>>& addresses,
       base::OnceCallback<void(base::Time previous, base::Time current)>
           assets_last_discovered_at_test_fn,
       const std::vector<std::string>& expected_token_contract_addresses) {
@@ -397,7 +397,7 @@ class AssetDiscoveryManagerUnitTest : public testing::Test {
   }
 
   void TestDiscoverNFTsOnAllSupportedChains(
-      std::map<mojom::CoinType, std::vector<std::string>>& addresses,
+      const std::map<mojom::CoinType, std::vector<std::string>>& addresses,
       const std::vector<std::string>& expected_token_contract_addresses) {
     asset_discovery_manager_->remaining_buckets_ = 1;
     asset_discovery_manager_->DiscoverNFTsOnAllSupportedChains(addresses,
