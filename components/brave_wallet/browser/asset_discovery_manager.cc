@@ -738,4 +738,42 @@ GURL AssetDiscoveryManager::GetSimpleHashNftsByWalletUrl(
   return GURL(url);
 }
 
+// static
+const base::flat_map<std::string, std::string>&
+AssetDiscoveryManager::ToSimpleHashChainId() {
+  static base::NoDestructor<base::flat_map<std::string, std::string>>
+      chain_id_lookup({
+          {mojom::kMainnetChainId, "ethereum"},
+          {mojom::kSolanaMainnet, "solana"},
+          {mojom::kPolygonMainnetChainId, "polygon"},
+          {mojom::kArbitrumMainnetChainId, "arbitrum"},
+          {mojom::kOptimismMainnetChainId, "optimism"},
+          {mojom::kAvalancheMainnetChainId, "avalanche"},
+          {mojom::kBinanceSmartChainMainnetChainId, "bsc"},
+          {mojom::kGoerliChainId, "ethereum-goerli"},
+          {mojom::kSolanaTestnet, "solana-testnet"},
+          {mojom::kSolanaDevnet, "solana-devnet"},
+      });
+  return *chain_id_lookup;
+}
+
+// static
+const base::flat_map<std::string, std::string>&
+AssetDiscoveryManager::FromSimpleHashChainId() {
+  static base::NoDestructor<base::flat_map<std::string, std::string>>
+      chain_id_lookup({
+          {"ethereum", mojom::kMainnetChainId},
+          {"solana", mojom::kSolanaMainnet},
+          {"polygon", mojom::kPolygonMainnetChainId},
+          {"arbitrum", mojom::kArbitrumMainnetChainId},
+          {"optimism", mojom::kOptimismMainnetChainId},
+          {"avalanche", mojom::kAvalancheMainnetChainId},
+          {"bsc", mojom::kBinanceSmartChainMainnetChainId},
+          {"ethereum-goerli", mojom::kGoerliChainId},
+          {"solana-testnet", mojom::kSolanaTestnet},
+          {"solana-devnet", mojom::kSolanaDevnet},
+      });
+  return *chain_id_lookup;
+}
+
 }  // namespace brave_wallet

@@ -185,6 +185,9 @@ class AssetDiscoveryManager : public mojom::KeyringServiceObserver {
   static GURL GetSimpleHashNftsByWalletUrl(
       const std::string& account_address,
       const std::vector<std::string>& chain_ids);
+  static const base::flat_map<std::string, std::string>& ToSimpleHashChainId();
+  static const base::flat_map<std::string, std::string>&
+  FromSimpleHashChainId();
 
   // remaining_buckets_ is the number of 'buckets' of requets remaining for an
   // in-flight DiscoverAssetsOnAllSupportedChainsRefresh call to be completed.

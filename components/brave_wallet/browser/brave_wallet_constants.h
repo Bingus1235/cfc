@@ -1230,8 +1230,6 @@ const std::string GetSardineNetworkName(const std::string& chain_id);
 const base::flat_map<std::string, std::string>& GetInfuraChainEndpoints();
 const base::flat_map<std::string, std::string>&
 GetEthBalanceScannerContractAddresses();
-const base::flat_map<std::string, std::string>& ToSimpleHashChainId();
-const base::flat_map<std::string, std::string>& FromSimpleHashChainId();
 bool HasJupiterFeesForTokenMint(const std::string& mint);
 
 }  // namespace brave_wallet
