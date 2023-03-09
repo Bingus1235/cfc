@@ -42,10 +42,7 @@ constexpr char kTransakURL[] = "https://global.transak.com/";
 constexpr char kTransakApiKey[] = "985d14f0-4cf5-4a4c-8917-78107620d3b7";
 constexpr char kSimpleHashUrl[] = "https://api.simplehash.com";
 constexpr char kSimpleHashBraveProxyUrl[] =
-    "https://simplehash.brave.com";  // TODO (nvonpentz): replace with
-                                     // actual brave url once
-                                     // https://github.com/brave/devops/issues/9206
-                                     // is closed
+    "https://simplehash.wallet.brave.com";
 
 constexpr webui::LocalizedString kLocalizedStrings[] = {
     {"braveWalletSolanaSysvarRentProgram",

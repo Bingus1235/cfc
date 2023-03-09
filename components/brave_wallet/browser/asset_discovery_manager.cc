@@ -366,7 +366,7 @@ void AssetDiscoveryManager::MergeDiscoveredEthAssets(
 }
 
 // Calls
-// https://api.simplehash.com/api/v0/nfts/owners?chains={chains}&wallet_addresses={wallet_addresses}
+// https://simplehash.wallet.brave.com/api/v0/nfts/owners?chains={chains}&wallet_addresses={wallet_addresses}
 void AssetDiscoveryManager::FetchNFTsFromSimpleHash(
     const std::string& account_address,
     const std::vector<std::string>& chain_ids,
@@ -460,7 +460,8 @@ AssetDiscoveryManager::ParseNFTsFromSimpleHash(const base::Value& json_value,
     nextURL = GURL();
   } else {
     GURL::Replacements replacements;
-    replacements.SetHostStr(GURL(kSimpleHashBraveProxyUrl).host().c_str());
+    std::string replacement_host = GURL(kSimpleHashBraveProxyUrl).host();
+    replacements.SetHostStr(replacement_host);
     nextURL = nextURL.ReplaceComponents(replacements);
   }
 
@@ -746,7 +747,7 @@ absl::optional<SolanaAddress> AssetDiscoveryManager::DecodeMintAddress(
 
 // static
 // Creates a URL like
-// https://simplehash.brave.com/api/v0/nfts/owners?chains={chains}&wallet_addresses={wallet_addresses}
+// https://simplehash.wallet.brave.com/api/v0/nfts/owners?chains={chains}&wallet_addresses={wallet_addresses}
 GURL AssetDiscoveryManager::GetSimpleHashNftsByWalletUrl(
     const std::string& account_address,
     const std::vector<std::string>& chain_ids) {
