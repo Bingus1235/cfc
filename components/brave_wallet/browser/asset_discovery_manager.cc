@@ -453,6 +453,12 @@ AssetDiscoveryManager::ParseNFTsFromSimpleHash(const base::Value& json_value,
     nextURL = GURL(*next);
   }
 
+  if (!nextURL.is_empty() && (nextURL.host() != GURL(kSimpleHashUrl).host() ||
+                              !(nextURL.scheme() == url::kHttpsScheme))) {
+    nextURL = GURL();
+  }
+  // TODO(nvonpentz): replace 'next' url host with brave anon proxy url
+
   const base::Value::List* nfts = dict->FindList("nfts");
   if (!nfts) {
     return absl::nullopt;

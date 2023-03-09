@@ -1530,6 +1530,60 @@ TEST_F(AssetDiscoveryManagerUnitTest, ParseNFTsFromSimpleHash) {
       *json_value, mojom::CoinType::ETH);
   ASSERT_FALSE(result);
 
+  // Invalid next URL (wrong host) yields empty next URL
+  json = R"({
+    "next": "https://foo.com/api/v0/nfts/owners?chains=ethereum&wallet_addresses=0x00",
+    "previous": null,
+    "nfts": [
+      {
+        "chain": "polygon",
+        "contract_address": "0x1111111111111111111111111111111111111111",
+        "token_id": "1",
+        "name": "Token #1",
+        "image_url": "https://nftimages-cdn.simplehash.com/1.png",
+        "contract": {
+          "type": "ERC721"
+        },
+        "collection": {
+          "spam_score": 0
+        }
+      }
+    ]
+  })";
+  json_value = base::JSONReader::Read(json);
+  ASSERT_TRUE(json_value);
+  result = asset_discovery_manager_->ParseNFTsFromSimpleHash(
+      *json_value, mojom::CoinType::ETH);
+  ASSERT_TRUE(result);
+  EXPECT_EQ(result->first, GURL());
+
+  // Invalid next URL (not https) yields empty next URL
+  json = R"({
+    "next": "http://api.simplehash.com/api/v0/nfts/owners?chains=ethereum&wallet_addresses=0x00",
+    "previous": null,
+    "nfts": [
+      {
+        "chain": "polygon",
+        "contract_address": "0x1111111111111111111111111111111111111111",
+        "token_id": "1",
+        "name": "Token #1",
+        "image_url": "https://nftimages-cdn.simplehash.com/1.png",
+        "contract": {
+          "type": "ERC721"
+        },
+        "collection": {
+          "spam_score": 0
+        }
+      }
+    ]
+  })";
+  json_value = base::JSONReader::Read(json);
+  ASSERT_TRUE(json_value);
+  result = asset_discovery_manager_->ParseNFTsFromSimpleHash(
+      *json_value, mojom::CoinType::ETH);
+  ASSERT_TRUE(result);
+  EXPECT_EQ(result->first, GURL());
+
   // Unsupported CoinType yields nullopt (valid otherwise)
   json = R"({
     "next": null,
