@@ -482,6 +482,13 @@ AssetDiscoveryManager::ParseNFTsFromSimpleHash(const base::Value& json_value,
     }
     token->contract_address = *contract_address;
 
+    // chain_id (required)
+    auto* chain = nft->FindString("chain");
+    if (!chain || !chain_ids.contains(*chain)) {
+      continue;
+    }
+    token->chain_id = chain_ids.at(*chain);
+
     // name
     auto* name = nft->FindString("name");
     if (name) {
@@ -550,13 +557,6 @@ AssetDiscoveryManager::ParseNFTsFromSimpleHash(const base::Value& json_value,
       }
       token->token_id = Uint256ValueToHex(token_id_uint256);
     }
-
-    // chain_id (required)
-    auto* chain = nft->FindString("chain");
-    if (!chain || !chain_ids.contains(*chain)) {
-      continue;
-    }
-    token->chain_id = chain_ids.at(*chain);
 
     // coin
     token->coin = coin;
