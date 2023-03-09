@@ -29,7 +29,7 @@ namespace brave_federated {
 class CommunicationAdapter;
 class DataStoreService;
 class EligibilityService;
-class TaskRunner;
+class FederatedTaskRunner;
 
 class LearningService : public Observer {
  public:
@@ -54,7 +54,6 @@ class LearningService : public Observer {
   EligibilityService* eligibility_service_;
   CommunicationAdapter* communication_adapter_;
 
-  std::map<std::string, TaskRunner*> task_runners_;
   std::unique_ptr<base::RetainingOneShotTimer> reconnect_timer_;
   bool participating_;
 };
