@@ -1,4 +1,4 @@
-// Copyright (c) 2022 The Brave Authors. All rights reserved.
+// Copyright (c) 2023 The Brave Authors. All rights reserved.
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this file,
 // you can obtain one at https://mozilla.org/MPL/2.0/.
@@ -17,12 +17,12 @@ import Main from './components/main'
 import ConversationList from './components/conversation-list'
 import InputBox from './components/input-box'
 import { useConversationHistory, useInput } from './state/hooks'
-import getPageHandlerInstance, { CharacterType } from './api/page_handler'
+import getPageHandlerInstance from './api/page_handler'
 
 setIconBasePath('chrome-untrusted://resources/brave-icons')
 
 function App () {
-  const { conversationHistory, appendHistory } = useConversationHistory()
+  const { conversationHistory } = useConversationHistory()
   const { value, setValue } = useInput();
 
   const handleInputChange = (e: any) => {
@@ -32,9 +32,12 @@ function App () {
 
   const handleSubmit = (e: any) => {
     e.preventDefault()
-    getPageHandlerInstance().pageHandler.queryPrompt(value)
-    appendHistory({ text: value, characterType: CharacterType.HUMAN })
+    getPageHandlerInstance().pageHandler.getCompletions(value)
     setValue('')
+  }
+
+  const handleOnSummaryClick = () => {
+    getPageHandlerInstance().pageHandler.getSummary()
   }
 
   const conversationList = (
@@ -48,6 +51,7 @@ function App () {
       value={value}
       onInputChange={handleInputChange}
       onSubmit={handleSubmit}
+      onSummaryClick={handleOnSummaryClick}
     />
   )
 

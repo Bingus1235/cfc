@@ -86,6 +86,8 @@ void ChatUIAPIRequest::QueryPrompt(ResponseCallback callback,
   api_request_helper_.Request("POST", GetURLWithPath(kUrlBase, kCompletionPath),
                               CreateJSONRequestBody(dict), "application/json",
                               true, std::move(internal_callback), headers);
+
+  VLOG(1) << __func__ << " API Request sent\n";
 }
 
 void ChatUIAPIRequest::OnGetResponse(
@@ -103,6 +105,8 @@ void ChatUIAPIRequest::OnGetResponse(
     VLOG(1) << __func__ << " Response from API was not HTTP 200 (Received "
             << result.response_code() << ")";
   }
+
+  VLOG(1) << __func__ << " API Request received\n";
 
   std::move(callback).Run(success && completion ? *completion : result.body(),
                           success);

@@ -14,11 +14,19 @@
 #include "content/public/browser/web_contents_observer.h"
 #include "content/public/browser/web_contents_user_data.h"
 
+namespace ui {
+class AXTree;
+}  // namespace ui
+
 using chat_ui::mojom::CharacterType;
 using chat_ui::mojom::ConversationTurn;
 
 class ChatTabHelper : public content::WebContentsObserver,
                       public content::WebContentsUserData<ChatTabHelper> {
+  using OnArticleSummaryCallback =
+      base::OnceCallback<void(const std::u16string& summary,
+                              bool is_from_cache)>;
+
  public:
   class Observer : public base::CheckedObserver {
    public:
@@ -31,10 +39,12 @@ class ChatTabHelper : public content::WebContentsObserver,
   ChatTabHelper& operator=(const ChatTabHelper&) = delete;
   ~ChatTabHelper() override;
 
-  std::vector<ConversationTurn> GetConversationHistory() {
-    return chat_history_;
-  }
+  std::string GetConversationHistoryAsString();
+  std::vector<ConversationTurn> GetConversationHistory();
   void AddToConversationHistory(const ConversationTurn& turn);
+  void GetArticleSummaryString(
+      OnArticleSummaryCallback on_article_summary_callback);
+  void SetArticleSummaryString(const std::u16string text);
   void AddObserver(Observer* observer);
   void RemoveObserver(Observer* observer);
 
@@ -43,12 +53,23 @@ class ChatTabHelper : public content::WebContentsObserver,
 
   explicit ChatTabHelper(content::WebContents* web_contents);
 
+  // AXTreeDistiller
+  void OnSnapshotFinished(OnArticleSummaryCallback on_article_summary_callback,
+                          const ui::AXTreeUpdate& result);
+  void DistillViaAlgorithm(
+      OnArticleSummaryCallback&& on_article_summary_callback,
+      const ui::AXTree&& tree);
+
   // content::WebContentsObserver
   void PrimaryPageChanged(content::Page& page) override;
   void WebContentsDestroyed() override;
 
+  void CleanUp();
+
   base::ObserverList<Observer> observers_;
+
   std::vector<ConversationTurn> chat_history_;
+  std::u16string article_summary_;
 
   WEB_CONTENTS_USER_DATA_KEY_DECL();
 };

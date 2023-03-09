@@ -13,23 +13,14 @@ export function useConversationHistory() {
     getPageHandlerInstance().pageHandler.getConversationHistory().then(res => setConversationHistory(res.conversationHistory))
   }
 
-  const appendHistory = (turn: ConversationTurn) => {
-    setConversationHistory((prevState) => [...prevState, turn])
-  }
-
   React.useEffect(() => {
     getConversationHistory()
 
-    getPageHandlerInstance().callbackRouter.onContextChange.addListener(getConversationHistory)
-
-    getPageHandlerInstance().callbackRouter.onResponse.addListener((turn: ConversationTurn) => {
-      appendHistory(turn)
-    })
+    getPageHandlerInstance().callbackRouter.onConversationHistoryUpdate.addListener(getConversationHistory)
   }, [])
 
   return {
     conversationHistory,
-    appendHistory
   }
 }
 

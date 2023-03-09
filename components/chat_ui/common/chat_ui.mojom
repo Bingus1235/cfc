@@ -10,8 +10,14 @@ enum CharacterType {
   ASSISTANT
 };
 
+enum ConversationTurnVisibility {
+  VISIBLE,
+  HIDDEN
+};
+
 struct ConversationTurn {
   CharacterType character_type;
+  ConversationTurnVisibility visibility;
   string text;
 };
 
@@ -19,10 +25,10 @@ struct ConversationTurn {
 interface PageHandler {
   SetClientPage(pending_remote<ChatUIPage> page);
   GetConversationHistory() => (array<ConversationTurn> conversation_history);
-  QueryPrompt(string input);
+  GetCompletions(string input);
+  GetSummary();
 };
 
 interface ChatUIPage {
-  OnResponse(ConversationTurn turn);
-  OnContextChange();
+  OnConversationHistoryUpdate();
 };

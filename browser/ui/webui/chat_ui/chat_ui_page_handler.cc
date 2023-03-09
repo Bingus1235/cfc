@@ -10,10 +10,17 @@
 #include <vector>
 
 #include "base/strings/strcat.h"
+#include "base/strings/utf_string_conversions.h"
 #include "brave/components/chat_ui/common/chat_ui_constants.h"
 #include "chrome/browser/ui/tabs/tab_strip_model.h"
+#include "chrome/common/chrome_isolated_world_ids.h"
+#include "components/grit/brave_components_strings.h"
 #include "content/public/browser/browser_context.h"
 #include "content/public/browser/storage_partition.h"
+#include "ui/base/l10n/l10n_util.h"
+
+using chat_ui::mojom::CharacterType;
+using chat_ui::mojom::ConversationTurnVisibility;
 
 ChatUIPageHandler::ChatUIPageHandler(
     TabStripModel* tab_strip_model,
@@ -44,15 +51,9 @@ void ChatUIPageHandler::SetClientPage(
   page_.Bind(std::move(page));
 }
 
-void ChatUIPageHandler::QueryPrompt(const std::string& input) {
-  active_chat_tab_helper_->AddToConversationHistory(
-      {chat_ui::mojom::CharacterType::HUMAN, input});
-
-  DCHECK(api_helper_);
-
-  api_helper_->QueryPrompt(
-      base::BindOnce(&ChatUIPageHandler::OnResponse, base::Unretained(this)),
-      base::StrCat({chat_ui::kHumanPrompt, input, chat_ui::kAIPrompt}));
+void ChatUIPageHandler::GetCompletions(const std::string& input) {
+  MakeAPIRequestWithConversationHistoryUpdate(
+      {CharacterType::HUMAN, ConversationTurnVisibility::VISIBLE, input});
 }
 
 void ChatUIPageHandler::GetConversationHistory(
@@ -61,14 +62,91 @@ void ChatUIPageHandler::GetConversationHistory(
       active_chat_tab_helper_->GetConversationHistory();
 
   std::vector<chat_ui::mojom::ConversationTurnPtr> list;
-  std::transform(history.begin(), history.end(), std::back_inserter(list),
+
+  // Remove conversations that are meant to be hidden from the user
+  auto new_end_it = std::remove_if(
+      history.begin(), history.end(), [](const ConversationTurn& turn) {
+        return turn.visibility == ConversationTurnVisibility::HIDDEN;
+      });
+
+  std::transform(history.begin(), new_end_it, std::back_inserter(list),
                  [](const ConversationTurn& turn) { return turn.Clone(); });
 
   std::move(callback).Run(std::move(list));
 }
 
+void ChatUIPageHandler::GetSummary() {
+  active_chat_tab_helper_->GetArticleSummaryString(base::BindOnce(
+      &ChatUIPageHandler::OnArticleSummaryResult, base::Unretained(this)));
+}
+
+void ChatUIPageHandler::OnArticleSummaryResult(const std::u16string& result,
+                                               bool is_from_cache) {
+  if (is_from_cache) {
+    active_chat_tab_helper_->AddToConversationHistory({
+        CharacterType::ASSISTANT,
+        ConversationTurnVisibility::VISIBLE,
+        base::UTF16ToUTF8(result),
+    });
+    page_.get()->OnConversationHistoryUpdate();
+    return;
+  }
+
+  std::string summarize_prompt = base::ReplaceStringPlaceholders(
+      l10n_util::GetStringUTF8(IDS_CHAT_PROMPT_TEMPLATE),
+      {base::UTF16ToUTF8(result)}, nullptr);
+
+  // We hide the prompt with article content from the user
+  MakeAPIRequestWithConversationHistoryUpdate(
+      {CharacterType::HUMAN, ConversationTurnVisibility::HIDDEN,
+       summarize_prompt});
+}
+
+void ChatUIPageHandler::MakeAPIRequestWithConversationHistoryUpdate(
+    ConversationTurn turn) {
+  active_chat_tab_helper_->AddToConversationHistory(turn);
+  page_.get()->OnConversationHistoryUpdate();
+
+  std::string prompt_with_history =
+      base::StrCat({active_chat_tab_helper_->GetConversationHistoryAsString(),
+                    chat_ui::kAIPrompt});
+
+  DCHECK(api_helper_);
+
+  // We assume that a hidden conversation contains a summary
+  // TODO(nullhook): This is not always true, but should be a better heuristic
+  bool contains_summary =
+      turn.visibility == ConversationTurnVisibility::HIDDEN ? true : false;
+
+  api_helper_->QueryPrompt(
+      base::BindOnce(&ChatUIPageHandler::OnAPIResponse, base::Unretained(this),
+                     contains_summary),
+      std::move(prompt_with_history));
+}
+
+void ChatUIPageHandler::OnAPIResponse(bool contains_summary,
+                                      const std::string& assistant_input,
+                                      bool success) {
+  if (!success) {
+    return;
+  }
+
+  ConversationTurn turn = {CharacterType::ASSISTANT,
+                           ConversationTurnVisibility::VISIBLE,
+                           assistant_input};
+  active_chat_tab_helper_->AddToConversationHistory(turn);
+
+  std::u16string output;
+  if (contains_summary &&
+      base::UTF8ToUTF16(turn.text.c_str(), turn.text.length(), &output)) {
+    active_chat_tab_helper_->SetArticleSummaryString(output);
+  }
+
+  page_.get()->OnConversationHistoryUpdate();
+}
+
 void ChatUIPageHandler::OnPageChanged() {
-  page_.get()->OnContextChange();
+  page_.get()->OnConversationHistoryUpdate();
 }
 
 void ChatUIPageHandler::OnTabStripModelChanged(
@@ -77,8 +155,8 @@ void ChatUIPageHandler::OnTabStripModelChanged(
     const TabStripSelectionChange& selection) {
   if (selection.active_tab_changed()) {
     if (active_chat_tab_helper_) {
-      chat_tab_helper_observation_.Reset();
       active_chat_tab_helper_ = nullptr;
+      chat_tab_helper_observation_.Reset();
     }
 
     if (selection.new_contents) {
@@ -86,18 +164,7 @@ void ChatUIPageHandler::OnTabStripModelChanged(
           ChatTabHelper::FromWebContents(selection.new_contents);
       chat_tab_helper_observation_.Observe(active_chat_tab_helper_);
 
-      page_.get()->OnContextChange();
+      page_.get()->OnConversationHistoryUpdate();
     }
   }
-}
-
-void ChatUIPageHandler::OnResponse(const std::string& assistant_input,
-                                   bool success) {
-  if (!success) {
-    return;
-  }
-
-  ConversationTurn turn = {CharacterType::ASSISTANT, assistant_input};
-  page_.get()->OnResponse(turn.Clone());
-  active_chat_tab_helper_->AddToConversationHistory(turn);
 }

@@ -10,6 +10,7 @@ import Icon from '@brave/leo/react/icon'
 interface InputBoxProps {
   onInputChange?: Function
   onSubmit?: Function
+  onSummaryClick?: Function
   value: string
 }
 
@@ -22,8 +23,13 @@ function InputBox (props: InputBoxProps) {
     props.onSubmit?.(e)
   }
 
+  const handleSummaryClick = (e: any) => {
+    props.onSummaryClick?.(e)
+  }
+
   return (
     <div className={styles.container}>
+      <button className={styles.summaryButton} onClick={handleSummaryClick}> Summarize</button>
       <form className={styles.form}>
         <textarea
           className={styles.textbox}

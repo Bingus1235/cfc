@@ -40,3 +40,14 @@
   color: var(--leo-color-text-primary);
   cursor: pointer;
 }
+
+.summaryButton {
+  background-color: transparent;
+  border: 1px solid #E2E2FC;
+  color: var(--leo-color-text-interactive);
+  border-radius: 30px;
+  border: 1px solid #E2E2FC;
+  width: 100%;
+  padding: 10px 0;
+  margin-bottom: 10px;
+}

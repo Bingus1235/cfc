@@ -13,13 +13,19 @@
 
 #include "base/scoped_observation.h"
 #include "brave/browser/chat/chat_tab_helper.h"
+#include "brave/browser/speedreader/speedreader_tab_helper.h"
 #include "brave/components/chat_ui/browser/chat_ui_api_request.h"
 #include "brave/components/chat_ui/common/chat_ui.mojom.h"
 #include "chrome/browser/ui/tabs/tab_strip_model_observer.h"
+#include "components/services/screen_ai/buildflags/buildflags.h"
 #include "mojo/public/cpp/bindings/pending_receiver.h"
 #include "mojo/public/cpp/bindings/pending_remote.h"
 #include "mojo/public/cpp/bindings/receiver.h"
 #include "mojo/public/cpp/bindings/remote.h"
+
+namespace ui {
+class AXTree;
+}  // namespace ui
 
 class TabStripModel;
 namespace content {
@@ -39,14 +45,19 @@ class ChatUIPageHandler : public chat_ui::mojom::PageHandler,
 
   ~ChatUIPageHandler() override;
 
- private:
   // chat_ui::mojom::PageHandler:
   void SetClientPage(
       mojo::PendingRemote<chat_ui::mojom::ChatUIPage> page) override;
-  void QueryPrompt(const std::string& input) override;
+  void GetCompletions(const std::string& input) override;
   void GetConversationHistory(GetConversationHistoryCallback callback) override;
+  void GetSummary() override;
 
-  void OnResponse(const std::string& assistant_input, bool success);
+ private:
+  void OnArticleSummaryResult(const std::u16string& result, bool is_from_cache);
+  void MakeAPIRequestWithConversationHistoryUpdate(ConversationTurn turn);
+  void OnAPIResponse(bool contains_summary,
+                     const std::string& assistant_input,
+                     bool success);
 
   // ChatTabHelper::Observer
   void OnPageChanged() override;
@@ -59,11 +70,13 @@ class ChatUIPageHandler : public chat_ui::mojom::PageHandler,
 
   std::unique_ptr<chat_ui::ChatUIAPIRequest> api_helper_ = nullptr;
 
-  mojo::Receiver<chat_ui::mojom::PageHandler> receiver_;
   mojo::Remote<chat_ui::mojom::ChatUIPage> page_;
+
   raw_ptr<ChatTabHelper> active_chat_tab_helper_ = nullptr;
+
   base::ScopedObservation<ChatTabHelper, ChatTabHelper::Observer>
       chat_tab_helper_observation_{this};
+  mojo::Receiver<chat_ui::mojom::PageHandler> receiver_;
 };
 
 #endif  // BRAVE_BROWSER_UI_WEBUI_CHAT_UI_CHAT_UI_PAGE_HANDLER_H_
