@@ -79,7 +79,7 @@ void VpnRenderFrameObserver::OnGetPurchaseToken(
   if (frame) {
     if (IsValueAllowed(purchase_token)) {
       std::u16string set_local_storage = base::StrCat(
-          {u"window.sessionStorage.setItem(\"braveVpn.receipt\", \"",
+          {u"window.localStorage.setItem(\"braveVpn.receipt\", \"",
            base::UTF8ToUTF16(purchase_token), u"\");"});
       frame->ExecuteJavaScript(set_local_storage);
     }
