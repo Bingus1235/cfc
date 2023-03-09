@@ -727,7 +727,7 @@ TEST_F(AssetDiscoveryManagerUnitTest,
        {
            {"4fzcQKyGFuk55uJaBZtvTHh42RBxbrZMuXzsGQvBJbwF", sol_response},
        }},
-      {GURL("https://api.simplehash.com/api/v0/nfts/"
+      {GURL("https://simplehash.brave.com/api/v0/nfts/"
             "owners?chains=ethereum%2Cpolygon&wallet_addresses="
             "0xBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB"),
        {
@@ -757,7 +757,7 @@ TEST_F(AssetDiscoveryManagerUnitTest,
               })"},
        }},
       {
-          GURL("https://api.simplehash.com/api/v0/nfts/"
+          GURL("https://simplehash.brave.com/api/v0/nfts/"
                "owners?chains=ethereum%2Cpolygon&wallet_addresses="
                "0xCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC"),
           {
@@ -769,7 +769,7 @@ TEST_F(AssetDiscoveryManagerUnitTest,
           },
       },
       {
-          GURL("https://api.simplehash.com/api/v0/nfts/"
+          GURL("https://simplehash.brave.com/api/v0/nfts/"
                "owners?chains=solana&wallet_addresses="
                "4fzcQKyGFuk55uJaBZtvTHh42RBxbrZMuXzsGQvBJbwF"),
           {
@@ -878,7 +878,7 @@ TEST_F(AssetDiscoveryManagerUnitTest,
            {"4fzcQKyGFuk55uJaBZtvTHh42RBxbrZMuXzsGQvBJbwF", sol_response},
        }},
       {
-          GURL("https://api.simplehash.com/api/v0/nfts/"
+          GURL("https://simplehash.brave.com/api/v0/nfts/"
                "owners?chains=ethereum%2Cpolygon&wallet_addresses="
                "0xBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB"),
           {
@@ -891,7 +891,7 @@ TEST_F(AssetDiscoveryManagerUnitTest,
           },
       },
       {
-          GURL("https://api.simplehash.com/api/v0/nfts/"
+          GURL("https://simplehash.brave.com/api/v0/nfts/"
                "owners?chains=ethereum%2Cpolygon&wallet_addresses="
                "0xCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC"),
           {
@@ -904,7 +904,7 @@ TEST_F(AssetDiscoveryManagerUnitTest,
           },
       },
       {
-          GURL("https://api.simplehash.com/api/v0/nfts/"
+          GURL("https://simplehash.brave.com/api/v0/nfts/"
                "owners?chains=solana&wallet_addresses="
                "4fzcQKyGFuk55uJaBZtvTHh42RBxbrZMuXzsGQvBJbwF"),
           {
@@ -1483,7 +1483,7 @@ TEST_F(AssetDiscoveryManagerUnitTest, GetSimpleHashNftsByWalletUrl) {
   EXPECT_EQ(asset_discovery_manager_->GetSimpleHashNftsByWalletUrl(
                 "0x0000000000000000000000000000000000000000",
                 {mojom::kMainnetChainId}),
-            GURL("https://api.simplehash.com/api/v0/nfts/"
+            GURL("https://simplehash.brave.com/api/v0/nfts/"
                  "owners?chains=ethereum&wallet_addresses="
                  "0x0000000000000000000000000000000000000000"));
 
@@ -1491,7 +1491,7 @@ TEST_F(AssetDiscoveryManagerUnitTest, GetSimpleHashNftsByWalletUrl) {
   EXPECT_EQ(asset_discovery_manager_->GetSimpleHashNftsByWalletUrl(
                 "0x0000000000000000000000000000000000000000",
                 {mojom::kMainnetChainId, mojom::kOptimismMainnetChainId}),
-            GURL("https://api.simplehash.com/api/v0/nfts/"
+            GURL("https://simplehash.brave.com/api/v0/nfts/"
                  "owners?chains=ethereum%2Coptimism&wallet_addresses="
                  "0x0000000000000000000000000000000000000000"));
 
@@ -1669,7 +1669,7 @@ TEST_F(AssetDiscoveryManagerUnitTest, ParseNFTsFromSimpleHash) {
       *json_value, mojom::CoinType::ETH);
   ASSERT_TRUE(result);
   EXPECT_EQ(result->first.spec(),
-            "https://api.simplehash.com/api/v0/nfts/next");
+            "https://simplehash.brave.com/api/v0/nfts/next");
   EXPECT_EQ(result->second.size(), 2u);
   EXPECT_EQ(result->second[0]->contract_address,
             "0x1111111111111111111111111111111111111111");
@@ -1710,7 +1710,7 @@ TEST_F(AssetDiscoveryManagerUnitTest, ParseNFTsFromSimpleHash) {
   // 5. Missing standard
   // 6. Missing spam_score
   json = R"({
-    "next": "https://api.simplehash.com/api/v0/nfts/next",
+    "next": "https://simplehash.brave.com/api/v0/nfts/next",
     "previous": null,
     "nfts": [
       {
@@ -1921,7 +1921,7 @@ TEST_F(AssetDiscoveryManagerUnitTest, FetchNFTsFromSimpleHash) {
   nft1->coin = mojom::CoinType::ETH;
   expected_nfts.push_back(std::move(nft1));
   url = GURL(
-      "https://api.simplehash.com/api/v0/nfts/"
+      "https://simplehash.brave.com/api/v0/nfts/"
       "owners?chains=ethereum%2Coptimism&wallet_addresses="
       "0x0000000000000000000000000000000000000000");
   responses[url] = json;
@@ -1951,7 +1951,7 @@ TEST_F(AssetDiscoveryManagerUnitTest, FetchNFTsFromSimpleHash) {
     ]
   })";
   responses[url] = json;
-  GURL next_url = GURL("https://api.simplehash.com/api/v0/nfts/next");
+  GURL next_url = GURL("https://simplehash.brave.com/api/v0/nfts/next");
   json2 = R"({
     "next": null,
     "previous": null,
@@ -2004,7 +2004,7 @@ TEST_F(AssetDiscoveryManagerUnitTest, DiscoverNFTsOnAllSupportedChains) {
   addresses[mojom::CoinType::ETH] = {
       "0x0000000000000000000000000000000000000000"};
   url = GURL(
-      "https://api.simplehash.com/api/v0/nfts/"
+      "https://simplehash.brave.com/api/v0/nfts/"
       "owners?chains=ethereum%2Cpolygon&wallet_addresses="
       "0x0000000000000000000000000000000000000000");
   json = R"({
@@ -2039,7 +2039,7 @@ TEST_F(AssetDiscoveryManagerUnitTest, DiscoverNFTsOnAllSupportedChains) {
   addresses[mojom::CoinType::ETH].push_back(
       "0xB4B2802129071b2B9eBb8cBB01EA1E4D14B34961");
   url = GURL(
-      "https://api.simplehash.com/api/v0/nfts/"
+      "https://simplehash.brave.com/api/v0/nfts/"
       "owners?chains=ethereum&wallet_addresses="
       "0xB4B2802129071b2B9eBb8cBB01EA1E4D14B34961");
   json = R"({
@@ -2116,7 +2116,7 @@ TEST_F(AssetDiscoveryManagerUnitTest, DiscoverNFTsOnAllSupportedChains) {
   addresses[mojom::CoinType::ETH].push_back(
       "0x16e4476c8fDDc552e3b1C4b8b56261d85977fE52");
   url = GURL(
-      "https://api.simplehash.com/api/v0/nfts/"
+      "https://simplehash.brave.com/api/v0/nfts/"
       "owners?chains=ethereum&wallet_addresses="
       "0x16e4476c8fDDc552e3b1C4b8b56261d85977fE52");
   json2 = R"({

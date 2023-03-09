@@ -453,11 +453,16 @@ AssetDiscoveryManager::ParseNFTsFromSimpleHash(const base::Value& json_value,
     nextURL = GURL(*next);
   }
 
+  // Validate the URL of the next page using HTTPS and SimpleHash host
+  // and replace the host with the proxy host
   if (!nextURL.is_empty() && (nextURL.host() != GURL(kSimpleHashUrl).host() ||
                               !(nextURL.scheme() == url::kHttpsScheme))) {
     nextURL = GURL();
+  } else {
+    GURL::Replacements replacements;
+    replacements.SetHostStr(GURL(kSimpleHashBraveProxyUrl).host().c_str());
+    nextURL = nextURL.ReplaceComponents(replacements);
   }
-  // TODO(nvonpentz): replace 'next' url host with brave anon proxy url
 
   const base::Value::List* nfts = dict->FindList("nfts");
   if (!nfts) {
@@ -741,7 +746,7 @@ absl::optional<SolanaAddress> AssetDiscoveryManager::DecodeMintAddress(
 
 // static
 // Creates a URL like
-// https://api.simplehash.com/api/v0/nfts/owners?chains={chains}&wallet_addresses={wallet_addresses}
+// https://simplehash.brave.com/api/v0/nfts/owners?chains={chains}&wallet_addresses={wallet_addresses}
 GURL AssetDiscoveryManager::GetSimpleHashNftsByWalletUrl(
     const std::string& account_address,
     const std::vector<std::string>& chain_ids) {
@@ -750,7 +755,7 @@ GURL AssetDiscoveryManager::GetSimpleHashNftsByWalletUrl(
   }
 
   std::string urlStr =
-      base::StringPrintf("%s/api/v0/nfts/owners", kSimpleHashUrl);
+      base::StringPrintf("%s/api/v0/nfts/owners", kSimpleHashBraveProxyUrl);
   const base::flat_map<std::string, std::string>& simple_hash_chain_ids =
       ToSimpleHashChainId();
   std::string chain_ids_param;
