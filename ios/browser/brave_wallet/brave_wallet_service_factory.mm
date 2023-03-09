@@ -63,9 +63,7 @@ BraveWalletServiceFactory::BuildServiceInstanceFor(
   auto* json_rpc_service =
       JsonRpcServiceFactory::GetServiceForState(browser_state);
   auto* tx_service = TxServiceFactory::GetServiceForState(browser_state);
-  auto* default_storage_partition = context->GetDefaultStoragePartition();
-  auto shared_url_loader_factory =
-      default_storage_partition->GetURLLoaderFactoryForBrowserProcess();
+  auto shared_url_loader_factory = browser_state->GetSharedURLLoaderFactory();
   std::unique_ptr<BraveWalletService> service(new BraveWalletService(
       shared_url_loader_factory, std::make_unique<BraveWalletServiceDelegate>(),
       keyring_service, json_rpc_service, tx_service, browser_state->GetPrefs(),
