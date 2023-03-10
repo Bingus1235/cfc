@@ -146,6 +146,29 @@ base::Value::Dict GetEthNativeAssetFromChain(
   return native_asset;
 }
 
+net::NetworkTrafficAnnotationTag GetNetworkTrafficAnnotationTag() {
+  return net::DefineNetworkTrafficAnnotation("brave_wallet_service", R"(
+      semantics {
+        sender: "Brave Wallet Service"
+        description:
+          "This service is used to discover crypto assets"on behalf "
+          "of the user interacting with the native Brave wallet."
+        trigger:
+          "Triggered by uses of the native Brave wallet."
+        data:
+          "NFT assets."
+        destination: WEBSITE
+      }
+      policy {
+        cookies_allowed: NO
+        setting:
+          "You can enable or disable this feature on chrome://flags."
+        policy_exception_justification:
+          "Not implemented."
+      }
+    )");
+}
+
 }  // namespace
 
 namespace brave_wallet {
@@ -164,12 +187,14 @@ BraveWalletService::BraveWalletService(
       tx_service_(tx_service),
       profile_prefs_(profile_prefs),
       brave_wallet_p3a_(this, keyring_service, profile_prefs, local_state),
-      asset_discovery_manager_(
-          std::make_unique<AssetDiscoveryManager>(url_loader_factory,
-                                                  this,
-                                                  json_rpc_service,
-                                                  keyring_service,
-                                                  profile_prefs)),
+      asset_discovery_manager_(std::make_unique<AssetDiscoveryManager>(
+          new api_request_helper::APIRequestHelper(
+              GetNetworkTrafficAnnotationTag(),
+              url_loader_factory),
+          this,
+          json_rpc_service,
+          keyring_service,
+          profile_prefs)),
       weak_ptr_factory_(this) {
   if (delegate_)
     delegate_->AddObserver(this);

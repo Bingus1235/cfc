@@ -32,19 +32,18 @@ class KeyringService;
 
 class AssetDiscoveryManager : public mojom::KeyringServiceObserver {
  public:
-  AssetDiscoveryManager(
-      scoped_refptr<network::SharedURLLoaderFactory> url_loader_factory,
-      BraveWalletService* wallet_service,
-      JsonRpcService* json_rpc_service,
-      KeyringService* keyring_service,
-      PrefService* prefs);
+  using APIRequestHelper = api_request_helper::APIRequestHelper;
+  using APIRequestResult = api_request_helper::APIRequestResult;
+
+  AssetDiscoveryManager(APIRequestHelper* api_request_helper,
+                        BraveWalletService* wallet_service,
+                        JsonRpcService* json_rpc_service,
+                        KeyringService* keyring_service,
+                        PrefService* prefs);
 
   AssetDiscoveryManager(const AssetDiscoveryManager&) = delete;
   AssetDiscoveryManager& operator=(AssetDiscoveryManager&) = delete;
   ~AssetDiscoveryManager() override;
-
-  using APIRequestHelper = api_request_helper::APIRequestHelper;
-  using APIRequestResult = api_request_helper::APIRequestResult;
 
   // KeyringServiceObserver
   void KeyringCreated(const std::string& keyring_id) override {}
@@ -206,7 +205,7 @@ class AssetDiscoveryManager : public mojom::KeyringServiceObserver {
   DiscoverAssetsCompletedCallbackForTesting
       discover_assets_completed_callback_for_testing_;
   scoped_refptr<network::SharedURLLoaderFactory> url_loader_factory_;
-  std::unique_ptr<api_request_helper::APIRequestHelper> api_request_helper_;
+  std::unique_ptr<APIRequestHelper> api_request_helper_;
   raw_ptr<BraveWalletService> wallet_service_;
   raw_ptr<JsonRpcService> json_rpc_service_;
   raw_ptr<KeyringService> keyring_service_;
