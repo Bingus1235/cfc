@@ -10,6 +10,8 @@
 
 namespace brave_wallet {
 
+BitcoinKeyring::BitcoinKeyring(bool testnet) : testnet_(testnet) {}
+
 std::string BitcoinKeyring::GetReceivingAddress(uint32_t account_index,
                                                 uint32_t receiving_index) {
   auto key = DeriveReceivingKey(account_index, receiving_index);
@@ -19,7 +21,7 @@ std::string BitcoinKeyring::GetReceivingAddress(uint32_t account_index,
 
   HDKey* hd_key = static_cast<HDKey*>(key.get());
 
-  return hd_key->GetSegwitAddress();
+  return hd_key->GetSegwitAddress(testnet_);
 }
 
 std::string BitcoinKeyring::GetChangeAddress(uint32_t account_index,
@@ -31,7 +33,7 @@ std::string BitcoinKeyring::GetChangeAddress(uint32_t account_index,
 
   HDKey* hd_key = static_cast<HDKey*>(key.get());
 
-  return hd_key->GetSegwitAddress();
+  return hd_key->GetSegwitAddress(testnet_);
 }
 
 std::string BitcoinKeyring::GetAddressInternal(HDKeyBase* hd_key_base) const {
@@ -39,7 +41,7 @@ std::string BitcoinKeyring::GetAddressInternal(HDKeyBase* hd_key_base) const {
     return std::string();
   }
   HDKey* hd_key = static_cast<HDKey*>(hd_key_base);
-  return hd_key->GetSegwitAddress();
+  return hd_key->GetSegwitAddress(testnet_);
 }
 
 std::unique_ptr<HDKeyBase> BitcoinKeyring::DeriveAccount(uint32_t index) const {

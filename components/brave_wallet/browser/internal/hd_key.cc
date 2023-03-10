@@ -60,8 +60,9 @@ bool UTCDecryptPrivateKey(const std::string& derived_key,
                           const std::vector<uint8_t>& iv,
                           std::vector<uint8_t>* private_key,
                           size_t dklen) {
-  if (!private_key)
+  if (!private_key) {
     return false;
+  }
   std::unique_ptr<SymmetricKey> decryption_key =
       SymmetricKey::Import(SymmetricKey::AES, derived_key.substr(0, dklen / 2));
   if (!decryption_key) {
@@ -196,8 +197,9 @@ std::unique_ptr<HDKey> HDKey::GenerateFromExtendedKey(const std::string& key) {
 // static
 std::unique_ptr<HDKey> HDKey::GenerateFromPrivateKey(
     const std::vector<uint8_t>& private_key) {
-  if (private_key.size() != 32)
+  if (private_key.size() != 32) {
     return nullptr;
+  }
   std::unique_ptr<HDKey> hd_key = std::make_unique<HDKey>();
   hd_key->SetPrivateKey(private_key);
   return hd_key;
@@ -331,8 +333,9 @@ std::unique_ptr<HDKey> HDKey::GenerateFromV3UTC(const std::string& password,
   }
 
   if (!UTCPasswordVerification(derived_key->key(), ciphertext_bytes, *mac,
-                               *dklen))
+                               *dklen)) {
     return nullptr;
+  }
 
   const auto* cipher = crypto->FindString("cipher");
   if (!cipher) {
@@ -426,7 +429,7 @@ std::string HDKey::GetPublicExtendedKey(
 }
 
 // https://github.com/bitcoin/bips/blob/master/bip-0173.mediawiki#segwit-address-format
-std::string HDKey::GetSegwitAddress() const {
+std::string HDKey::GetSegwitAddress(bool testnet) const {
   auto hash160 = Hash160(public_key_);
   std::vector<unsigned char> input;
   input.reserve(33);   // 1 + (160 / 5)
@@ -434,8 +437,7 @@ std::string HDKey::GetSegwitAddress() const {
   ConvertBits<8, 5, true>([&](unsigned char c) { input.push_back(c); },
                           hash160.begin(), hash160.end());
 
-  // TODO(apaymyshev): support testnet
-  return bech32::Encode("bc", input);
+  return bech32::Encode(testnet ? "tb" : "bc", input);
 }
 
 std::vector<uint8_t> HDKey::GetUncompressedPublicKey() const {
@@ -462,8 +464,9 @@ std::vector<uint8_t> HDKey::GetPublicKeyFromX25519_XSalsa20_Poly1305() const {
   std::vector<uint8_t> public_key(public_key_len);
   const uint8_t* private_key_ptr = private_key_.data();
   if (crypto_scalarmult_curve25519_tweet_base(public_key.data(),
-                                              private_key_ptr) != 0)
+                                              private_key_ptr) != 0) {
     return std::vector<uint8_t>();
+  }
   return public_key;
 }
 
@@ -474,16 +477,20 @@ HDKey::DecryptCipherFromX25519_XSalsa20_Poly1305(
     const std::vector<uint8_t>& ephemeral_public_key,
     const std::vector<uint8_t>& ciphertext) const {
   // Only x25519-xsalsa20-poly1305 is supported by MM at the time of writing
-  if (version != "x25519-xsalsa20-poly1305")
+  if (version != "x25519-xsalsa20-poly1305") {
     return absl::nullopt;
-  if (nonce.size() != crypto_box_curve25519xsalsa20poly1305_tweet_NONCEBYTES)
+  }
+  if (nonce.size() != crypto_box_curve25519xsalsa20poly1305_tweet_NONCEBYTES) {
     return absl::nullopt;
+  }
   if (ephemeral_public_key.size() !=
-      crypto_box_curve25519xsalsa20poly1305_tweet_PUBLICKEYBYTES)
+      crypto_box_curve25519xsalsa20poly1305_tweet_PUBLICKEYBYTES) {
     return absl::nullopt;
+  }
   if (private_key_.size() !=
-      crypto_box_curve25519xsalsa20poly1305_tweet_SECRETKEYBYTES)
+      crypto_box_curve25519xsalsa20poly1305_tweet_SECRETKEYBYTES) {
     return absl::nullopt;
+  }
 
   std::vector<uint8_t> padded_ciphertext = ciphertext;
   padded_ciphertext.insert(padded_ciphertext.begin(), crypto_box_BOXZEROBYTES,
@@ -492,8 +499,9 @@ HDKey::DecryptCipherFromX25519_XSalsa20_Poly1305(
   const uint8_t* private_key_ptr = private_key_.data();
   if (crypto_box_open(padded_plaintext.data(), padded_ciphertext.data(),
                       padded_ciphertext.size(), nonce.data(),
-                      ephemeral_public_key.data(), private_key_ptr) != 0)
+                      ephemeral_public_key.data(), private_key_ptr) != 0) {
     return absl::nullopt;
+  }
   std::vector<uint8_t> plaintext(
       padded_plaintext.cbegin() + crypto_box_ZEROBYTES,
       padded_plaintext.cend());

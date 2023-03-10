@@ -307,6 +307,7 @@ interface PanelHandlerFactory {
                      pending_receiver<PanelHandler> panel_handler,
                      pending_receiver<WalletHandler> wallet_handler,
                      pending_receiver<JsonRpcService> json_rpc_service,
+                     pending_receiver<BitcoinRpcService> bitcoin_rpc_service,
                      pending_receiver<SwapService> swap_service,
                      pending_receiver<AssetRatioService> asset_ratio_service,
                      pending_receiver<KeyringService> keyring_service,
@@ -325,6 +326,7 @@ interface PageHandlerFactory {
                     pending_receiver<PageHandler> page_handler,
                     pending_receiver<WalletHandler> wallet_handler,
                     pending_receiver<JsonRpcService> json_rpc_service,
+                    pending_receiver<BitcoinRpcService> bitcoin_rpc_service,
                     pending_receiver<SwapService> swap_service,
                     pending_receiver<AssetRatioService> asset_ratio_service,
                     pending_receiver<KeyringService> keyring_service,
@@ -538,6 +540,7 @@ const string kSolanaKeyringId = "solana";
 const string kDefaultKeyringId = "default";
 
 const string kBitcoinKeyringId = "bitcoin";
+const string kBitcoinTestnetKeyringId = "bitcoin_testnet";
 
 const string kP3ACountTestNetworksSwitch = "p3a-count-wallet-test-networks";
 const string kP3ACountTestNetworksLoadTimeKey = "braveWalletP3ACountTestNetworks";
@@ -817,6 +820,10 @@ interface KeyringService {
   // Note that there is no need for an API to notify unlocked
   // because the KeyringServiceObserver Unlocked event can be used for that.
   HasPendingUnlockRequest() => (bool pending);
+
+  GetBitcoinAddresses(string keyring_id, uint32 account_index) => (array<string> receiving_addresses, array<string> change_addresses);
+  GetBitcoinReceivingAddress(string keyring_id, uint32 account_index, uint32 receiving_index) => (string? address);
+  GetBitcoinChangeAddress(string keyring_id, uint32 account_index, uint32 receiving_index) => (string? address);
 };
 
 // Used for cryptocurrency prices over time.
@@ -1148,6 +1155,31 @@ interface JsonRpcService {
        SolanaProviderError error, string error_message);
   // Returns the metadata json associated with the NFT account address
   GetSolTokenMetadata(string token_mint_address) => (string response, SolanaProviderError error, string error_message);
+};
+
+struct BitcoinUnspentOutput {
+  string txid;
+  int32 vout;
+  // status
+  uint64 value;
+};
+
+struct BitcoinAddressInfo {
+  string address;
+  bool change;
+  uint32 balance;
+  array<BitcoinUnspentOutput> utxo_list;
+};
+
+struct BitcoinAccountInfo {
+  array<BitcoinAddressInfo> address_infos;
+  uint32 balance;
+};
+
+interface BitcoinRpcService {
+  GetUtxoList(string keyring_id, string address) => (string result_json, string? error_message);
+  GetBitcoinAccountInfo(string keyring_id, uint32 account_index) => (BitcoinAccountInfo? account_info);
+  SendTo(string keyring_id, uint32 account_index, string address_to, uint64 amount, uint64 fee) => (string txid);
 };
 
 enum TransactionStatus {

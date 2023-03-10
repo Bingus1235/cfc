@@ -4478,13 +4478,15 @@ TEST_F(KeyringServiceUnitTest, BitcoinReceiveChangeAddresses) {
       service.GetKeyringInfoSync(mojom::kBitcoinKeyringId)->account_infos,
       testing::IsEmpty());
 
-  EXPECT_EQ(service.GetBitcoinReceivingAddress(mojom::kBitcoinKeyringId, 0, 0),
+  EXPECT_EQ(
+      service.GetBitcoinReceivingAddressSync(mojom::kBitcoinKeyringId, 0, 0),
+      absl::nullopt);
+  EXPECT_EQ(service.GetBitcoinChangeAddressSync(mojom::kBitcoinKeyringId, 0, 0),
             absl::nullopt);
-  EXPECT_EQ(service.GetBitcoinChangeAddress(mojom::kBitcoinKeyringId, 0, 0),
-            absl::nullopt);
-  EXPECT_EQ(service.GetBitcoinReceivingAddress(mojom::kBitcoinKeyringId, 1, 0),
-            absl::nullopt);
-  EXPECT_EQ(service.GetBitcoinChangeAddress(mojom::kBitcoinKeyringId, 1, 0),
+  EXPECT_EQ(
+      service.GetBitcoinReceivingAddressSync(mojom::kBitcoinKeyringId, 1, 0),
+      absl::nullopt);
+  EXPECT_EQ(service.GetBitcoinChangeAddressSync(mojom::kBitcoinKeyringId, 1, 0),
             absl::nullopt);
 
   AddAccount(&service, "Btc Acc", mojom::CoinType::BTC);
@@ -4502,13 +4504,15 @@ TEST_F(KeyringServiceUnitTest, BitcoinReceiveChangeAddresses) {
   EXPECT_EQ(btc_acc->coin, mojom::CoinType::BTC);
   EXPECT_EQ(btc_acc->keyring_id, mojom::kBitcoinKeyringId);
 
-  EXPECT_EQ(service.GetBitcoinReceivingAddress(mojom::kBitcoinKeyringId, 0, 0),
-            "bc1qcr8te4kr609gcawutmrza0j4xv80jy8z306fyu");
-  EXPECT_EQ(service.GetBitcoinChangeAddress(mojom::kBitcoinKeyringId, 0, 0),
+  EXPECT_EQ(
+      service.GetBitcoinReceivingAddressSync(mojom::kBitcoinKeyringId, 0, 0),
+      "bc1qcr8te4kr609gcawutmrza0j4xv80jy8z306fyu");
+  EXPECT_EQ(service.GetBitcoinChangeAddressSync(mojom::kBitcoinKeyringId, 0, 0),
             "bc1q8c6fshw2dlwun7ekn9qwf37cu2rn755upcp6el");
-  EXPECT_EQ(service.GetBitcoinReceivingAddress(mojom::kBitcoinKeyringId, 1, 0),
-            absl::nullopt);
-  EXPECT_EQ(service.GetBitcoinChangeAddress(mojom::kBitcoinKeyringId, 1, 0),
+  EXPECT_EQ(
+      service.GetBitcoinReceivingAddressSync(mojom::kBitcoinKeyringId, 1, 0),
+      absl::nullopt);
+  EXPECT_EQ(service.GetBitcoinChangeAddressSync(mojom::kBitcoinKeyringId, 1, 0),
             absl::nullopt);
 }
 
