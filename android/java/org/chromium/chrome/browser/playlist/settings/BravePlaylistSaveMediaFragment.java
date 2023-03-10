@@ -57,34 +57,19 @@ public class BravePlaylistSaveMediaFragment
         RadioButtonGroupPlaylistAutoSavePreference radioButtonGroupPlaylistAutoSavePreference =
                 (RadioButtonGroupPlaylistAutoSavePreference) findPreference(
                         BravePlaylistPreferences.PREF_AUTO_SAVE_MEDIA_FOR_OFFLINE);
-        Log.e("BravePlaylist",
-                "PREF_AUTO_SAVE_MEDIA_FOR_OFFLINE : "
-                        + SharedPreferencesManager.getInstance().readInt(
-                                BravePlaylistPreferences.PREF_AUTO_SAVE_MEDIA_FOR_OFFLINE, 0));
 
         radioButtonGroupPlaylistAutoSavePreference.initialize(
                 SharedPreferencesManager.getInstance().readInt(
                         BravePlaylistPreferences.PREF_AUTO_SAVE_MEDIA_FOR_OFFLINE, 0));
 
-        radioButtonGroupPlaylistAutoSavePreference.setOnPreferenceChangeListener((preference,
-                                                                                         newValue)
-                                                                                         -> {
-            int method = (int) newValue;
-            Log.e("BravePlaylist", "PREF_AUTO_SAVE_MEDIA_FOR_OFFLINE new value : " + method);
-            if (mPlaylistService != null) {
-                Log.e("BravePlaylist",
-                        "inside condition PREF_AUTO_SAVE_MEDIA_FOR_OFFLINE new value : " + method);
-                // mPlaylistService.setPlaylistCacheByDefault(
-                //         (method == 0 || method == 2) ? true : false);
-                SharedPreferencesManager.getInstance().writeInt(
-                        BravePlaylistPreferences.PREF_AUTO_SAVE_MEDIA_FOR_OFFLINE, method);
-                Log.e("BravePlaylist",
-                        "PREF_AUTO_SAVE_MEDIA_FOR_OFFLINE  after: "
-                                + SharedPreferencesManager.getInstance().readInt(
-                                        BravePlaylistPreferences.PREF_AUTO_SAVE_MEDIA_FOR_OFFLINE,
-                                        0));
-            }
-            return true;
-        });
+        radioButtonGroupPlaylistAutoSavePreference.setOnPreferenceChangeListener(
+                (preference, newValue) -> {
+                    int method = (int) newValue;
+                    if (mPlaylistService != null) {
+                        SharedPreferencesManager.getInstance().writeInt(
+                                BravePlaylistPreferences.PREF_AUTO_SAVE_MEDIA_FOR_OFFLINE, method);
+                    }
+                    return true;
+                });
     }
 }

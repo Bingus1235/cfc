@@ -100,7 +100,6 @@ public class PlaylistHostActivity extends AsyncInitializationActivity
                         Playlist playlist = new Playlist();
                         playlist.name = createPlaylistModel.getNewPlaylistId();
                         playlist.items = new PlaylistItem[0];
-                        Log.e(ConstantUtils.TAG, "Name : " + playlist.name);
                         mPlaylistService.createPlaylist(playlist, createdPlaylist -> {
                             if (createPlaylistModel.isMoveOrCopy()) {
                                 MoveOrCopyModel tempMoveOrCopyModel = PlaylistUtils.moveOrCopyModel;
@@ -110,7 +109,6 @@ public class PlaylistHostActivity extends AsyncInitializationActivity
                                 mPlaylistViewModel.performMoveOrCopy(PlaylistUtils.moveOrCopyModel);
                             }
                         });
-                        Log.e(ConstantUtils.TAG, "after Name : " + playlist.name);
                         loadAllPlaylists();
                     }
                 });
@@ -119,11 +117,8 @@ public class PlaylistHostActivity extends AsyncInitializationActivity
                 PlaylistHostActivity.this, renamePlaylistModel -> {
                     if (mPlaylistService != null) {
                         mPlaylistService.renamePlaylist(renamePlaylistModel.getPlaylistId(),
-                                renamePlaylistModel.getNewName(), updatedPlaylist -> {
-                                    Log.e(ConstantUtils.TAG,
-                                            "after rename Name : " + updatedPlaylist.name);
-                                    loadPlaylist(updatedPlaylist.id);
-                                });
+                                renamePlaylistModel.getNewName(),
+                                updatedPlaylist -> { loadPlaylist(updatedPlaylist.id); });
                     }
                 });
 
@@ -198,22 +193,13 @@ public class PlaylistHostActivity extends AsyncInitializationActivity
                 PlaylistHostActivity.this, playlistOptionsModel -> {
                     if (mPlaylistService != null) {
                         PlaylistOptions option = playlistOptionsModel.getOptionType();
-                        if (option == PlaylistOptions.EDIT_PLAYLIST) {
-                            Log.e(ConstantUtils.TAG, "PlaylistOptions.EDIT_PLAYLIST");
-                        } else if (option == PlaylistOptions.RENAME_PLAYLIST) {
-                            Log.e(ConstantUtils.TAG, "PlaylistOptions.RENAME_PLAYLIST");
-                        } else if (option == PlaylistOptions.REMOVE_PLAYLIST_OFFLINE_DATA) {
-                            Log.e(ConstantUtils.TAG,
-                                    "PlaylistOptions.REMOVE_PLAYLIST_OFFLINE_DATA");
+                        if (option == PlaylistOptions.REMOVE_PLAYLIST_OFFLINE_DATA) {
                             if (mPlaylistService != null
                                     && playlistOptionsModel.getPlaylistModel() != null) {
                                 mPlaylistService.removeLocalDataForItemsInPlaylist(
                                         playlistOptionsModel.getPlaylistModel().getId());
-                                // loadPlaylist(playlistOptionsModel.getPlaylistModel().getId());
                             }
                         } else if (option == PlaylistOptions.DOWNLOAD_PLAYLIST_FOR_OFFLINE_USE) {
-                            Log.e(ConstantUtils.TAG,
-                                    "PlaylistOptions.DOWNLOAD_PLAYLIST_FOR_OFFLINE_USE");
                             if (mPlaylistService != null
                                     && playlistOptionsModel.getPlaylistModel() != null) {
                                 for (PlaylistItemModel playlistItemModel :
@@ -227,7 +213,6 @@ public class PlaylistHostActivity extends AsyncInitializationActivity
                                 }
                             }
                         } else if (option == PlaylistOptions.DELETE_PLAYLIST) {
-                            Log.e(ConstantUtils.TAG, "PlaylistOptions.DELETE_PLAYLIST");
                             if (mPlaylistService != null
                                     && playlistOptionsModel.getPlaylistModel() != null) {
                                 mPlaylistService.removePlaylist(
@@ -235,10 +220,8 @@ public class PlaylistHostActivity extends AsyncInitializationActivity
                                 loadAllPlaylists();
                             }
                         } else if (option == PlaylistOptions.MOVE_PLAYLIST_ITEMS) {
-                            Log.e(ConstantUtils.TAG, "PlaylistOptions.MOVE_PLAYLIST_ITEMS");
                             showMoveOrCopyPlaylistBottomSheet();
                         } else if (option == PlaylistOptions.COPY_PLAYLIST_ITEMS) {
-                            Log.e(ConstantUtils.TAG, "PlaylistOptions.COPY_PLAYLIST_ITEMS");
                             showMoveOrCopyPlaylistBottomSheet();
                         }
                     }
@@ -249,7 +232,6 @@ public class PlaylistHostActivity extends AsyncInitializationActivity
                     if (mPlaylistService != null) {
                         PlaylistOptions option = playlistOptionsModel.getOptionType();
                         if (option == PlaylistOptions.REMOVE_ALL_OFFLINE_DATA) {
-                            Log.e(ConstantUtils.TAG, "PlaylistOptions.REMOVE_ALL_OFFLINE_DATA");
                             if (mPlaylistService != null
                                     && playlistOptionsModel.getAllPlaylistModels() != null) {
                                 for (PlaylistModel playlistModel :
@@ -260,8 +242,6 @@ public class PlaylistHostActivity extends AsyncInitializationActivity
                             }
                         } else if (option
                                 == PlaylistOptions.DOWNLOAD_ALL_PLAYLISTS_FOR_OFFLINE_USE) {
-                            Log.e(ConstantUtils.TAG,
-                                    "PlaylistOptions.DOWNLOAD_ALL_PLAYLISTS_FOR_OFFLINE_USE");
                             if (mPlaylistService != null) {
                                 mPlaylistService.getAllPlaylists(playlists -> {
                                     for (Playlist playlist : playlists) {
@@ -285,41 +265,31 @@ public class PlaylistHostActivity extends AsyncInitializationActivity
                     if (mPlaylistService != null) {
                         PlaylistOptions option = playlistItemOption.getOptionType();
                         if (option == PlaylistOptions.MOVE_PLAYLIST_ITEM) {
-                            Log.e(ConstantUtils.TAG, "PlaylistOptions.MOVE_PLAYLIST_ITEM");
                             showMoveOrCopyPlaylistBottomSheet();
                         } else if (option == PlaylistOptions.COPY_PLAYLIST_ITEM) {
-                            Log.e(ConstantUtils.TAG, "PlaylistOptions.COPY_PLAYLIST_ITEM");
                             showMoveOrCopyPlaylistBottomSheet();
                         } else if (option == PlaylistOptions.DELETE_ITEMS_OFFLINE_DATA) {
-                            Log.e(ConstantUtils.TAG, "PlaylistOptions.DELETE_ITEMS_OFFLINE_DATA");
                             mPlaylistService.removeLocalDataForItem(
                                     playlistItemOption.getPlaylistItemModel().getId());
                             loadPlaylist(playlistItemOption.getPlaylistId());
-                        } else if (option == PlaylistOptions.SHARE_PLAYLIST_ITEM) {
-                            Log.e(ConstantUtils.TAG, "PlaylistOptions.SHARE_PLAYLIST_ITEM");
                         } else if (option == PlaylistOptions.OPEN_IN_NEW_TAB) {
-                            Log.e(ConstantUtils.TAG, "PlaylistOptions.OPEN_IN_NEW_TAB");
                             openPlaylistInTab(false,
                                     playlistItemOption.getPlaylistItemModel().getPageSource());
                         } else if (option == PlaylistOptions.OPEN_IN_PRIVATE_TAB) {
-                            Log.e(ConstantUtils.TAG, "PlaylistOptions.OPEN_IN_PRIVATE_TAB");
                             openPlaylistInTab(true,
                                     playlistItemOption.getPlaylistItemModel().getPageSource());
                         } else if (option == PlaylistOptions.DELETE_PLAYLIST_ITEM) {
-                            Log.e(ConstantUtils.TAG, "PlaylistOptions.DELETE_PLAYLIST_ITEM");
                             mPlaylistService.removeItemFromPlaylist(
                                     playlistItemOption.getPlaylistId(),
                                     playlistItemOption.getPlaylistItemModel().getId());
                             loadPlaylist(playlistItemOption.getPlaylistId());
                         } else if (option == PlaylistOptions.RECOVER_PLAYLIST_ITEM) {
-                            Log.e(ConstantUtils.TAG, "PlaylistOptions.RECOVER_PLAYLIST_ITEM");
                             mPlaylistService.recoverLocalDataForItem(
                                     playlistItemOption.getPlaylistItemModel().getId(), true,
                                     playlistItem
                                     -> {
 
                                     });
-                            // loadPlaylist(playlistItemOption.getPlaylistId());
                         }
                     }
                 });
@@ -358,7 +328,6 @@ public class PlaylistHostActivity extends AsyncInitializationActivity
                         playlistItemsJsonArray.put(playlistItemObject);
                     }
                     playlistJson.put("items", playlistItemsJsonArray);
-                    Log.e(ConstantUtils.TAG, "playlistJson :  " + playlistJson.toString(2));
                     if (mPlaylistViewModel != null) {
                         mPlaylistViewModel.setPlaylistData(playlistJson.toString(2));
                     }
@@ -408,10 +377,8 @@ public class PlaylistHostActivity extends AsyncInitializationActivity
                             playlistItemsJsonArray.put(playlistItemObject);
                         }
                         playlistJsonObject.put("items", playlistItemsJsonArray);
-                        Log.e(ConstantUtils.TAG, "playlistJsonObject : " + playlistJsonObject);
                         playlistsJson.put(playlistJsonObject);
                     }
-                    Log.e(ConstantUtils.TAG, "playlistsJson : " + playlistsJson.toString(2));
                     if (mPlaylistViewModel != null) {
                         mPlaylistViewModel.setAllPlaylistData(playlistsJson.toString(2));
                     }
@@ -423,7 +390,6 @@ public class PlaylistHostActivity extends AsyncInitializationActivity
     }
 
     private void showAllPlaylistsFragment() {
-        // loadAllPlaylists();
         AllPlaylistFragment allPlaylistFragment = new AllPlaylistFragment();
         getSupportFragmentManager()
                 .beginTransaction()
@@ -438,8 +404,6 @@ public class PlaylistHostActivity extends AsyncInitializationActivity
 
     @Override
     public void onOptionClicked(PlaylistOptionsModel playlistOptionsModel) {
-        Log.e(ConstantUtils.TAG,
-                "PlaylistOptionsModel type : " + playlistOptionsModel.getOptionType());
         if (PlaylistOptions.DELETE_PLAYLIST == playlistOptionsModel.getOptionType()) {
             if (mPlaylistService != null && playlistOptionsModel.getPlaylistModel() != null) {
                 mPlaylistService.removePlaylist(playlistOptionsModel.getPlaylistModel().getId());
@@ -455,7 +419,6 @@ public class PlaylistHostActivity extends AsyncInitializationActivity
 
     @Override
     public void onEvent(int eventType, String playlistId) {
-        Log.e(ConstantUtils.TAG, "Event : " + eventType + " : playlist id : " + playlistId);
         PlaylistEventEnum playlistEvent = PlaylistEventEnum.kNone;
         switch (eventType) {
             case PlaylistEvent.ITEM_ADDED:
@@ -504,10 +467,6 @@ public class PlaylistHostActivity extends AsyncInitializationActivity
     @Override
     public void onMediaFileDownloadProgressed(String id, long totalBytes, long receivedBytes,
             byte percentComplete, String timeRemaining) {
-        Log.e(ConstantUtils.TAG,
-                "Id : " + id + "totalBytes : " + (totalBytes / 1024) + "KB "
-                        + "receivedBytes : " + (receivedBytes / 1024) + "KB "
-                        + "timeRemaining : " + timeRemaining);
         if (mPlaylistViewModel != null) {
             mPlaylistViewModel.updateDownloadProgress(new DownloadProgressModel(
                     id, totalBytes, receivedBytes, percentComplete, timeRemaining));

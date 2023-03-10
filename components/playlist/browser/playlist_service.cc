@@ -343,9 +343,6 @@ void PlaylistService::DownloadMediaFile(const mojom::PlaylistItemPtr& item,
   VLOG(2) << __func__;
   DCHECK(item);
 
-  LOG(ERROR) << "BravePlaylist : "
-             << "DownloadMediaFile 2";
-
   auto job = std::make_unique<PlaylistMediaFileDownloadManager::DownloadJob>();
   job->item = item.Clone();
   job->on_progress_callback =
@@ -356,8 +353,6 @@ void PlaylistService::DownloadMediaFile(const mojom::PlaylistItemPtr& item,
       update_media_src_and_retry_on_fail, std::move(callback));
 
   media_file_download_manager_->DownloadMediaFile(std::move(job));
-  LOG(ERROR) << "BravePlaylist : "
-             << "DownloadMediaFile 3";
 }
 
 base::FilePath PlaylistService::GetPlaylistItemDirPath(
@@ -459,11 +454,7 @@ void PlaylistService::AddMediaFilesFromActiveTabToPlaylist(
 
 void PlaylistService::FindMediaFilesFromActiveTab(
     FindMediaFilesFromActiveTabCallback callback) {
-  LOG(ERROR) << "BravePlaylist : "
-             << "FindMediaFilesFromActiveTab 1";
   DCHECK(delegate_);
-  LOG(ERROR) << "BravePlaylist : "
-             << "FindMediaFilesFromActiveTab 2";
 
   auto* contents = delegate_->GetActiveWebContents();
   if (!contents) {
@@ -471,20 +462,14 @@ void PlaylistService::FindMediaFilesFromActiveTab(
     return;
   }
 
-  LOG(ERROR) << "BravePlaylist : "
-             << "FindMediaFilesFromActiveTab 4";
   PlaylistDownloadRequestManager::Request request;
   auto current_url = contents->GetVisibleURL();
-  LOG(ERROR) << "BravePlaylist : "
-             << "FindMediaFilesFromActiveTab : " << current_url;
   if (ShouldDownloadOnBackground(contents)) {
     request.url_or_contents = current_url.spec();
   } else {
     request.url_or_contents = contents->GetWeakPtr();
   }
 
-  LOG(ERROR) << "BravePlaylist : "
-             << "FindMediaFilesFromActiveTab 5";
   request.callback = base::BindOnce(std::move(callback), current_url);
   download_request_manager_->GetMediaFilesFromPage(std::move(request));
 }
@@ -608,8 +593,6 @@ void PlaylistService::OnPlaylistItemDirCreated(
     DownloadMediaFile(item, update_media_src_and_retry_caching_on_fail,
                       std::move(callback));
   }
-  LOG(ERROR) << "BravePlaylist : "
-             << "DownloadMediaFile 1";
 }
 
 void PlaylistService::DownloadThumbnail(const mojom::PlaylistItemPtr& item) {
@@ -651,6 +634,7 @@ void PlaylistService::RemovePlaylist(const std::string& playlist_id) {
     return;
 
   DCHECK(!playlist_id.empty());
+
   base::Value::List id_list;
   {
     ScopedDictPrefUpdate playlists_update(prefs_, kPlaylistsPref);
@@ -725,9 +709,6 @@ void PlaylistService::RecoverLocalDataForItem(
     return;
   }
 
-  LOG(ERROR) << "BravePlaylist : "
-             << "RecoverLocalDataForItem 1";
-
   auto item = ConvertValueToPlaylistItem(*item_value);
   DCHECK(item);
 
@@ -737,8 +718,6 @@ void PlaylistService::RecoverLocalDataForItem(
                                 std::move(callback));
     return;
   }
-  LOG(ERROR) << "BravePlaylist : "
-             << "RecoverLocalDataForItem 2";
 
   // Before recovering data, try to update item's media source by visiting the
   // original page first.

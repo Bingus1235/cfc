@@ -64,10 +64,6 @@ public class BravePlaylistPreferences extends BravePreferenceFragment
                 SharedPreferencesManager.getInstance().readBoolean(PREF_AUTO_PLAY, true));
         mAutoPlaySwitch.setOnPreferenceChangeListener(this);
 
-        Log.e("BravePlaylist",
-                "PREF_AUTO_SAVE_MEDIA_FOR_OFFLINE : "
-                        + SharedPreferencesManager.getInstance().readInt(
-                                PREF_AUTO_SAVE_MEDIA_FOR_OFFLINE, 0));
         mAutoSaveMediaForOfflinePreference =
                 (Preference) findPreference(PREF_AUTO_SAVE_MEDIA_FOR_OFFLINE);
         updateAutoSaveMedia();

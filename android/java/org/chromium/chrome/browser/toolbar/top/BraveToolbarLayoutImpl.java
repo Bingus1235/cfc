@@ -498,7 +498,6 @@ public abstract class BraveToolbarLayoutImpl extends ToolbarLayout
             @Override
             public void onHidden(Tab tab, @TabHidingType int reason) {
                 dismissCookieConsent();
-                // hidePlaylistButton();
             }
 
             @Override
@@ -514,7 +513,6 @@ public abstract class BraveToolbarLayoutImpl extends ToolbarLayout
 
             @Override
             public void onPageLoadFinished(final Tab tab, GURL url) {
-                Log.e(ConstantUtils.TAG, "onPageLoadFinished URL : " + tab.getUrl().getSpec());
                 if (getToolbarDataProvider().getTab() == tab) {
                     mBraveShieldsHandler.updateHost(url.getSpec());
                     updateBraveShieldsButtonState(tab);
@@ -587,21 +585,13 @@ public abstract class BraveToolbarLayoutImpl extends ToolbarLayout
                     showBraveRewardsOnboardingModal();
                 }
 
-                Log.e(ConstantUtils.TAG,
-                        "onDidFinishNavigationInPrimaryMainFrame URL : " + tab.getUrl().getSpec());
                 if (ChromeFeatureList.isEnabled(BraveFeatureList.BRAVE_PLAYLIST)
                         && SharedPreferencesManager.getInstance().readBoolean(
                                 BravePlaylistPreferences.PREF_ENABLE_PLAYLIST, true)
                         && mPlaylistService != null) {
                     hidePlaylistButton();
                     mPlaylistService.findMediaFilesFromActiveTab((url, playlistItems) -> {
-                        Log.e(ConstantUtils.TAG, "Inside condition");
-                        Log.e(ConstantUtils.TAG, "findMediaFilesFromActiveTab url  : " + url.url);
-                        for (PlaylistItem playlistItem : playlistItems) {
-                            Log.e(ConstantUtils.TAG, "Media source  : " + playlistItem.mediaSource);
-                        }
                         if (playlistItems.length > 0) {
-                            Log.e(ConstantUtils.TAG, "playlistItems.length > 0");
                             showPlaylistButton(tab.getUrl().getSpec());
                         }
                     });
@@ -664,7 +654,6 @@ public abstract class BraveToolbarLayoutImpl extends ToolbarLayout
                 @Override
                 public void onOptionClicked(PlaylistOptionsModel playlistOptionsModel) {
                     if (playlistOptionsModel.getOptionType() == PlaylistOptions.ADD_MEDIA) {
-                        Log.e(ConstantUtils.TAG, "URL : " + url);
                         org.chromium.url.mojom.Url contentUrl = new org.chromium.url.mojom.Url();
                         contentUrl.url = url;
                         int mediaCount = SharedPreferencesManager.getInstance().readInt(
@@ -684,7 +673,6 @@ public abstract class BraveToolbarLayoutImpl extends ToolbarLayout
 
                                             @Override
                                             public void onSettingsClicked() {
-                                                Log.e(ConstantUtils.TAG, "Settings clicked : ");
                                                 braveActivity.openBravePlaylistSettings();
                                             }
                                         };
