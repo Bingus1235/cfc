@@ -1,8 +1,8 @@
 diff --git a/chrome/browser/content_settings/page_specific_content_settings_delegate.cc b/chrome/browser/content_settings/page_specific_content_settings_delegate.cc
-index 27f8d9e9c660bd8d66d6d5e1a01d7ff15b51fdf7..a96a901dbb57de85613ba3a61d938d085a328f72 100644
+index 3111c4d4701e75a5717ec7af498d8d1402130ca9..30391a47fa848d32ce344d55dcbcd332545391a1 100644
 --- a/chrome/browser/content_settings/page_specific_content_settings_delegate.cc
 +++ b/chrome/browser/content_settings/page_specific_content_settings_delegate.cc
-@@ -122,6 +122,7 @@ void GetGuestViewDefaultContentSettingRules(
+@@ -129,6 +129,7 @@ void GetGuestViewDefaultContentSettingRules(
        ContentSettingsPattern::Wildcard(), ContentSettingsPattern::Wildcard(),
        content_settings::ContentSettingToValue(CONTENT_SETTING_BLOCK),
        std::string(), incognito));
