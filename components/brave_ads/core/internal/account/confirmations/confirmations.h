@@ -50,13 +50,12 @@ class Confirmations final : public RedeemUnblindedTokenDelegate {
   void OnRetry();
   void StopRetrying();
 
-  void CreateConfirmationAndRedeemToken(const TransactionInfo& transaction,
-                                        const base::Time& created_at,
-                                        base::Value::Dict user_data);
-
-  void CreateNewConfirmationAndAppendToRetryQueue(
-      const ConfirmationInfo& confirmation,
-      base::Value::Dict user_data);
+  void CreateNewConfirmationAndRedeemToken(const TransactionInfo& transaction,
+                                           const base::Time& created_at,
+                                           base::Value::Dict user_data);
+  void RebuildConfirmationAndRedeemToken(const ConfirmationInfo& confirmation,
+                                         base::Value::Dict user_data);
+  void RedeemConfirmationToken(const ConfirmationInfo& confirmation);
 
   // RedeemUnblindedTokenDelegate:
   void OnDidSendConfirmation(const ConfirmationInfo& confirmation) override;
