@@ -5,8 +5,8 @@
 
 import { BraveWallet, WalletRoutes, TokenStandards } from '../constants/types'
 import { getLocale } from '../../common/locale'
+import getWalletPageApiProxy from '../page/wallet_page_api_proxy'
 
-const IPFS_GATEWAY = 'https://ipfs.io/ipfs/'
 const IPFS_PROTOCOL = 'ipfs://'
 
 export const stripERC20TokenImageURL = (url?: string) =>
@@ -24,14 +24,23 @@ export const isRemoteImageURL = (url?: string) =>
 export const isValidIconExtension = (url?: string) =>
   url?.endsWith('.jpg') || url?.endsWith('.jpeg') || url?.endsWith('.png') || url?.endsWith('.svg') || url?.endsWith('.gif')
 
-export const addIpfsGateway = (url: string | undefined) => {
+export const addIpfsGateway = async (url: string | undefined) => {
   const trimmedUrl = url ? url.trim() : ''
-  return isIpfs(trimmedUrl) ? trimmedUrl.replace(IPFS_PROTOCOL, IPFS_GATEWAY) : trimmedUrl
+  if (isIpfs(trimmedUrl)) {
+    const { braveWalletIpfsService } = getWalletPageApiProxy()
+    return (await braveWalletIpfsService.translateToNFTGatewayURL(trimmedUrl)).translatedUrl || ''
+  } else {
+    return trimmedUrl
+  }
 }
 
-export const reverseHttpifiedIpfsUrl = (url: string | undefined) => {
+export const reverseHttpifiedIpfsUrl = async (url: string | undefined) => {
+  const { braveWalletIpfsService } = getWalletPageApiProxy()
   const trimmedUrl = url ? url.trim() : ''
-  return trimmedUrl.startsWith(IPFS_GATEWAY) ? trimmedUrl.replace(IPFS_GATEWAY, IPFS_PROTOCOL) : trimmedUrl
+  if (isIpfs(trimmedUrl)) {
+    return trimmedUrl
+  }
+  return (await braveWalletIpfsService.extractIPFSUrlFromGatewayLikeUrl(trimmedUrl))?.ipfsUrl || undefined
 }
 
 export const isDataURL = (url?: string) => url?.startsWith('chrome://erc-token-images/')
@@ -137,6 +146,12 @@ export const isComponentInStorybook = (hostname: string = window.location.hostna
   return ['localhost', '127.0.0.1'].includes(window.location.hostname)
 }
 
-export const isNftPinnable = (tokenLogo: string) => {
-  return reverseHttpifiedIpfsUrl(stripERC20TokenImageURL(tokenLogo)).startsWith('ipfs://')
+export const isNftPinnable = async (urls: string[]) => {
+  const results = await Promise.all(urls.flatMap((v) => reverseHttpifiedIpfsUrl(stripERC20TokenImageURL(v))))
+  for (const result of results) {
+    if (!(result?.startsWith('ipfs://') || false)) {
+      return false
+    }
+  }
+  return true
 }

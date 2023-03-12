@@ -77,9 +77,9 @@ export const auroraSupportedContractAddresses = [
   '0x0bc529c00c6401aef6d220be8c6ea1667f6ad93e' // YFI
 ].map(contractAddress => contractAddress.toLowerCase())
 
-export const addLogoToToken = (token: BraveWallet.BlockchainToken) => {
+export const addLogoToToken = async (token: BraveWallet.BlockchainToken) => {
   const newLogo = token.logo?.startsWith('ipfs://')
-    ? addIpfsGateway(token.logo)
+    ? (await addIpfsGateway(token.logo))
     : token.logo?.startsWith('data:image/')
       ? token.logo
       : `chrome://erc-token-images/${token.logo}`

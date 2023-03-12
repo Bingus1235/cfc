@@ -96,10 +96,10 @@ export function useNftPin () {
     const getTokensSupport = async () => {
       const isTokenSupportedPromises = tokens.map(token => isTokenPinningSupported(token))
       const isTokenPinningSupportedResults = (await Promise.all(isTokenSupportedPromises)).map(res => res.result)
-      const nfts = tokens.map((token, idx) => {
-        const canBePinned = isNftPinnable(token.logo) && isTokenPinningSupportedResults[idx]
+      const nfts = await Promise.all(tokens.map(async (token, idx) => {
+        const canBePinned = (await isNftPinnable([token.logo])) && isTokenPinningSupportedResults[idx]
         return { canBePinned, token }
-      })
+      }))
       const pinnable = nfts
         .filter(({ canBePinned }) => canBePinned)
         .map(({ token }) => token)

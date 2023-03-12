@@ -32,11 +32,11 @@ export function useTokenRegistry () {
     let subscribed = true
     let registry = tokenRegistry
     Promise.all(networkList.map(async (network) => {
-      await getTokenList(network).then(
-        (result) => {
-          const formattedListWithIcons = result.tokens.map((token) => {
-            return addLogoToToken(token)
-          })
+      getTokenList(network).then(
+        async (result) => {
+          const formattedListWithIcons = await Promise.all(result.tokens.map(async (token) => {
+            return await addLogoToToken(token)
+          }))
           registry[network.chainId] = formattedListWithIcons
         }
       ).catch((error) => {

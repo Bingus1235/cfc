@@ -580,7 +580,7 @@ const util = {
       if (prevBuildArgs)
         fs.removeSync(buildArgsFile)
 
-      util.run('gn', ['gen', config.outputDir, '--args="' + buildArgsStr + '"', config.extraGnGenOpts], options)
+      util.run('gn', ['gen', config.outputDir, '--ide=qtcreator', '--args="' + buildArgsStr + '"', config.extraGnGenOpts], options)
       fs.writeFileSync(buildArgsFile, buildArgsStr)
       fs.writeFileSync(extraGnGenOptsFile, config.extraGnGenOpts)
     }

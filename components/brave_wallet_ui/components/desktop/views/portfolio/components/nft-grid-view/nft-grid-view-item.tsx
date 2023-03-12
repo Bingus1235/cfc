@@ -63,10 +63,10 @@ export const NFTGridViewItem = (props: Props) => {
     setShowMore(false)
   }, [])
 
-  // memos
-  const remoteImage = React.useMemo(() => {
+  const [remoteImage, setRemoteImage] = React.useState<string>()
+  React.useEffect(() => {
     const tokenImageURL = stripERC20TokenImageURL(token.logo)
-    return addIpfsGateway(tokenImageURL)
+    addIpfsGateway(tokenImageURL).then((v) => {setRemoteImage(v)})
   }, [token.logo])
 
   return (

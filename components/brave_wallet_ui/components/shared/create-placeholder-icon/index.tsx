@@ -23,6 +23,7 @@ import { IconWrapper, PlaceholderText } from './style'
 
 // Options
 import { getNetworkLogo } from '../../../options/asset-options'
+//import getWalletPanelApiProxy from 'components/brave_wallet_ui/panel/wallet_panel_api_proxy'
 
 interface Config {
   size: 'big' | 'medium' | 'small'
@@ -82,12 +83,19 @@ function withPlaceholderIcon (WrappedComponent: React.ComponentType<any>, config
       }
     }, [needsPlaceholder, asset.contractAddress, asset.name])
 
+    const [ipfsUrl, setIpfsUrl] = React.useState<string>()
+
+    // memos
+    React.useEffect(() => {
+      addIpfsGateway(tokenImageURL).then(setIpfsUrl)
+    }, [tokenImageURL])
+
     const remoteImage = React.useMemo(() => {
       if (isRemoteURL) {
-        return `chrome://image?${addIpfsGateway(tokenImageURL)}`
+        return `chrome://image?${ipfsUrl}`
       }
       return ''
-    }, [isRemoteURL, tokenImageURL])
+    }, [isRemoteURL, tokenImageURL, ipfsUrl])
 
     if (needsPlaceholder) {
       return (

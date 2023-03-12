@@ -337,7 +337,8 @@ interface PageHandlerFactory {
                     pending_receiver<BraveWalletP3A> brave_wallet_p3a,
                     pending_receiver<WalletPinService> brave_wallet_pin_service,
                     pending_receiver<WalletAutoPinService>
-                        brave_wallet_auto_pin_service);
+                        brave_wallet_auto_pin_service,
+                    pending_receiver<IpfsService> brave_wallet_ipfs_service);
 };
 
 // Lifetime option in sync with CreatePermissionLifetimeOptions()
@@ -872,6 +873,11 @@ interface SwapService {
   HasJupiterFeesForTokenMint(string mint) => (bool result);
 };
 
+interface IpfsService {
+  TranslateToNFTGatewayURL(string url) => (string? translated_url);
+  ExtractIPFSUrlFromGatewayLikeUrl(string url) => (string? ipfs_url);
+};
+
 interface JsonRpcServiceObserver {
   // Fired when the selected network changes
   ChainChangedEvent(string chain_id, CoinType coin);
@@ -1147,7 +1153,7 @@ interface JsonRpcService {
       (string amount, uint8 decimals, string uiAmountString,
        SolanaProviderError error, string error_message);
   // Returns the metadata json associated with the NFT account address
-  GetSolTokenMetadata(string token_mint_address) => (string response, SolanaProviderError error, string error_message);
+  GetSolTokenMetadata(string token_mint_address) => (string tokenUrl, string response, SolanaProviderError error, string error_message);
 };
 
 enum TransactionStatus {

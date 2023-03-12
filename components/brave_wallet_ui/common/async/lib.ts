@@ -300,17 +300,17 @@ export const getAllBuyAssets = async (): Promise<{
   )
 
   // add token logos
-  const rampAssetOptions: BraveWallet.BlockchainToken[] = rampAssetsPromises
+  const rampAssetOptions: BraveWallet.BlockchainToken[] = await Promise.all(rampAssetsPromises
     .flatMap(p => p.tokens)
-    .map(addLogoToToken)
+    .map(await addLogoToToken))
 
-  const sardineAssetOptions: BraveWallet.BlockchainToken[] = sardineAssetsPromises
+  const sardineAssetOptions: BraveWallet.BlockchainToken[] = await Promise.all(sardineAssetsPromises
     .flatMap(p => p.tokens)
-    .map(addLogoToToken)
+    .map(await addLogoToToken))
 
-  const transakAssetOptions: BraveWallet.BlockchainToken[] = transakAssetsPromises
+  const transakAssetOptions: BraveWallet.BlockchainToken[] = await Promise.all(transakAssetsPromises
     .flatMap(p => p.tokens)
-    .map(addLogoToToken)
+    .map(await addLogoToToken))
 
   // separate native assets from tokens
   const {
@@ -376,9 +376,9 @@ export const getAllSellAssets = async (): Promise<{
   )
 
   // add token logos
-  const rampAssetOptions: BraveWallet.BlockchainToken[] = rampAssetsPromises
+  const rampAssetOptions: BraveWallet.BlockchainToken[] = await Promise.all(rampAssetsPromises
     .flatMap(p => p.tokens)
-    .map(addLogoToToken)
+    .map(await addLogoToToken))
 
   // separate native assets from tokens
   const {

@@ -42,7 +42,7 @@ import {
 } from '../../../../nft/nft-ui-messages'
 import { auroraSupportedContractAddresses } from '../../../../utils/asset-utils'
 import { getLocale } from '../../../../../common/locale'
-import { stripERC20TokenImageURL } from '../../../../utils/string-utils'
+import { isNftPinnable, stripERC20TokenImageURL } from '../../../../utils/string-utils'
 // actions
 import { WalletPageActions } from '../../../../page/actions'
 
@@ -381,12 +381,18 @@ export const PortfolioAsset = (props: Props) => {
     return fullTokenList.some((asset) => asset.symbol.toLowerCase() === selectedAsset?.symbol.toLowerCase())
   }, [fullTokenList, selectedAsset?.symbol])
 
+  const [nftPinnable, setNftPinnable] = React.useState<boolean>()
+  React.useEffect(() => {
+    if (nftMetadata?.imageURL)
+      isNftPinnable([nftMetadata?.imageURL]).then(setNftPinnable)
+  }, [nftMetadata])
+
   const currentNftPinningStatus = React.useMemo(() => {
-    if (isNftAsset && selectedAsset) {
+    if (isNftAsset && selectedAsset && nftPinnable) {
       return getNftPinningStatus(selectedAsset)
     }
     return undefined
-  }, [isNftAsset, selectedAsset])
+  }, [nftPinnable, isNftAsset, selectedAsset])
 
   // methods
   const onClickAddAccount = React.useCallback((tabId: AddAccountNavTypes) => () => {

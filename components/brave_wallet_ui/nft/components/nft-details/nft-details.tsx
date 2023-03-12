@@ -17,7 +17,7 @@ import { useExplorer } from '../../../common/hooks'
 // Utils
 import Amount from '../../../utils/amount'
 import { getLocale } from '$web-common/locale'
-import { isNftPinnable, isValidateUrl, stripERC20TokenImageURL } from '../../../utils/string-utils'
+import { isValidateUrl, stripERC20TokenImageURL } from '../../../utils/string-utils'
 
 // Styled Components
 import {
@@ -213,7 +213,7 @@ export const NftDetails = ({ selectedAsset, nftMetadata, nftMetadataError, token
                     </DetailSectionRow>
                   </>
                 }
-                {selectedAsset && isNftPinnable(selectedAsset.logo) && nftPinningStatus?.code &&
+                {selectedAsset && nftPinningStatus?.code &&
                   <DetailSectionRow>
                     <DetailSectionColumn>
                       <NftPinningStatus pinningStatusCode={nftPinningStatus.code} />
