@@ -688,7 +688,7 @@ public abstract class BraveToolbarLayoutImpl extends ToolbarLayout
                             BraveActivity.getBraveActivity().openPlaylistActivity(
                                     getContext(), ConstantUtils.DEFAULT_PLAYLIST);
                         } catch (ActivityNotFoundException e) {
-                            Log.e(ConstantUtils.TAG, "Open playlist " + e);
+                            Log.e(TAG, "Open playlist " + e);
                         }
                     } else if (playlistOptionsModel.getOptionType()
                             == PlaylistOptions.PLAYLIST_SETTINGS) {
@@ -734,7 +734,7 @@ public abstract class BraveToolbarLayoutImpl extends ToolbarLayout
                                 BraveActivity.getBraveActivity().openPlaylistActivity(
                                         getContext(), ConstantUtils.DEFAULT_PLAYLIST);
                             } catch (ActivityNotFoundException e) {
-                                Log.e(ConstantUtils.TAG, "Open playlist " + e);
+                                Log.e(TAG, "Open playlist " + e);
                             }
                         }
                     });

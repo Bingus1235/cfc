@@ -1,7 +1,7 @@
-/* Copyright (c) 2022 The Brave Authors. All rights reserved.
+/* Copyright (c) 2023 The Brave Authors. All rights reserved.
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this file,
- * You can obtain one at http://mozilla.org/MPL/2.0/. */
+ * You can obtain one at https://mozilla.org/MPL/2.0/. */
 
 package org.chromium.chrome.browser.playlist;
 
@@ -57,6 +57,7 @@ import org.chromium.playlist.mojom.PlaylistServiceObserver;
 
 public class PlaylistHostActivity extends AsyncInitializationActivity
         implements ConnectionErrorHandler, PlaylistOptionsListener, PlaylistServiceObserver {
+    private static final String TAG = "BravePlaylist";
     private PlaylistService mPlaylistService;
     private PlaylistViewModel mPlaylistViewModel;
 
@@ -332,7 +333,7 @@ public class PlaylistHostActivity extends AsyncInitializationActivity
                         mPlaylistViewModel.setPlaylistData(playlistJson.toString(2));
                     }
                 } catch (Exception e) {
-                    Log.e(ConstantUtils.TAG, "PlaylistHostActivity -> JSONException error " + e);
+                    Log.e(TAG, "PlaylistHostActivity -> JSONException error " + e);
                 }
             });
         }
@@ -383,7 +384,7 @@ public class PlaylistHostActivity extends AsyncInitializationActivity
                         mPlaylistViewModel.setAllPlaylistData(playlistsJson.toString(2));
                     }
                 } catch (Exception e) {
-                    Log.e(ConstantUtils.TAG, "PlaylistHostActivity -> JSONException error " + e);
+                    Log.e(TAG, "PlaylistHostActivity -> JSONException error " + e);
                 }
             });
         }
