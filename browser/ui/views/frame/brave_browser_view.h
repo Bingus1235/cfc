@@ -95,6 +95,7 @@ class BraveBrowserView : public BrowserView {
 
   FRIEND_TEST_ALL_PREFIXES(VerticalTabStripBrowserTest, VisualState);
   FRIEND_TEST_ALL_PREFIXES(VerticalTabStripBrowserTest, Fullscreen);
+  FRIEND_TEST_ALL_PREFIXES(VerticalTabStripBrowserTest, DragAndDropSanity);
 
   static void SetDownloadConfirmReturnForTesting(bool allow);
 
