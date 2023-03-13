@@ -760,16 +760,16 @@ public class BraveShieldsHandler implements BraveRewardsHelper.LargeIconReadyCal
     }
 
     private void setUpSwitchLayouts() {
-        LinearLayout mUpgradeHttpsLayout = mSecondaryLayout.findViewById(R.id.brave_shields_upgrade_https_id);
+        LinearLayout upgradeHttpsLayout = mSecondaryLayout.findViewById(R.id.brave_shields_upgrade_https_id);
         if (!ChromeFeatureList.isEnabled(BraveFeatureList.HTTPS_BY_DEFAULT)) {
-            TextView mUpgradeHttpsText =
-                    mUpgradeHttpsLayout.findViewById(R.id.brave_shields_switch_text);
+            TextView upgradeHttpsText =
+                    upgradeHttpsLayout.findViewById(R.id.brave_shields_switch_text);
             mBraveShieldsHTTPSEverywhereSwitch =
-                    mUpgradeHttpsLayout.findViewById(R.id.brave_shields_switch);
-            mUpgradeHttpsText.setText(R.string.brave_shields_https_everywhere_switch);
+                    upgradeHttpsLayout.findViewById(R.id.brave_shields_switch);
+            upgradeHttpsText.setText(R.string.brave_shields_https_everywhere_switch);
             setupHTTPSEverywhereSwitchClick(mBraveShieldsHTTPSEverywhereSwitch);
         } else {
-            mUpgradeHttpsLayout.setVisibility(View.GONE);
+            upgradeHttpsLayout.setVisibility(View.GONE);
         }
 
         LinearLayout mBlockScriptsLayout = mSecondaryLayout.findViewById(R.id.brave_shields_block_scripts_id);
