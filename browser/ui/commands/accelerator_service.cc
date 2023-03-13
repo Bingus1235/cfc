@@ -14,6 +14,7 @@
 #include "base/containers/contains.h"
 #include "base/containers/cxx20_erase_vector.h"
 #include "base/containers/flat_map.h"
+#include "base/ranges/algorithm.h"
 #include "brave/app/command_utils.h"
 #include "brave/components/commands/browser/accelerator_pref_manager.h"
 #include "brave/components/commands/common/accelerator_parsing.h"
@@ -64,13 +65,11 @@ void AcceleratorService::Initialize() {
   accelerators_ = pref_manager_.GetAccelerators();
   UpdateDefaultAccelerators();
 
-  accelerators_ = pref_manager_.GetAccelerators();
-
   // Include commands in the table which don't have any accelerators.
   auto commands = GetCommands();
-  for (const auto& command : commands) {
-    if (!accelerators_.contains(command)) {
-      accelerators_[command] = {};
+  for (const auto& command_id : commands) {
+    if (!accelerators_.contains(command_id)) {
+      accelerators_[command_id] = {};
     }
   }
 }
@@ -82,23 +81,22 @@ void AcceleratorService::UpdateDefaultAccelerators() {
   Accelerators removed;
 
   // Handle new accelerators, and removed accelerators.
-  for (const auto& command : default_accelerators_) {
-    const auto& new_accelerators = command.second;
-    const auto& old_accelerators = old_defaults[command.first];
+  for (const auto& [command_id, new_accelerators] : default_accelerators_) {
+    const auto& old_accelerators = old_defaults[command_id];
 
     // Note all the added accelerators.
-    std::copy_if(new_accelerators.begin(), new_accelerators.end(),
-                 std::back_inserter(added[command.first]),
-                 [&old_accelerators](const auto& accelerator) {
-                   return !base::Contains(old_accelerators, accelerator);
-                 });
+    base::ranges::copy_if(
+        new_accelerators, std::back_inserter(added[command_id]),
+        [&old_accelerators](const auto& accelerator) {
+          return !base::Contains(old_accelerators, accelerator);
+        });
 
     // Note all the removed accelerators.
-    std::copy_if(old_accelerators.begin(), old_accelerators.end(),
-                 std::back_inserter(removed[command.first]),
-                 [&new_accelerators](const auto& accelerator) {
-                   return !base::Contains(new_accelerators, accelerator);
-                 });
+    base::ranges::copy_if(
+        old_accelerators, std::back_inserter(removed[command_id]),
+        [&new_accelerators](const auto& accelerator) {
+          return !base::Contains(new_accelerators, accelerator);
+        });
   }
 
   // We also need to handle the case where a command was removed from the list
@@ -110,21 +108,20 @@ void AcceleratorService::UpdateDefaultAccelerators() {
     }
 
     // We used to have accelerators for this command, now we have none.
-    std::copy(accelerators.begin(), accelerators.end(),
-              std::back_inserter(removed[command_id]));
+    base::ranges::copy(accelerators, std::back_inserter(removed[command_id]));
   }
 
   // Remove deleted accelerators
-  for (const auto& [command, accelerators] : removed) {
+  for (const auto& [command_id, accelerators] : removed) {
     for (const auto& accelerator : accelerators) {
-      UnassignAccelerator(command, accelerator);
+      UnassignAccelerator(command_id, accelerator);
     }
   }
 
   // Add new accelerators
-  for (const auto& [command, accelerators] : added) {
+  for (const auto& [command_id, accelerators] : added) {
     for (const auto& accelerator : accelerators) {
-      AssignAccelerator(command, accelerator);
+      AssignAccelerator(command_id, accelerator);
     }
   }
 

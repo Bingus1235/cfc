@@ -9,7 +9,6 @@
 #include <string>
 #include <vector>
 
-#include "base/containers/flat_map.h"
 #include "base/observer_list.h"
 #include "base/observer_list_types.h"
 #include "brave/components/commands/browser/accelerator_pref_manager.h"
@@ -25,7 +24,7 @@ class PrefService;
 
 namespace commands {
 
-using Accelerators = base::flat_map<int, std::vector<ui::Accelerator>>;
+using Accelerators = AcceleratorPrefManager::Accelerators;
 
 class AcceleratorService : public mojom::CommandsService, public KeyedService {
  public:
