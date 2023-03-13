@@ -8,9 +8,9 @@
 
 #include "content/public/browser/service_process_host.h"  // IWYU pragma: keep
 
-namespace bat_ads::mojom {
+namespace mojom {
 class BatAdsService;
-}  // namespace bat_ads::mojom
+}  // namespace mojom
 
 template <>
 inline sandbox::mojom::Sandbox

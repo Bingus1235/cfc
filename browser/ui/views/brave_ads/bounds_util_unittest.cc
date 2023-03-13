@@ -29,7 +29,7 @@ TEST(BoundsUtilTest, CheckSnapBoundsToEdgeOfWorkArea) {
   gfx::Point initial_origin(work_area.x() + shift_x,
                             work_area.y() + work_area.height() / 2);
   bounds.set_origin(initial_origin);
-  brave_ads::SnapBoundsToEdgeOfWorkArea(work_area, &bounds);
+  SnapBoundsToEdgeOfWorkArea(work_area, &bounds);
   EXPECT_EQ(work_area.x(), bounds.x());
   EXPECT_EQ(initial_origin.y(), bounds.y());
 
@@ -37,7 +37,7 @@ TEST(BoundsUtilTest, CheckSnapBoundsToEdgeOfWorkArea) {
   initial_origin = gfx::Point(work_area.width() - shift_x,
                               work_area.y() + work_area.height() / 2);
   bounds.set_origin(initial_origin);
-  brave_ads::SnapBoundsToEdgeOfWorkArea(work_area, &bounds);
+  SnapBoundsToEdgeOfWorkArea(work_area, &bounds);
   EXPECT_EQ(work_area.x() + work_area.width() - bounds.width(), bounds.x());
   EXPECT_EQ(initial_origin.y(), bounds.y());
 
@@ -45,7 +45,7 @@ TEST(BoundsUtilTest, CheckSnapBoundsToEdgeOfWorkArea) {
   initial_origin = gfx::Point(work_area.x() + work_area.height() / 2,
                               work_area.y() + shift_y);
   bounds.set_origin(initial_origin);
-  brave_ads::SnapBoundsToEdgeOfWorkArea(work_area, &bounds);
+  SnapBoundsToEdgeOfWorkArea(work_area, &bounds);
   EXPECT_EQ(initial_origin.x(), bounds.x());
   EXPECT_EQ(work_area.y(), bounds.y());
 
@@ -53,7 +53,7 @@ TEST(BoundsUtilTest, CheckSnapBoundsToEdgeOfWorkArea) {
   initial_origin = gfx::Point(work_area.x() + work_area.height() / 2,
                               work_area.height() - shift_y);
   bounds.set_origin(initial_origin);
-  brave_ads::SnapBoundsToEdgeOfWorkArea(work_area, &bounds);
+  SnapBoundsToEdgeOfWorkArea(work_area, &bounds);
   EXPECT_EQ(initial_origin.x(), bounds.x());
   EXPECT_EQ(work_area.y() + work_area.height() - bounds.height(), bounds.y());
 }
