@@ -10,17 +10,17 @@
 
 #include "components/prefs/pref_change_registrar.h"
 
-#define BrowserCaptionButtonContainerWin \
-  BrowserCaptionButtonContainerWin_ChromiumImpl
+#define BrowserCaptionButtonContainer \
+  BrowserCaptionButtonContainer_ChromiumImpl
 
 #include "src/chrome/browser/ui/views/frame/browser_caption_button_container_win.h"  // IWYU pragma: export
-#undef BrowserCaptionButtonContainerWin
+#undef BrowserCaptionButtonContainer
 
-class BrowserCaptionButtonContainerWin
-    : public BrowserCaptionButtonContainerWin_ChromiumImpl {
+class BrowserCaptionButtonContainer
+    : public BrowserCaptionButtonContainer_ChromiumImpl {
  public:
-  explicit BrowserCaptionButtonContainerWin(BrowserFrameViewWin* frame_view);
-  ~BrowserCaptionButtonContainerWin() override;
+  explicit BrowserCaptionButtonContainer(BrowserFrameViewWin* frame_view);
+  ~BrowserCaptionButtonContainer() override;
 
  private:
   void UpdateSearchTabsButtonState();

@@ -9,15 +9,15 @@
 #include "chrome/browser/profiles/profile.h"
 #include "chrome/browser/ui/views/tab_search_bubble_host.h"
 
-#define BrowserCaptionButtonContainerWin \
-  BrowserCaptionButtonContainerWin_ChromiumImpl
+#define BrowserCaptionButtonContainer \
+  BrowserCaptionButtonContainer_ChromiumImpl
 
 #include "src/chrome/browser/ui/views/frame/browser_caption_button_container_win.cc"
-#undef BrowserCaptionButtonContainerWin
+#undef BrowserCaptionButtonContainer
 
-BrowserCaptionButtonContainerWin::BrowserCaptionButtonContainerWin(
+BrowserCaptionButtonContainer::BrowserCaptionButtonContainer(
     BrowserFrameViewWin* frame_view)
-    : BrowserCaptionButtonContainerWin_ChromiumImpl(frame_view),
+    : BrowserCaptionButtonContainer_ChromiumImpl(frame_view),
       frame_view_(frame_view) {
   if (WindowFrameUtil::IsWin10TabSearchCaptionButtonEnabled(
           frame_view_->browser_view()->browser())) {
@@ -26,17 +26,17 @@ BrowserCaptionButtonContainerWin::BrowserCaptionButtonContainerWin(
     pref_change_registrar_.Add(
         kTabsSearchShow,
         base::BindRepeating(
-            &BrowserCaptionButtonContainerWin::OnPreferenceChanged,
+            &BrowserCaptionButtonContainer::OnPreferenceChanged,
             base::Unretained(this)));
     // Show the correct value in settings on initial start
     UpdateSearchTabsButtonState();
   }
 }
 
-BrowserCaptionButtonContainerWin::~BrowserCaptionButtonContainerWin() =
+BrowserCaptionButtonContainer::~BrowserCaptionButtonContainer() =
     default;
 
-void BrowserCaptionButtonContainerWin::OnPreferenceChanged(
+void BrowserCaptionButtonContainer::OnPreferenceChanged(
     const std::string& pref_name) {
   if (pref_name == kTabsSearchShow) {
     UpdateSearchTabsButtonState();
@@ -44,7 +44,7 @@ void BrowserCaptionButtonContainerWin::OnPreferenceChanged(
   }
 }
 
-void BrowserCaptionButtonContainerWin::UpdateSearchTabsButtonState() {
+void BrowserCaptionButtonContainer::UpdateSearchTabsButtonState() {
   auto* tab_search_bubble_host = GetTabSearchBubbleHost();
   if (tab_search_bubble_host) {
     auto* button = tab_search_bubble_host->button();
