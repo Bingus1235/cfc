@@ -760,7 +760,8 @@ public class BraveShieldsHandler implements BraveRewardsHelper.LargeIconReadyCal
     }
 
     private void setUpSwitchLayouts() {
-        LinearLayout upgradeHttpsLayout = mSecondaryLayout.findViewById(R.id.brave_shields_upgrade_https_id);
+        LinearLayout upgradeHttpsLayout =
+                mSecondaryLayout.findViewById(R.id.brave_shields_upgrade_https_id);
         if (!ChromeFeatureList.isEnabled(BraveFeatureList.HTTPS_BY_DEFAULT)) {
             TextView upgradeHttpsText =
                     upgradeHttpsLayout.findViewById(R.id.brave_shields_switch_text);
