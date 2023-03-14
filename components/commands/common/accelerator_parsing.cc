@@ -75,6 +75,10 @@ std::vector<std::string> GetModifierNames(ui::KeyEventFlags flags) {
     result.push_back("Alt");
   }
 
+  if (flags & ui::EF_ALTGR_DOWN) {
+    result.push_back("AltGr");
+  }
+
   if (flags & ui::EF_SHIFT_DOWN) {
     result.push_back("Shift");
   }
@@ -97,6 +101,9 @@ ui::KeyEventFlags GetModifierFromKeys(
   }
   if (base::Contains(modifiers, "Alt")) {
     result = result | ui::EF_ALT_DOWN;
+  }
+  if (base::Contains(modifiers, "AltGr")) {
+    result = result | ui::EF_ALTGR_DOWN;
   }
   if (base::Contains(modifiers, "Shift")) {
     result = result | ui::EF_SHIFT_DOWN;

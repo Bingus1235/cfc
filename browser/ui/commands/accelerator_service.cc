@@ -6,6 +6,7 @@
 #include "brave/browser/ui/commands/accelerator_service.h"
 
 #include <algorithm>
+#include <sstream>
 #include <string>
 #include <utility>
 #include <vector>
@@ -32,13 +33,12 @@ mojom::CommandPtr ToMojoCommand(
   auto command = mojom::Command::New();
   command->id = command_id;
   command->name = commands::GetCommandName(command_id);
-
-  // TODO: Find out why this is sometimes wrong.
   command->modified = accelerators != default_accelerators;
+
   for (const auto& accelerator : accelerators) {
     auto a = mojom::Accelerator::New();
     a->codes = commands::ToCodesString(accelerator);
-    a->keys = commands::ToKeysString(accelerator);
+    a->keys = commands::ToCodesString(accelerator);
     command->accelerators.push_back(std::move(a));
   }
   return command;
