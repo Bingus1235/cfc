@@ -204,7 +204,9 @@ void ChromeImporter::StartImport(const importer::SourceProfile& source_profile,
   const bool set_encryption_key = SetEncryptionKey(source_path);
   if ((items & importer::PASSWORDS) && !cancelled() && set_encryption_key) {
     bridge_->NotifyItemStarted(importer::PASSWORDS);
-    ImportPasswords();
+    ImportPasswords(base::FilePath(FILE_PATH_LITERAL("Login Data")));
+    ImportPasswords(
+        base::FilePath(FILE_PATH_LITERAL("Login Data For Account")));
     bridge_->NotifyItemEnded(importer::PASSWORDS);
   }
 
@@ -441,9 +443,8 @@ double ChromeImporter::chromeTimeToDouble(int64_t time) {
   return ((time * 10 - 0x19DB1DED53E8000) / 10000) / 1000;
 }
 
-void ChromeImporter::ImportPasswords() {
-  base::FilePath passwords_path = source_path_.Append(
-      base::FilePath::StringType(FILE_PATH_LITERAL("Login Data")));
+void ChromeImporter::ImportPasswords(base::FilePath passwords_file_name) {
+  base::FilePath passwords_path = source_path_.Append(passwords_file_name);
 
   if (!base::PathExists(passwords_path))
     return;
