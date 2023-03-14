@@ -1,5 +1,5 @@
 diff --git a/chrome/browser/ui/views/tabs/tab_strip.cc b/chrome/browser/ui/views/tabs/tab_strip.cc
-index 5bd6e98c9a27a80030892da91efa23be90f7b14d..fce22cd9dc9c00c27ffc36872a85cae2d0c9105a 100644
+index 1e35deb1e1422005e26afe87a92cf5318191afe1..b42f6e8b87dba56a52e1796766ecf313c6ff913a 100644
 --- a/chrome/browser/ui/views/tabs/tab_strip.cc
 +++ b/chrome/browser/ui/views/tabs/tab_strip.cc
 @@ -488,6 +488,7 @@ class TabStrip::TabDragContextImpl : public TabDragContext,
