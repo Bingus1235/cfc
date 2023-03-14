@@ -72,9 +72,12 @@ enum PostCommitTransactionGeminiError {
 
 enum PostCommitTransactionUpholdError {
   kFailedToCreateRequest,
+  kTransactionPending,                  // HTTP 200
+  kUnexpectedError,                     // HTTP 200
   kAccessTokenExpired,                  // HTTP 401
   kTransactionNotFound,                 // HTTP 404
-  kUnexpectedStatusCode                 // HTTP xxx
+  kUnexpectedStatusCode,                // HTTP xxx
+  kFailedToParseBody
 };
 
 enum PostCreateTransactionUpholdError {

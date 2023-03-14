@@ -108,6 +108,8 @@ void UpholdTransfer::OnCommitTransaction(
   }
 
   switch (result.error()) {
+    case PostCommitTransactionUphold::Error::kTransactionPending:
+      return std::move(callback).Run(mojom::Result::RETRY);
     case PostCommitTransactionUphold::Error::kTransactionNotFound:
       break;
     case PostCommitTransactionUphold::Error::kAccessTokenExpired:
