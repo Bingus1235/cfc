@@ -6061,7 +6061,7 @@ TEST_F(JsonRpcServiceUnitTest, GetSolTokenMetadata) {
     "seller_fee_basis_points": 1000,
     "symbol": ""
   })";
-  auto network_url = GetNetwork(mojom::kLocalhostChainId, mojom::CoinType::SOL);
+  auto network_url = GetNetwork(mojom::kSolanaMainnet, mojom::CoinType::SOL);
   SetSolTokenMetadataInterceptor(
       network_url, get_account_info_response,
       GURL("https://"

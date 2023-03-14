@@ -421,6 +421,9 @@ class JsonRpcService : public KeyedService, public mojom::JsonRpcService {
                               mojom::SolanaProviderError error,
                               const std::string& error_message)>;
   void GetSolanaAccountInfo(const std::string& pubkey,
+                            const std::string& chain_id,
+                            GetSolanaAccountInfoCallback callback);
+  void GetSolanaAccountInfo(const std::string& pubkey,
                             GetSolanaAccountInfoCallback callback);
   using GetSolanaFeeForMessageCallback =
       base::OnceCallback<void(uint64_t fee,
